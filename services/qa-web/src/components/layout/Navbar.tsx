@@ -91,7 +91,7 @@ export function Navbar() {
                   {session.user.name}
                 </div>
                 <div className="text-[10px] text-slate-400 font-medium">
-                  {isRoot ? "ROOT" : "STAFF"}
+                  {session.user.roleTitle || (isRoot ? "ROOT" : "บุคลากร")}
                 </div>
               </div>
 

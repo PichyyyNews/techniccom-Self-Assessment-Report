@@ -10,24 +10,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ROOT    // ผู้ดูแลระบบสูงสุด (Root Admin)
-  STAFF   // บุคลากร (Personnel / Faculty / Staff)
+model RoleDefinition {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "ROOT", "STAFF", "DEPT_HEAD", "TEACHER"
+  title       String   // e.g. "ผู้ดูแลระบบสูงสุด (ROOT)", "บุคลากรทั่วไป (STAFF)"
+  description String?
+  color       String   @default("blue") // "rose" | "blue" | "emerald" | "purple" | "amber"
+  permissions String[] // Allowed paths e.g. ["/dashboard", "/admin/users"]
+  isSystem    Boolean  @default(false) // true for ROOT (cannot be deleted)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String?
-  name          String
-  role          Role      @default(STAFF)
-  position      String?   // ตำแหน่ง เช่น ครูผู้ช่วย, ครูชำนาญการ, เจ้าหน้าที่ธุรการ
-  phone         String?   // เบอร์โทรศัพท์
-  birthDate     DateTime? // วันเดือนปีเกิด
-  avatarUrl     String?   // URL รูปโปรไฟล์
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String          @id @default(cuid())
+  email            String          @unique
+  passwordHash     String?
+  name             String
+  roleCode         String          @default("STAFF") // code reference
+  roleDefinitionId String?
+  roleDefinition   RoleDefinition? @relation(fields: [roleDefinitionId], references: [id])
+  position         String?         // ตำแหน่ง เช่น ครูผู้ช่วย, ครูชำนาญการ, เจ้าหน้าที่ธุรการ
+  phone            String?         // เบอร์โทรศัพท์
+  birthDate        DateTime?       // วันเดือนปีเกิด
+  avatarUrl        String?         // URL รูปประจำตัว
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([email])
 }

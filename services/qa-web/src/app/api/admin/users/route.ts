@@ -3,9 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
 
-// GET /api/admin/users - List all users (Only ROOT)
+// GET /api/admin/users - List all users
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +13,12 @@ export async function GET() {
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.ROOT) {
-      return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (เฉพาะ ROOT)" }, { status: 403 });
+    const hasPermission =
+      session.user.role === "ROOT" ||
+      session.user.permissions?.includes("/admin/users");
+
+    if (!hasPermission) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้" }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
@@ -23,7 +26,17 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
-        role: true,
+        roleCode: true,
+        roleDefinitionId: true,
+        roleDefinition: {
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            color: true,
+            permissions: true,
+          },
+        },
         position: true,
         phone: true,
         birthDate: true,
@@ -42,7 +55,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/users - Create new user (Only ROOT)
+// POST /api/admin/users - Create new user
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -51,12 +64,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.ROOT) {
-      return NextResponse.json({ error: "ไม่มีสิทธิ์สร้างผู้ใช้งาน (เฉพาะ ROOT)" }, { status: 403 });
+    const hasPermission =
+      session.user.role === "ROOT" ||
+      session.user.permissions?.includes("/admin/users");
+
+    if (!hasPermission) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์สร้างผู้ใช้งาน" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { email, password, name, role, position, phone, birthDate, avatarUrl } = body;
+    const { email, password, name, roleCode, position, phone, birthDate, avatarUrl } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน (อีเมล, รหัสผ่าน, ชื่อ-สกุล)" }, { status: 400 });
@@ -73,6 +90,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "อีเมลนี้ถูกใช้งานในระบบแล้ว" }, { status: 400 });
     }
 
+    // Resolve RoleDefinition
+    const targetRoleCode = roleCode || "STAFF";
+    const roleDef = await prisma.roleDefinition.findUnique({
+      where: { code: targetRoleCode },
+    });
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
@@ -80,29 +103,23 @@ export async function POST(req: Request) {
         email: cleanEmail,
         passwordHash,
         name: name.trim(),
-        role: (role as Role) || Role.STAFF,
+        roleCode: targetRoleCode,
+        roleDefinitionId: roleDef?.id || null,
         position: position ? position.trim() : null,
         phone: phone ? phone.trim() : null,
         birthDate: birthDate ? new Date(birthDate) : null,
         avatarUrl: avatarUrl ? avatarUrl.trim() : null,
         isActive: true,
       },
+      include: {
+        roleDefinition: true,
+      },
     });
 
     return NextResponse.json(
       {
         message: "สร้างผู้ใช้งานสำเร็จ",
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          role: newUser.role,
-          position: newUser.position,
-          phone: newUser.phone,
-          birthDate: newUser.birthDate,
-          avatarUrl: newUser.avatarUrl,
-          isActive: newUser.isActive,
-        },
+        user: newUser,
       },
       { status: 201 }
     );

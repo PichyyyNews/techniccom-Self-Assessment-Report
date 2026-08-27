@@ -26,8 +26,11 @@ export function AppSidebar({
   const { isCollapsed, toggleCollapse, setMobileOpen } = useSidebar();
 
   const isRoot = session?.user?.role === "ROOT";
-  const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
+  const userPermissions = session?.user?.permissions || ["/dashboard"];
+  const canManageUsers = isRoot || userPermissions.includes("/admin/users");
+  const canAccessDashboard = isRoot || userPermissions.includes("/dashboard");
 
+  const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
   const effectiveCollapsed = isMobile ? false : isCollapsed;
 
   const navItems = [
@@ -35,14 +38,14 @@ export function AppSidebar({
       title: "หน้าหลัก (Dashboard)",
       href: "/dashboard",
       icon: LayoutDashboard,
-      show: true,
+      show: canAccessDashboard,
     },
     {
-      title: "จัดการผู้ใช้งาน",
+      title: "จัดการผู้ใช้และสิทธิ์",
       href: "/admin/users",
       icon: Users,
-      show: isRoot,
-      badge: "ROOT",
+      show: canManageUsers,
+      badge: isRoot ? "ROOT" : undefined,
     },
   ];
 
@@ -50,6 +53,14 @@ export function AppSidebar({
     if (isMobile) {
       setMobileOpen(false);
     }
+  };
+
+  const getRoleBadgeStyle = (color?: string | null, isRootUser?: boolean) => {
+    if (isRootUser || color === "rose") return "bg-rose-50 text-rose-700 border border-rose-200";
+    if (color === "purple") return "bg-purple-50 text-purple-700 border border-purple-200";
+    if (color === "emerald") return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+    if (color === "amber") return "bg-amber-50 text-amber-700 border border-amber-200";
+    return "bg-blue-50 text-blue-700 border border-blue-200";
   };
 
   return (
@@ -198,14 +209,14 @@ export function AppSidebar({
               "rounded-2xl border border-slate-200/80 bg-slate-50/70 transition hover:bg-slate-100/70",
               effectiveCollapsed ? "p-2 flex justify-center" : "p-3.5"
             )}
-            title={effectiveCollapsed ? `${session.user.name} (${session.user.role})` : undefined}
+            title={effectiveCollapsed ? `${session.user.name} (${session.user.roleTitle || session.user.role})` : undefined}
           >
             <div className="flex items-center gap-3">
               {session.user.avatarUrl ? (
                 <img
                   src={session.user.avatarUrl}
                   alt={session.user.name || "Avatar"}
-                  className="h-10 w-10 rounded-xl object-cover border border-slate-200 flex-shrink-0"
+                  className="h-10 w-10 rounded-xl object-cover border border-slate-200 flex-shrink-0 bg-white"
                 />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-xs flex-shrink-0">
@@ -219,15 +230,14 @@ export function AppSidebar({
                     <span className="text-xs font-bold text-slate-900 truncate">
                       {session.user.name}
                     </span>
-                    {isRoot ? (
-                      <span className="px-1.5 py-0.5 text-[9px] font-black rounded bg-rose-100 text-rose-700 flex-shrink-0">
-                        ROOT
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-700 flex-shrink-0">
-                        บุคลากร
-                      </span>
-                    )}
+                    <span
+                      className={clsx(
+                        "px-1.5 py-0.5 text-[9px] font-black rounded flex-shrink-0 truncate max-w-[85px]",
+                        getRoleBadgeStyle(session.user.roleColor, isRoot)
+                      )}
+                    >
+                      {session.user.roleTitle || (isRoot ? "ROOT" : "บุคลากร")}
+                    </span>
                   </div>
 
                   <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">

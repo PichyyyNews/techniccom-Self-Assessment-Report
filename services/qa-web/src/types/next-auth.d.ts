@@ -1,4 +1,3 @@
-import { Role } from "@prisma/client";
 import "next-auth";
 import "next-auth/jwt";
 
@@ -7,7 +6,10 @@ declare module "next-auth" {
     id: string;
     email?: string | null;
     name?: string | null;
-    role: Role;
+    role: string; // roleCode e.g. "ROOT", "STAFF", "DEPT_HEAD"
+    roleTitle?: string | null;
+    roleColor?: string | null;
+    permissions?: string[];
     position?: string | null;
     phone?: string | null;
     birthDate?: string | null;
@@ -20,7 +22,10 @@ declare module "next-auth" {
       id: string;
       email?: string | null;
       name?: string | null;
-      role: Role;
+      role: string;
+      roleTitle?: string | null;
+      roleColor?: string | null;
+      permissions?: string[];
       position?: string | null;
       phone?: string | null;
       birthDate?: string | null;
@@ -33,7 +38,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    role: Role;
+    role: string;
+    roleTitle?: string | null;
+    roleColor?: string | null;
+    permissions?: string[];
     position?: string | null;
     phone?: string | null;
     birthDate?: string | null;

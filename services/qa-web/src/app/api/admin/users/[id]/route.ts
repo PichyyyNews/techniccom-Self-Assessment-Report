@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
 
 // PUT /api/admin/users/[id] - Update user details, role, position, phone, birthDate, avatar, password, or active status
 export async function PUT(
@@ -18,12 +17,16 @@ export async function PUT(
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.ROOT) {
-      return NextResponse.json({ error: "ไม่มีสิทธิ์แก้ไขผู้ใช้งาน (เฉพาะ ROOT)" }, { status: 403 });
+    const hasPermission =
+      session.user.role === "ROOT" ||
+      session.user.permissions?.includes("/admin/users");
+
+    if (!hasPermission) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์แก้ไขผู้ใช้งาน" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { name, role, position, phone, birthDate, avatarUrl, isActive, password } = body;
+    const { name, roleCode, position, phone, birthDate, avatarUrl, isActive, password } = body;
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -39,14 +42,18 @@ export async function PUT(
       if (isActive === false) {
         return NextResponse.json({ error: "ไม่สามารถระงับการใช้งาน Root Admin ได้" }, { status: 400 });
       }
-      if (role && role !== Role.ROOT) {
+      if (roleCode && roleCode !== "ROOT") {
         return NextResponse.json({ error: "ไม่สามารถลดระดับสิทธิ์ Root Admin ได้" }, { status: 400 });
       }
     }
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name.trim();
-    if (role !== undefined) updateData.role = role as Role;
+    if (roleCode !== undefined) {
+      updateData.roleCode = roleCode;
+      const roleDef = await prisma.roleDefinition.findUnique({ where: { code: roleCode } });
+      updateData.roleDefinitionId = roleDef?.id || null;
+    }
     if (position !== undefined) updateData.position = position ? position.trim() : null;
     if (phone !== undefined) updateData.phone = phone ? phone.trim() : null;
     if (birthDate !== undefined) updateData.birthDate = birthDate ? new Date(birthDate) : null;
@@ -60,21 +67,12 @@ export async function PUT(
     const updatedUser = await prisma.user.update({
       where: { id },
       data: updateData,
+      include: { roleDefinition: true },
     });
 
     return NextResponse.json({
       message: "อัปเดตข้อมูลผู้ใช้สำเร็จ",
-      user: {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        role: updatedUser.role,
-        position: updatedUser.position,
-        phone: updatedUser.phone,
-        birthDate: updatedUser.birthDate,
-        avatarUrl: updatedUser.avatarUrl,
-        isActive: updatedUser.isActive,
-      },
+      user: updatedUser,
     });
   } catch (error: any) {
     console.error("PUT /api/admin/users/[id] error:", error);
@@ -95,8 +93,12 @@ export async function DELETE(
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.ROOT) {
-      return NextResponse.json({ error: "เฉพาะ ROOT เท่านั้นที่สามารถลบผู้ใช้ได้" }, { status: 403 });
+    const hasPermission =
+      session.user.role === "ROOT" ||
+      session.user.permissions?.includes("/admin/users");
+
+    if (!hasPermission) {
+      return NextResponse.json({ error: "เฉพาะผู้มีสิทธิ์เท่านั้นที่สามารถลบผู้ใช้ได้" }, { status: 403 });
     }
 
     const user = await prisma.user.findUnique({

@@ -6,13 +6,26 @@ export default withAuth(
     const token = req.nextauth?.token;
     const pathname = req.nextUrl.pathname;
 
-    // 1. Guard /admin/* paths: Only ROOT allowed
-    if (pathname.startsWith("/admin")) {
-      const isRoot = token?.role === "ROOT";
+    const isRoot = token?.role === "ROOT";
+    const userPermissions = (token?.permissions as string[]) || ["/dashboard"];
 
-      if (!isRoot) {
-        // Non-root trying to access /admin -> redirect to /dashboard
+    // 1. Guard /admin/* paths: ROOT or roles with permission for /admin/users
+    if (pathname.startsWith("/admin")) {
+      const canAccessAdmin = isRoot || userPermissions.some((p) => pathname.startsWith(p));
+      if (!canAccessAdmin) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+    }
+
+    // 2. Guard /dashboard/* paths
+    if (pathname.startsWith("/dashboard")) {
+      const canAccessDashboard = isRoot || userPermissions.includes("/dashboard");
+      if (!canAccessDashboard) {
+        // If they only have admin permission
+        if (userPermissions.includes("/admin/users")) {
+          return NextResponse.redirect(new URL("/admin/users", req.url));
+        }
+        return NextResponse.redirect(new URL("/login", req.url));
       }
     }
 
