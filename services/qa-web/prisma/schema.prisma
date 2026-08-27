@@ -23,6 +23,18 @@ model RoleDefinition {
   updatedAt   DateTime @updatedAt
 }
 
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // e.g. "USER_LOGIN", "UPDATE_PROFILE", "UPDATE_EDUCATION", "UPDATE_EXPERIENCE", "UPDATE_SKILLS", "UPLOAD_EVIDENCE", "CREATE_USER"
+  title     String   // ข้อความกิจกรรม เช่น "อัปเดตข้อมูลส่วนตัว", "เพิ่มประวัติการศึกษา"
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 model User {
   id               String          @id @default(cuid())
   email            String          @unique
@@ -41,6 +53,7 @@ model User {
   workHistory      Json?           // ประวัติการทำงาน [{ role, organization, period }]
   skills           String[]        // ทักษะ / ความเชี่ยวชาญ
   isActive         Boolean         @default(true)
+  activities       ActivityLog[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
