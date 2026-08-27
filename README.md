@@ -69,7 +69,7 @@ npm run dev
 4. **มาตรฐานที่ 4**: การบริการวิชาชีพและจิตอาสา
 5. **มาตรฐานที่ 5**: การบริหารจัดการและภาวะผู้นำ
 
-อ่านรายละเอียดเพิ่มเติมใน [docs/standards-kpi.md](docs/standards-kpi.md) และ [docs/server-architecture.md](docs/server-architecture.md)
+อ่านรายละเอียดเพิ่มเติมใน [docs/SYSTEM_SETUP_AND_TROUBLESHOOTING.md](docs/SYSTEM_SETUP_AND_TROUBLESHOOTING.md) (สรุปปัญหาที่พบและวิธีแก้ไข) และ [docs/server_infrastructure.md](docs/server_infrastructure.md)
 
 ---
 
