@@ -65,7 +65,7 @@ export function ContributionGraph({
         months.push({ label: monthNames[month], weekIndex: weekIdx });
       }
 
-      // STRICTLY USE REAL DATABASE DATA (0 if no activity recorded)
+      // Strictly use REAL database activity log data (0 if no activity)
       const count = contributionMap[dateStr] || 0;
       countSum += count;
 
@@ -109,9 +109,11 @@ export function ContributionGraph({
       case 4:
         return "bg-emerald-800 hover:ring-2 hover:ring-emerald-900";
       default:
-        return "bg-slate-100 hover:bg-slate-200";
+        return "bg-slate-100 hover:bg-slate-200 border border-slate-200/40";
     }
   };
+
+  const totalWeeksCount = weeks.length || 53;
 
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
@@ -137,16 +139,18 @@ export function ContributionGraph({
         </div>
       </div>
 
-      {/* Heatmap Grid (Scrollable on small screens) */}
-      <div className="relative overflow-x-auto pb-2 pt-1">
-        <div className="inline-block min-w-[760px]">
-          {/* Month Labels */}
-          <div className="flex text-[11px] text-slate-400 font-medium pl-8 mb-1.5 relative h-4">
+      {/* Heatmap Grid Wrapper (Spans full width gracefully) */}
+      <div className="overflow-x-auto pb-2 pt-1">
+        <div className="w-full min-w-[700px]">
+          {/* Month Labels Bar */}
+          <div className="flex text-[11px] text-slate-400 font-medium pl-10 mb-1.5 relative h-5">
             {monthLabels.map((m, idx) => (
               <span
                 key={idx}
                 className="absolute"
-                style={{ left: `${m.weekIndex * 14 + 32}px` }}
+                style={{
+                  left: `calc(2.5rem + ${(m.weekIndex / totalWeeksCount) * 100}%)`,
+                }}
               >
                 {m.label}
               </span>
@@ -154,18 +158,18 @@ export function ContributionGraph({
           </div>
 
           {/* Grid Container */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 w-full">
             {/* Day Labels (Mon, Wed, Fri) */}
-            <div className="flex flex-col justify-between text-[10px] text-slate-400 font-semibold pr-2 py-0.5 h-[96px] select-none">
+            <div className="flex flex-col justify-between text-[10px] text-slate-400 font-semibold w-8 pr-1 py-0.5 h-[98px] sm:h-[112px] select-none flex-shrink-0">
               <span>จันทร์</span>
               <span>พุธ</span>
               <span>ศุกร์</span>
             </div>
 
-            {/* Weeks columns */}
-            <div className="flex gap-[3.5px]">
+            {/* Weeks columns spanning across width */}
+            <div className="flex-1 flex gap-[3px] sm:gap-[4px] justify-between">
               {weeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex flex-col gap-[3.5px]">
+                <div key={wIdx} className="flex-1 flex flex-col gap-[3px] sm:gap-[4px]">
                   {week.map((day, dIdx) => (
                     <div
                       key={dIdx}
@@ -180,7 +184,7 @@ export function ContributionGraph({
                       }}
                       onMouseLeave={() => setHoveredDay(null)}
                       className={clsx(
-                        "h-[11px] w-[11px] rounded-[3px] transition-all cursor-pointer",
+                        "w-full aspect-square rounded-[3px] transition-all cursor-pointer",
                         getCellColor(day.level)
                       )}
                     />
@@ -191,14 +195,14 @@ export function ContributionGraph({
           </div>
 
           {/* Bottom Footer / Legend */}
-          <div className="flex items-center justify-between pt-3 text-[11px] text-slate-500 border-t border-slate-100 mt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 text-[11px] text-slate-500 border-t border-slate-100 mt-4">
             <span className="text-slate-400 text-xs">
               * บันทึกกิจกรรมอัตโนมัติเมื่อมีการอัปเดตข้อมูล, อัปโหลดเอกสาร SAR หรือประเมินคุณภาพ
             </span>
 
-            <div className="flex items-center gap-1.5 font-medium text-slate-500">
+            <div className="flex items-center gap-1.5 font-medium text-slate-500 self-end sm:self-auto">
               <span>น้อย</span>
-              <span className="h-3 w-3 rounded-[3px] bg-slate-100 inline-block border border-slate-200" title="0 กิจกรรม" />
+              <span className="h-3 w-3 rounded-[3px] bg-slate-100 inline-block border border-slate-200/80" title="0 กิจกรรม" />
               <span className="h-3 w-3 rounded-[3px] bg-emerald-300 inline-block" title="1 กิจกรรม" />
               <span className="h-3 w-3 rounded-[3px] bg-emerald-500 inline-block" title="2-3 กิจกรรม" />
               <span className="h-3 w-3 rounded-[3px] bg-emerald-600 inline-block" title="4-5 กิจกรรม" />

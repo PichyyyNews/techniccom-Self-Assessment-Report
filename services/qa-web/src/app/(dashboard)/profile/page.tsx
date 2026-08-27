@@ -21,7 +21,7 @@ import {
   Key,
   Quote,
   Clock,
-  ArrowRight,
+  Camera,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
@@ -254,68 +254,42 @@ export default function ProfilePage() {
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
       <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         {/* Cover Graphic Banner */}
-        <div className="h-32 sm:h-44 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative" />
+        <div className="h-36 sm:h-52 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative">
+          <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+        </div>
 
         {/* Profile Identity Layout */}
-        <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-0 relative">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-16">
-            {/* Avatar + Main Names */}
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
-              <div className="relative group self-start sm:self-auto">
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
-                  />
-                ) : (
-                  <div className="flex h-24 w-24 sm:h-32 sm:w-32 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-3xl sm:text-4xl border-4 border-white shadow-xl shadow-slate-900/10">
-                    {user?.name ? user.name.charAt(0) : "U"}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={openBasicModal}
-                  className="absolute bottom-1 right-1 p-1.5 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition"
-                  title="เปลี่ยนรูปประจำตัว"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              <div className="space-y-1 sm:mb-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                    {user?.name}
-                  </h1>
-                  <span
-                    className={clsx(
-                      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black border",
-                      getBadgeStyle(roleColor)
-                    )}
-                  >
-                    {isRoot && <Shield className="h-3 w-3" />}
-                    {roleTitle}
-                  </span>
+        <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-0">
+          {/* Top Floating Row: Avatar (Left) + Action Buttons (Right) */}
+          <div className="flex items-end justify-between -mt-14 sm:-mt-20 mb-4 sm:mb-5">
+            {/* Avatar with Camera Trigger */}
+            <div className="relative group">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
+                />
+              ) : (
+                <div className="flex h-28 w-28 sm:h-36 sm:w-36 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-3xl sm:text-4xl border-4 border-white shadow-xl shadow-slate-900/10">
+                  {user?.name ? user.name.charAt(0) : "U"}
                 </div>
-
-                <p className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                  {user?.position || "บุคลากรวิทยาลัย"}
-                </p>
-
-                <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5 text-slate-400" />
-                  {user?.email}
-                </p>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={openBasicModal}
+                className="absolute bottom-1 right-1 p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
+                title="เปลี่ยนรูปประจำตัว"
+              >
+                <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2 self-stretch sm:self-auto sm:mb-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={openBasicModal}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
               >
                 <Edit3 className="h-4 w-4" />
                 แก้ไขข้อมูลส่วนตัว
@@ -323,7 +297,7 @@ export default function ProfilePage() {
 
               <button
                 onClick={openPasswordModal}
-                className="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                className="p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
                 title="เปลี่ยนรหัสผ่าน"
               >
                 <Key className="h-4 w-4 text-slate-500" />
@@ -331,15 +305,43 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* User Name & Details Section (100% Inside White Card) */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                {user?.name}
+              </h1>
+              <span
+                className={clsx(
+                  "inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-black border",
+                  getBadgeStyle(roleColor)
+                )}
+              >
+                {isRoot && <Shield className="h-3.5 w-3.5" />}
+                {roleTitle}
+              </span>
+            </div>
+
+            <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-blue-600" />
+              {user?.position || "บุคลากรวิทยาลัย"}
+            </p>
+
+            <p className="text-xs text-slate-400 flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 text-slate-400" />
+              {user?.email}
+            </p>
+          </div>
+
           {/* Social Bio / Philosophy */}
           <div className="mt-5 pt-4 border-t border-slate-100 text-xs sm:text-sm text-slate-600 leading-relaxed">
             {user?.bio ? (
-              <div className="flex items-start gap-2 bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-100">
+              <div className="flex items-start gap-2.5 bg-slate-50/90 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
                 <Quote className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5 rotate-180" />
                 <p className="whitespace-pre-line text-slate-800 font-medium">{user.bio}</p>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
                 <span className="text-slate-400 text-xs italic">
                   ยังไม่มีคำแนะนำตัว... คลิกเพื่อเพิ่มคติประจำใจหรือประวัติโดยย่อ
                 </span>
