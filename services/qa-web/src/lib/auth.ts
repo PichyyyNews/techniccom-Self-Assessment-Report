@@ -31,11 +31,10 @@ export const authOptions: NextAuthOptions = {
         const rootEmail = (process.env.ROOT_ADMIN_EMAIL || "admin@technic.ac.th").trim().toLowerCase();
         const rootPassword = process.env.ROOT_ADMIN_PASSWORD || "admin1234";
 
-        // 1. Check Root Admin Fallback / Sync
+        // 1. Root Admin Fallback / Auto-provisioning
         if (inputEmail === rootEmail && credentials.password === rootPassword) {
           let rootUser = await prisma.user.findUnique({
             where: { email: rootEmail },
-            include: { department: true },
           });
 
           if (!rootUser) {
@@ -43,12 +42,12 @@ export const authOptions: NextAuthOptions = {
             rootUser = await prisma.user.create({
               data: {
                 email: rootEmail,
-                name: "ผู้ดูแลระบบไอทีวิทยาลัย (Super Admin)",
-                role: Role.SUPER_ADMIN,
+                name: "ผู้ดูแลระบบสูงสุด (Root Admin)",
+                role: Role.ROOT,
                 passwordHash,
+                position: "ผู้ดูแลระบบไอทีวิทยาลัย",
                 isActive: true,
               },
-              include: { department: true },
             });
           }
 
@@ -56,9 +55,11 @@ export const authOptions: NextAuthOptions = {
             id: rootUser.id,
             email: rootUser.email,
             name: rootUser.name,
-            role: Role.SUPER_ADMIN,
-            departmentId: rootUser.departmentId,
-            departmentName: rootUser.department?.nameTh || null,
+            role: Role.ROOT,
+            position: rootUser.position,
+            phone: rootUser.phone,
+            birthDate: rootUser.birthDate ? rootUser.birthDate.toISOString() : null,
+            avatarUrl: rootUser.avatarUrl,
             isActive: true,
           };
         }
@@ -66,7 +67,6 @@ export const authOptions: NextAuthOptions = {
         // 2. Standard User Lookup in DB
         const user = await prisma.user.findUnique({
           where: { email: inputEmail },
-          include: { department: true },
         });
 
         if (!user || !user.passwordHash) {
@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (user.isActive === false) {
-          throw new Error("บัญชีผู้ใช้นี้ถูกปิดการใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
+          throw new Error("บัญชีผู้ใช้นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -91,8 +91,10 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          departmentId: user.departmentId,
-          departmentName: user.department?.nameTh || null,
+          position: user.position,
+          phone: user.phone,
+          birthDate: user.birthDate ? user.birthDate.toISOString() : null,
+          avatarUrl: user.avatarUrl,
           isActive: user.isActive,
         };
       },
@@ -103,8 +105,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role as Role;
-        token.departmentId = user.departmentId;
-        token.departmentName = user.departmentName;
+        token.position = user.position;
+        token.phone = user.phone;
+        token.birthDate = user.birthDate;
+        token.avatarUrl = user.avatarUrl;
         token.isActive = user.isActive;
       }
       return token;
@@ -113,8 +117,10 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
-        session.user.departmentId = token.departmentId as string | null;
-        session.user.departmentName = token.departmentName as string | null;
+        session.user.position = token.position as string | null;
+        session.user.phone = token.phone as string | null;
+        session.user.birthDate = token.birthDate as string | null;
+        session.user.avatarUrl = token.avatarUrl as string | null;
         session.user.isActive = token.isActive as boolean;
       }
       return session;

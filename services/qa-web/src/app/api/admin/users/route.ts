@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 
-// GET /api/admin/users - List all users (Only SUPER_ADMIN and QA_HEAD)
+// GET /api/admin/users - List all users (Only ROOT)
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,8 @@ export async function GET() {
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.SUPER_ADMIN && session.user.role !== Role.QA_HEAD) {
-      return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้" }, { status: 403 });
+    if (session.user.role !== Role.ROOT) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (เฉพาะ ROOT)" }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
@@ -24,15 +24,11 @@ export async function GET() {
         email: true,
         name: true,
         role: true,
+        position: true,
+        phone: true,
+        birthDate: true,
+        avatarUrl: true,
         isActive: true,
-        departmentId: true,
-        department: {
-          select: {
-            id: true,
-            code: true,
-            nameTh: true,
-          },
-        },
         createdAt: true,
         updatedAt: true,
       },
@@ -46,7 +42,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/users - Create new user (Only SUPER_ADMIN and QA_HEAD)
+// POST /api/admin/users - Create new user (Only ROOT)
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -55,12 +51,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== Role.SUPER_ADMIN && session.user.role !== Role.QA_HEAD) {
-      return NextResponse.json({ error: "ไม่มีสิทธิ์สร้างผู้ใช้งาน" }, { status: 403 });
+    if (session.user.role !== Role.ROOT) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์สร้างผู้ใช้งาน (เฉพาะ ROOT)" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { email, password, name, role, departmentId } = body;
+    const { email, password, name, role, position, phone, birthDate, avatarUrl } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน (อีเมล, รหัสผ่าน, ชื่อ-สกุล)" }, { status: 400 });
@@ -84,12 +80,12 @@ export async function POST(req: Request) {
         email: cleanEmail,
         passwordHash,
         name: name.trim(),
-        role: (role as Role) || Role.TEACHER,
-        departmentId: departmentId || null,
+        role: (role as Role) || Role.STAFF,
+        position: position ? position.trim() : null,
+        phone: phone ? phone.trim() : null,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        avatarUrl: avatarUrl ? avatarUrl.trim() : null,
         isActive: true,
-      },
-      include: {
-        department: true,
       },
     });
 
@@ -101,7 +97,10 @@ export async function POST(req: Request) {
           email: newUser.email,
           name: newUser.name,
           role: newUser.role,
-          department: newUser.department,
+          position: newUser.position,
+          phone: newUser.phone,
+          birthDate: newUser.birthDate,
+          avatarUrl: newUser.avatarUrl,
           isActive: newUser.isActive,
         },
       },

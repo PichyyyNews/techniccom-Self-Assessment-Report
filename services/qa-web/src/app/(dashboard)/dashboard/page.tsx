@@ -3,166 +3,175 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  CheckSquare,
-  FolderArchive,
-  Award,
-  ArrowUpRight,
-  Sparkles,
-  Building2,
+  Users,
+  ShieldCheck,
+  User,
+  Phone,
   Calendar,
-  Clock,
+  Briefcase,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function TeacherDashboardPage() {
+function calculateAge(birthDateString?: string | Date | null) {
+  if (!birthDateString) return null;
+  const birth = new Date(birthDateString);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age >= 0 ? age : null;
+}
+
+export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  const [standards, academicYear] = await Promise.all([
-    prisma.standard.findMany({
-      include: {
-        indicators: true,
-      },
-      orderBy: { standardNumber: "asc" },
-    }),
-    prisma.academicYear.findFirst({ where: { isActive: true } }),
-  ]);
+  // Fetch full user details from DB
+  const user = session?.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+      })
+    : null;
 
-  const totalIndicators = standards.reduce((acc, s) => acc + s.indicators.length, 0);
+  const isRoot = session?.user?.role === "ROOT";
+  const userCount = isRoot ? await prisma.user.count() : 0;
+  const age = calculateAge(user?.birthDate);
 
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="rounded-2xl border border-blue-100 bg-white p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
-                <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-                ปีการศึกษา {academicYear?.year || 2569}
-              </span>
-              {session?.user?.departmentName && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                  <Building2 className="h-3.5 w-3.5 text-slate-500" />
-                  {session.user.departmentName}
-                </span>
-              )}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="flex items-start gap-4 sm:gap-5">
+            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl shadow-lg shadow-blue-500/20 flex-shrink-0">
+              {user?.name ? user.name.charAt(0) : "U"}
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold ${
+                    isRoot
+                      ? "bg-rose-50 text-rose-700 border border-rose-200"
+                      : "bg-blue-50 text-blue-700 border border-blue-200"
+                  }`}
+                >
+                  <Sparkles className="h-3 w-3" />
+                  {isRoot ? "ผู้ดูแลระบบสูงสุด (ROOT)" : "บุคลากร (STAFF)"}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                  สถานะปกติ
+                </span>
+              </div>
 
-            <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              ยินดีต้อนรับ, {session?.user?.name || "อาจารย์ผู้ประเมิน"}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-              รายงานการประเมินตนเองระดับแผนกวิชา (Self-Assessment Report: SAR) ตามเกณฑ์มาตรฐาน สอศ.
+              <h1 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                {user?.name || session?.user?.name || "ผู้ใช้งาน"}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                {user?.email || session?.user?.email}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Action for ROOT */}
+          {isRoot && (
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 flex-shrink-0"
+            >
+              <Users className="h-4 w-4" />
+              ไปยังหน้าจัดการผู้ใช้งาน
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* User Information Details Card */}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-sm">
+        <h2 className="text-base font-bold text-slate-900 pb-4 border-b border-slate-100 flex items-center gap-2">
+          <User className="h-5 w-5 text-blue-600" />
+          ข้อมูลส่วนตัวและตำแหน่งงาน (Personnel Profile)
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4">
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+              ตำแหน่ง
+            </span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {user?.position || "- ยังไม่ได้ระบุ -"}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4">
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-slate-400" />
+              เบอร์โทรศัพท์
+            </span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {user?.phone || "- ยังไม่ได้ระบุ -"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4">
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+              วันเดือนปีเกิด
+            </span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {user?.birthDate
+                ? new Date(user.birthDate).toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "- ยังไม่ได้ระบุ -"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4">
+            <span className="text-xs font-medium text-slate-400">อายุ</span>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              {age !== null ? `${age} ปี` : "-"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Root Admin Statistics Card (Only visible to ROOT) */}
+      {isRoot && (
+        <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-white to-blue-50/40 p-7 sm:p-9 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-blue-700">
+                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                แผงควบคุมระบบ (Root Control)
+              </span>
+              <h3 className="text-xl font-bold text-slate-900 mt-1">
+                จัดการบัญชีและกำหนดสิทธิ์บุคลากรในระบบ
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                ปัจจุบันมีผู้ใช้งานในฐานข้อมูลทั้งหมด {userCount} บัญชี (คุณสามารถสร้างและแก้ไขสิทธิ์ได้)
+              </p>
+            </div>
+
             <Link
-              href="/indicators"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95"
+              href="/admin/users"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-xs font-bold text-white shadow-md transition hover:bg-slate-800 active:scale-95 flex-shrink-0"
             >
-              <CheckSquare className="h-4 w-4" />
-              กรอกคะแนนประเมิน
-            </Link>
-            <Link
-              href="/evidence"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95"
-            >
-              <FolderArchive className="h-4 w-4 text-slate-500" />
-              อัปโหลดหลักฐาน
+              <Users className="h-4 w-4 text-amber-400" />
+              จัดการผู้ใช้งานทั้งหมด
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Progress Cards Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">ตัวบ่งชี้ทั้งหมด</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <CheckSquare className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">{totalIndicators}</span>
-            <span className="text-xs text-slate-500 font-medium">ตัวบ่งชี้ (5 มาตรฐาน)</span>
-          </div>
-          <div className="mt-3 w-full bg-slate-100 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full w-[25%]" />
-          </div>
-          <span className="mt-2 block text-[11px] text-slate-400">สถานะ: อยู่ระหว่างรวบรวมหลักฐาน</span>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">ไฟล์หลักฐานในระบบ</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <FolderArchive className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">0</span>
-            <span className="text-xs text-slate-500 font-medium">ไฟล์ที่อัปโหลด</span>
-          </div>
-          <div className="mt-4 text-xs text-purple-600 font-semibold flex items-center gap-1">
-            <Link href="/evidence" className="flex items-center gap-1 hover:underline">
-              ไปยังคลังเอกสารหลักฐาน <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">สถานะเล่ม SAR</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Clock className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-amber-600">ฉบับร่าง (Draft)</span>
-          </div>
-          <span className="mt-3 block text-xs text-slate-500">
-            กำหนดส่งภายในสิ้นภาคเรียนการศึกษา
-          </span>
-        </div>
-      </div>
-
-      {/* Standards Summary List */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">มาตรฐานการประกันคุณภาพการศึกษา สอศ.</h2>
-          <p className="text-xs text-slate-500">เลือกดูและบันทึกข้อมูลการประเมินตนเองตามมาตรฐาน</p>
-        </div>
-
-        <div className="space-y-3 pt-2">
-          {standards.map((std) => (
-            <div
-              key={std.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 transition hover:bg-blue-50/30 hover:border-blue-200 gap-3"
-            >
-              <div className="flex items-start sm:items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-slate-200 text-blue-600 font-bold text-sm shadow-2xs flex-shrink-0">
-                  {std.standardNumber}
-                </span>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900">{std.title}</h4>
-                  <span className="text-xs text-slate-500 font-medium">
-                    ค่าน้ำหนัก {std.weight}% • {std.indicators.length} ตัวบ่งชี้
-                  </span>
-                </div>
-              </div>
-
-              <Link
-                href="/indicators"
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition"
-              >
-                ดูตัวบ่งชี้ <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

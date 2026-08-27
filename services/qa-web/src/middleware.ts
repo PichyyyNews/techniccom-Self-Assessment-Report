@@ -6,13 +6,12 @@ export default withAuth(
     const token = req.nextauth?.token;
     const pathname = req.nextUrl.pathname;
 
-    // 1. Guard /admin/* paths: Only SUPER_ADMIN and QA_HEAD allowed
+    // 1. Guard /admin/* paths: Only ROOT allowed
     if (pathname.startsWith("/admin")) {
-      const role = token?.role;
-      const isAdmin = role === "SUPER_ADMIN" || role === "QA_HEAD";
+      const isRoot = token?.role === "ROOT";
 
-      if (!isAdmin) {
-        // Non-admin trying to access /admin -> redirect to /dashboard
+      if (!isRoot) {
+        // Non-root trying to access /admin -> redirect to /dashboard
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
     }
@@ -34,7 +33,7 @@ export default withAuth(
           return true;
         }
 
-        // Protected routes: /admin, /dashboard, /indicators, /evidence
+        // Protected routes: /admin, /dashboard
         return !!token;
       },
     },
@@ -48,7 +47,5 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/dashboard/:path*",
-    "/indicators/:path*",
-    "/evidence/:path*",
   ],
 };

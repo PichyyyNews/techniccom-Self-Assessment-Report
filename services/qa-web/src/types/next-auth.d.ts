@@ -8,8 +8,10 @@ declare module "next-auth" {
     email?: string | null;
     name?: string | null;
     role: Role;
-    departmentId?: string | null;
-    departmentName?: string | null;
+    position?: string | null;
+    phone?: string | null;
+    birthDate?: string | null;
+    avatarUrl?: string | null;
     isActive?: boolean;
   }
 
@@ -19,8 +21,10 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       role: Role;
-      departmentId?: string | null;
-      departmentName?: string | null;
+      position?: string | null;
+      phone?: string | null;
+      birthDate?: string | null;
+      avatarUrl?: string | null;
       isActive?: boolean;
     };
   }
@@ -30,8 +34,10 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
-    departmentId?: string | null;
-    departmentName?: string | null;
+    position?: string | null;
+    phone?: string | null;
+    birthDate?: string | null;
+    avatarUrl?: string | null;
     isActive?: boolean;
   }
 }

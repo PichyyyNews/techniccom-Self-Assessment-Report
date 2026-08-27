@@ -8,36 +8,49 @@ import {
   Filter,
   Edit2,
   Trash2,
-  KeyRound,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Building2,
   Shield,
   Loader2,
   X,
+  Phone,
+  Calendar,
+  Briefcase,
+  User as UserIcon,
+  ArrowLeft,
+  KeyRound,
 } from "lucide-react";
-
-interface Department {
-  id: string;
-  code: string;
-  nameTh: string;
-}
+import Link from "next/link";
 
 interface UserItem {
   id: string;
   email: string;
   name: string;
-  role: "SUPER_ADMIN" | "QA_HEAD" | "DEPT_HEAD" | "TEACHER" | "AUDITOR";
-  departmentId: string | null;
-  department: Department | null;
+  role: "ROOT" | "STAFF";
+  position: string | null;
+  phone: string | null;
+  birthDate: string | null;
+  avatarUrl: string | null;
   isActive: boolean;
   createdAt: string;
 }
 
+function calculateAge(birthDateString?: string | null) {
+  if (!birthDateString) return null;
+  const birth = new Date(birthDateString);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age >= 0 ? age : null;
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
@@ -53,8 +66,11 @@ export default function AdminUsersPage() {
     name: "",
     email: "",
     password: "",
-    role: "TEACHER",
-    departmentId: "",
+    role: "STAFF" as "ROOT" | "STAFF",
+    position: "",
+    phone: "",
+    birthDate: "",
+    avatarUrl: "",
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
 
@@ -75,21 +91,8 @@ export default function AdminUsersPage() {
     }
   };
 
-  const fetchDepartments = async () => {
-    try {
-      const res = await fetch("/api/admin/departments");
-      const data = await res.json();
-      if (res.ok) {
-        setDepartments(data.departments || []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
-    fetchDepartments();
   }, []);
 
   const openCreateModal = () => {
@@ -99,8 +102,11 @@ export default function AdminUsersPage() {
       name: "",
       email: "",
       password: "",
-      role: "TEACHER",
-      departmentId: departments[0]?.id || "",
+      role: "STAFF",
+      position: "",
+      phone: "",
+      birthDate: "",
+      avatarUrl: "",
     });
     setShowModal(true);
   };
@@ -108,12 +114,16 @@ export default function AdminUsersPage() {
   const openEditModal = (user: UserItem) => {
     setModalMode("edit");
     setSelectedUser(user);
+    const dateFormatted = user.birthDate ? user.birthDate.split("T")[0] : "";
     setFormData({
       name: user.name,
       email: user.email,
       password: "",
       role: user.role,
-      departmentId: user.departmentId || "",
+      position: user.position || "",
+      phone: user.phone || "",
+      birthDate: dateFormatted,
+      avatarUrl: user.avatarUrl || "",
     });
     setShowModal(true);
   };
@@ -132,7 +142,7 @@ export default function AdminUsersPage() {
         });
         const data = await res.json();
         if (res.ok) {
-          setAlert({ type: "success", msg: "เพิ่มผู้ใช้งานเรียบร้อยแล้ว" });
+          setAlert({ type: "success", msg: "เพิ่มผู้ใช้งานใหม่เรียบร้อยแล้ว" });
           setShowModal(false);
           fetchUsers();
         } else {
@@ -143,7 +153,10 @@ export default function AdminUsersPage() {
         const payload: any = {
           name: formData.name,
           role: formData.role,
-          departmentId: formData.departmentId || null,
+          position: formData.position,
+          phone: formData.phone,
+          birthDate: formData.birthDate || null,
+          avatarUrl: formData.avatarUrl,
         };
         if (formData.password.trim().length > 0) {
           payload.password = formData.password.trim();
@@ -215,45 +228,36 @@ export default function AdminUsersPage() {
     const matchSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
-      (u.department?.nameTh || "").toLowerCase().includes(search.toLowerCase());
+      (u.position || "").toLowerCase().includes(search.toLowerCase()) ||
+      (u.phone || "").toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "ALL" || u.role === roleFilter;
     return matchSearch && matchRole;
   });
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "SUPER_ADMIN":
-        return <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-rose-50 text-rose-700 border border-rose-200">Super Admin</span>;
-      case "QA_HEAD":
-        return <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-purple-50 text-purple-700 border border-purple-200">หัวหน้างานประกัน</span>;
-      case "DEPT_HEAD":
-        return <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-amber-50 text-amber-700 border border-amber-200">หัวหน้าแผนก</span>;
-      case "TEACHER":
-        return <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200">ครูผู้รับผิดชอบ</span>;
-      case "AUDITOR":
-        return <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">กรรมการตรวจ</span>;
-      default:
-        return <span className="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-700">{role}</span>;
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Top Breadcrumb / Navigation Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-            <Users className="h-7 w-7 text-blue-600" />
-            จัดการบัญชีผู้ใช้งาน (User Management)
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 mb-2 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            กลับหน้า Dashboard
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+            <Users className="h-8 w-8 text-blue-600" />
+            จัดการผู้ใช้งานในระบบ (User Management)
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            ผู้ดูแลระบบสามารถสร้าง แก้ไข มอบหมายบทบาท และจัดการสถานะผู้ใช้ของทุกแผนกวิชา
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            สร้างบัญชี กำหนดตำแหน่ง เบอร์โทร วันเกิด (คำนวณอายุอัตโนมัติ) และกำหนดสิทธิ์ (ROOT / บุคลากร)
           </p>
         </div>
 
         <button
           onClick={openCreateModal}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-[0.99]"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
         >
           <UserPlus className="h-4 w-4" />
           เพิ่มผู้ใช้งานใหม่
@@ -263,7 +267,7 @@ export default function AdminUsersPage() {
       {/* Alert Banner */}
       {alert && (
         <div
-          className={`flex items-center justify-between rounded-xl p-4 text-sm font-medium ${
+          className={`flex items-center justify-between rounded-2xl p-4 text-xs sm:text-sm font-medium animate-in fade-in duration-150 ${
             alert.type === "success"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-900"
               : "border border-rose-200 bg-rose-50 text-rose-900"
@@ -271,9 +275,9 @@ export default function AdminUsersPage() {
         >
           <div className="flex items-center gap-2">
             {alert.type === "success" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
             ) : (
-              <AlertCircle className="h-5 w-5 text-rose-600" />
+              <AlertCircle className="h-5 w-5 text-rose-600 flex-shrink-0" />
             )}
             <span>{alert.msg}</span>
           </div>
@@ -283,7 +287,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Filters & Search Bar */}
+      {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -291,8 +295,8 @@ export default function AdminUsersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหาตามชื่อ, อีเมล, หรือแผนกวิชา..."
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+            placeholder="ค้นหาตามชื่อ, อีเมล, ตำแหน่ง, หรือเบอร์โทร..."
+            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition shadow-xs"
           />
         </div>
 
@@ -301,106 +305,143 @@ export default function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+            className="rounded-2xl border border-slate-200 bg-white py-3 px-4 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition shadow-xs font-medium"
           >
             <option value="ALL">ทุกสิทธิ์การใช้งาน (All Roles)</option>
-            <option value="SUPER_ADMIN">Super Admin</option>
-            <option value="QA_HEAD">หัวหน้างานประกันคุณภาพ (QA Head)</option>
-            <option value="DEPT_HEAD">หัวหน้าแผนกวิชา (Dept Head)</option>
-            <option value="TEACHER">ครูผู้รับผิดชอบ (Teacher)</option>
-            <option value="AUDITOR">กรรมการตรวจประเมิน (Auditor)</option>
+            <option value="ROOT">ผู้ดูแลระบบสูงสุด (ROOT)</option>
+            <option value="STAFF">บุคลากร (STAFF)</option>
           </select>
         </div>
       </div>
 
       {/* Users Table Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center p-12 text-slate-400">
+          <div className="flex flex-col items-center justify-center p-14 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-            <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจากฐานข้อมูล...</span>
+            <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-center text-slate-500">
+          <div className="flex flex-col items-center justify-center p-14 text-center text-slate-500">
             <Users className="h-10 w-10 text-slate-300 mb-2" />
-            <p className="font-semibold text-slate-700">ไม่พบผู้ใช้งานที่ตรงกับเงื่อนไข</p>
-            <p className="text-xs text-slate-400 mt-1">ลองเปลี่ยนคำค้นหาหรือตัวกรองบทบาท</p>
+            <p className="font-bold text-slate-700">ไม่พบข้อมูลผู้ใช้งาน</p>
+            <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มผู้ใช้งานใหม่" เพื่อสร้างผู้ใช้คนแรก</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
-              <thead className="border-b border-slate-100 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-6 py-4">ชื่อ - สกุล / อีเมล</th>
-                  <th className="px-6 py-4">สิทธิ์การใช้งาน</th>
-                  <th className="px-6 py-4">แผนกวิชา</th>
+                  <th className="px-6 py-4">ชื่อ - นามสกุล / อีเมล</th>
+                  <th className="px-6 py-4">ยศ / สิทธิ์</th>
+                  <th className="px-6 py-4">ตำแหน่ง / เบอร์โทร</th>
+                  <th className="px-6 py-4">วดป. เกิด / อายุ</th>
                   <th className="px-6 py-4 text-center">สถานะ</th>
                   <th className="px-6 py-4 text-right">การจัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900">{user.name}</div>
-                      <div className="text-xs text-slate-400">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {getRoleBadge(user.role)}
-                    </td>
-                    <td className="px-6 py-4">
-                      {user.department ? (
-                        <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                          <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span>{user.department.nameTh}</span>
+                {filteredUsers.map((user) => {
+                  const age = calculateAge(user.birthDate);
+                  return (
+                    <tr key={user.id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200">
+                            {user.name ? user.name.charAt(0) : "U"}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{user.name}</div>
+                            <div className="text-xs text-slate-400">{user.email}</div>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-slate-400 text-xs">- ส่วนกลาง -</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleToggleStatus(user)}
-                        title="คลิกเพื่อสลับสถานะ"
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold transition ${
-                          user.isActive
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                            : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
-                        }`}
-                      >
-                        {user.isActive ? (
-                          <>
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            เปิดใช้งาน
-                          </>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {user.role === "ROOT" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                            <Shield className="h-3.5 w-3.5" />
+                            ROOT
+                          </span>
                         ) : (
-                          <>
-                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                            ระงับการใช้งาน
-                          </>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                            บุคลากร
+                          </span>
                         )}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="space-y-0.5">
+                          <div className="text-slate-800 font-semibold text-xs flex items-center gap-1">
+                            <Briefcase className="h-3 w-3 text-slate-400" />
+                            {user.position || "-"}
+                          </div>
+                          <div className="text-slate-400 text-xs flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-slate-400" />
+                            {user.phone || "-"}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="space-y-0.5">
+                          <div className="text-slate-700 text-xs flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-slate-400" />
+                            {user.birthDate
+                              ? new Date(user.birthDate).toLocaleDateString("th-TH")
+                              : "-"}
+                          </div>
+                          <div className="text-slate-500 text-xs font-medium">
+                            {age !== null ? `อายุ ${age} ปี` : "-"}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 text-center">
                         <button
-                          onClick={() => openEditModal(user)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
-                          title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
+                          onClick={() => handleToggleStatus(user)}
+                          title="คลิกเพื่อสลับสถานะ"
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition ${
+                            user.isActive
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                              : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
+                          }`}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          {user.isActive ? (
+                            <>
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              ปกติ
+                            </>
+                          ) : (
+                            <>
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                              ระงับ
+                            </>
+                          )}
                         </button>
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
-                          title="ลบผู้ใช้งาน"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => openEditModal(user)}
+                            className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
+                            title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            className="p-2 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
+                            title="ลบผู้ใช้งาน"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -410,7 +451,7 @@ export default function AdminUsersPage() {
       {/* Modal: Create or Edit User */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-7 shadow-2xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 {modalMode === "create" ? (
@@ -427,100 +468,142 @@ export default function AdminUsersPage() {
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  ชื่อ - นามสกุล <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="เช่น อ.สมศักดิ์ รักเรียน"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  อีเมล (Email) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  disabled={modalMode === "edit"}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="name@technic.ac.th"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 disabled:opacity-60 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                />
-                {modalMode === "edit" && (
-                  <span className="text-[11px] text-slate-400 mt-0.5 block">
-                    * ไม่สามารถเปลี่ยนอีเมลได้หลังจากสร้างบัญชีแล้ว
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {modalMode === "create" ? (
-                    <>รหัสผ่านเริ่มต้น <span className="text-rose-500">*</span></>
-                  ) : (
-                    <>เปลี่ยนรหัสผ่านใหม่ (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</>
-                  )}
-                </label>
-                <input
-                  type="password"
-                  required={modalMode === "create"}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder={modalMode === "create" ? "กำหนดรหัสผ่าน เช่น 123456" : "••••••••"}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    สิทธิ์การใช้งาน (Role)
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ชื่อ - นามสกุล <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="เช่น นายรักเรียน เพียรศึกษา"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    อีเมล (Email) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    disabled={modalMode === "edit"}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="name@technic.ac.th"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 disabled:opacity-60 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {modalMode === "create" ? (
+                      <>รหัสผ่าน <span className="text-rose-500">*</span></>
+                    ) : (
+                      <>เปลี่ยนรหัสผ่าน (เว้นว่างไว้หากไม่เปลี่ยน)</>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    required={modalMode === "create"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder={modalMode === "create" ? "กำหนดรหัสผ่าน" : "••••••••"}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ยศ / สิทธิ์การใช้งาน <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as "ROOT" | "STAFF" })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
                   >
-                    <option value="TEACHER">ครูผู้รับผิดชอบ (Teacher)</option>
-                    <option value="DEPT_HEAD">หัวหน้าแผนกวิชา (Dept Head)</option>
-                    <option value="QA_HEAD">หัวหน้างานประกัน (QA Head)</option>
-                    <option value="AUDITOR">กรรมการประเมิน (Auditor)</option>
-                    <option value="SUPER_ADMIN">ผู้ดูแลระบบ (Super Admin)</option>
+                    <option value="STAFF">บุคลากร (STAFF)</option>
+                    <option value="ROOT">ผู้ดูแลระบบสูงสุด (ROOT)</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ตำแหน่งงาน
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.position}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    placeholder="เช่น ครู คศ.2, ครูผู้ช่วย, ธุรการ"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    สังกัดแผนกวิชา
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    เบอร์โทรศัพท์
                   </label>
-                  <select
-                    value={formData.departmentId}
-                    onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="081-234-5678"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                  >
-                    <option value="">- ไม่มี / ส่วนกลาง -</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.nameTh}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    วันเดือนปีเกิด (วดป. เกิด)
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    อายุ (คำนวณอัตโนมัติ)
+                  </label>
+                  <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-2.5 text-sm text-slate-700 font-bold">
+                    {calculateAge(formData.birthDate) !== null
+                      ? `${calculateAge(formData.birthDate)} ปี`
+                      : "-"}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  URL รูปโปรไฟล์ (Avatar URL)
+                </label>
+                <input
+                  type="url"
+                  value={formData.avatarUrl}
+                  onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
+                  placeholder="https://example.com/avatar.jpg"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                />
               </div>
 
               <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
@@ -534,7 +617,7 @@ export default function AdminUsersPage() {
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-70"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-70"
                 >
                   {formSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {modalMode === "create" ? "สร้างผู้ใช้งาน" : "บันทึกการเปลี่ยนแปลง"}
