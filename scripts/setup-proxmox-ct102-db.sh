@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Setup PostgreSQL 16 & MinIO on Proxmox CT 102 (database-server)
-# รันคำสั่งนี้บน Proxmox Host (Node: Techniccom)
+# รันคำสั่งนี้บน Proxmox Host (Node: Techniccom - 100.125.250.85)
 # ==============================================================================
 
 set -e
 
-echo "=== [1/4] Configuring CT 102 on Proxmox Host ==="
+echo "=== [1/5] Configuring CT 102 on Proxmox Host ==="
 # เปิด Nesting และ Keyctl เพื่อให้รัน Docker ใน LXC ได้
 pct set 102 -features nesting=1,keyctl=1
-# แนะนำเพิ่ม RAM เป็น 2GB เพื่อรองรับ PostgreSQL 16 + MinIO
+# ปรับ RAM ให้เหมาะสม
 pct set 102 -memory 2048 -swap 1024
 
-echo "=== [2/4] Starting CT 102 if not running ==="
+echo "=== [2/5] Starting CT 102 if not running ==="
 pct status 102 | grep -q "status: running" || pct start 102
 sleep 3
 
-echo "=== [3/4] Installing Docker inside CT 102 ==="
+echo "=== [3/5] Installing Docker inside CT 102 ==="
 pct exec 102 -- bash -c '
 set -e
 apt update && apt install -y ca-certificates curl gnupg lsb-release git
@@ -36,7 +36,7 @@ fi
 mkdir -p /opt/techsar-services
 '
 
-echo "=== [4/4] Deploying PostgreSQL & MinIO Docker Compose into CT 102 ==="
+echo "=== [4/5] Deploying PostgreSQL & MinIO Docker Compose into CT 102 ==="
 pct exec 102 -- bash -c '
 cat << "EOF" > /opt/techsar-services/docker-compose.yml
 services:
@@ -91,7 +91,25 @@ docker compose up -d
 docker ps
 '
 
+echo "=== [5/5] Setting up Port Forwarding from Tailscale (100.125.250.85) to CT 102 ==="
+sysctl -w net.ipv4.ip_forward=1 > /dev/null
+
+# Forward PostgreSQL (5432)
+iptables -t nat -C PREROUTING -p tcp --dport 5432 -j DNAT --to-destination 10.10.10.102:5432 2>/dev/null || \
+iptables -t nat -A PREROUTING -p tcp --dport 5432 -j DNAT --to-destination 10.10.10.102:5432
+
+# Forward MinIO API (9000)
+iptables -t nat -C PREROUTING -p tcp --dport 9000 -j DNAT --to-destination 10.10.10.102:9000 2>/dev/null || \
+iptables -t nat -A PREROUTING -p tcp --dport 9000 -j DNAT --to-destination 10.10.10.102:9000
+
+# Forward MinIO Console (9001)
+iptables -t nat -C PREROUTING -p tcp --dport 9001 -j DNAT --to-destination 10.10.10.102:9001 2>/dev/null || \
+iptables -t nat -A PREROUTING -p tcp --dport 9001 -j DNAT --to-destination 10.10.10.102:9001
+
+iptables -t nat -C POSTROUTING -j MASQUERADE 2>/dev/null || \
+iptables -t nat -A POSTROUTING -j MASQUERADE
+
 echo "=== Setup Completed Successfully! ==="
-echo "PostgreSQL is running on 10.10.10.102:5432"
-echo "MinIO S3 is running on 10.10.10.102:9000"
-echo "MinIO Console is accessible at http://10.10.10.102:9001 (User: minioadmin, Pass: miniopassword123)"
+echo "✅ PostgreSQL is now accessible at 100.125.250.85:5432 (and 10.10.10.102:5432)"
+echo "✅ MinIO S3 is now accessible at 100.125.250.85:9000"
+echo "✅ MinIO Console UI is at http://100.125.250.85:9001 (User: minioadmin, Pass: miniopassword123)"
