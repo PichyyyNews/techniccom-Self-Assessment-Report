@@ -1,75 +1,153 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Shield, Users, User, Phone, Briefcase } from "lucide-react";
+import {
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Shield,
+  Menu,
+} from "lucide-react";
 import Link from "next/link";
 
-export function Navbar({ areaTitle }: { areaTitle?: string }) {
+export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void }) {
   const { data: session } = useSession();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const isRoot = session?.user?.role === "ROOT";
+  const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-8 backdrop-blur transition-all">
+      {/* Left side: Mobile Hamburger & Current App Context */}
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="flex items-center gap-2 font-bold text-slate-800 transition hover:opacity-85">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
-            <Shield className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="text-lg tracking-tight text-blue-900 font-extrabold">TechSAR</span>
-            <span className="ml-1 text-xs text-slate-500 font-medium hidden sm:inline">
-              | {areaTitle || "ระบบงานประกันคุณภาพ"}
-            </span>
-          </div>
-        </Link>
+        {onMobileMenuToggle && (
+          <button
+            onClick={onMobileMenuToggle}
+            className="md:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+
+        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <span>ระบบบริหารจัดการประกันคุณภาพ</span>
+          <span>•</span>
+          <span className="text-blue-600 font-bold">TechSAR</span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
+      {/* Right side: Profile Avatar with Dropdown Menu */}
+      <div className="flex items-center gap-4">
         {session?.user ? (
-          <div className="flex items-center gap-3">
-            {/* Quick Action Button for ROOT */}
-            {isRoot && (
-              <Link
-                href="/admin/users"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
-              >
-                <Users className="h-3.5 w-3.5 text-amber-400" />
-                <span className="hidden sm:inline">จัดการผู้ใช้งาน</span>
-              </Link>
-            )}
-
-            {/* Profile Info */}
-            <div className="hidden md:block text-right">
-              <div className="flex items-center justify-end gap-1.5">
-                <span className="text-xs font-bold text-slate-800">{session.user.name}</span>
-                {isRoot ? (
-                  <span className="px-2 py-0.5 text-[10px] font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                    ROOT
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                    บุคลากร
-                  </span>
-                )}
-              </div>
-              <div className="text-[11px] text-slate-400">
-                {session.user.position ? `${session.user.position} • ` : ""}
-                {session.user.email}
-              </div>
-            </div>
-
-            <div className="h-7 w-px bg-slate-200 hidden sm:block" />
-
+          <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 active:scale-95"
-              title="ออกจากระบบ"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2.5 p-1 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">ออกจากระบบ</span>
+              {/* Avatar Image or Initial */}
+              {session.user.avatarUrl ? (
+                <img
+                  src={session.user.avatarUrl}
+                  alt={session.user.name || "Avatar"}
+                  className="h-9 w-9 rounded-xl object-cover border border-slate-200"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs">
+                  {userInitial}
+                </div>
+              )}
+
+              <div className="hidden md:block text-left pr-1">
+                <div className="text-xs font-bold text-slate-800 leading-tight">
+                  {session.user.name}
+                </div>
+                <div className="text-[10px] text-slate-400 font-medium">
+                  {isRoot ? "ROOT" : "STAFF"}
+                </div>
+              </div>
+
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
             </button>
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 animate-in fade-in zoom-in-95 duration-100 z-50">
+                {/* Header in Dropdown */}
+                <div className="p-3 border-b border-slate-100 mb-1">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    {session.user.name}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                    {session.user.email}
+                  </p>
+                  <div className="mt-2">
+                    {isRoot ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                        <Shield className="h-3 w-3" />
+                        ผู้ดูแลระบบสูงสุด (ROOT)
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                        บุคลากร (STAFF)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="space-y-0.5">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
+                  >
+                    <User className="h-4 w-4 text-slate-400" />
+                    โปรไฟล์ของฉัน (Profile)
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      alert("ระบบตั้งค่า (Setting) จะเปิดให้ใช้งานในเฟสถัดไป");
+                    }}
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition text-left"
+                  >
+                    <Settings className="h-4 w-4 text-slate-400" />
+                    ตั้งค่าระบบ (Setting)
+                  </button>
+                </div>
+
+                {/* Divider & Logout */}
+                <div className="pt-1 mt-1 border-t border-slate-100">
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition text-left"
+                  >
+                    <LogOut className="h-4 w-4 text-rose-500" />
+                    ออกจากระบบ (Logout)
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <Link
