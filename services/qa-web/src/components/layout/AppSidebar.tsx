@@ -79,7 +79,7 @@ export function AppSidebar({
             <img
               src="/logo.svg"
               alt="TechSAR Logo"
-              className="h-10 w-10 rounded-xl object-contain flex-shrink-0 shadow-md shadow-blue-500/20"
+              className="h-10 w-10 object-contain flex-shrink-0"
             />
 
             {!effectiveCollapsed && (
