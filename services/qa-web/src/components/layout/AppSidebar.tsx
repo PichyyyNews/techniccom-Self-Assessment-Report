@@ -10,6 +10,7 @@ import {
   Shield,
   PanelLeftClose,
   PanelLeftOpen,
+  Server,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSidebar } from "./SidebarContext";
@@ -46,6 +47,13 @@ export function AppSidebar({
       icon: Users,
       show: canManageUsers,
       badge: isRoot ? "ROOT" : undefined,
+    },
+    {
+      title: "ตั้งค่าระบบ & มอนิเตอร์",
+      href: "/admin/system",
+      icon: Server,
+      show: isRoot,
+      badge: "ROOT",
     },
   ];
 

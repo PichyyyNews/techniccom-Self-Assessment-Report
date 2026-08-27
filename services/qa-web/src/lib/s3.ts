@@ -12,6 +12,7 @@ export const s3Client = new S3Client({
 });
 
 export const S3_BUCKET = process.env.S3_BUCKET_NAME || "qa-evidences";
+export const S3_BUCKET_NAME = S3_BUCKET;
 
 export async function getPresignedUploadUrl(key: string, contentType: string) {
   const command = new PutObjectCommand({

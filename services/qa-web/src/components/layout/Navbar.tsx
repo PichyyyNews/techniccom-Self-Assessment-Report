@@ -41,6 +41,7 @@ export function Navbar() {
   const getPageTitle = () => {
     if (pathname === "/dashboard") return "ภาพรวมและข้อมูลส่วนตัว";
     if (pathname === "/profile") return "โปรไฟล์และประวัติการทำงาน";
+    if (pathname.startsWith("/admin/system")) return "ตั้งค่าระบบและมอนิเตอร์เซิร์ฟเวอร์";
     if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งาน";
     return "ระบบงานประกันคุณภาพ";
   };
