@@ -9,7 +9,6 @@ import {
   Edit2,
   Trash2,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   Shield,
   Loader2,
@@ -17,11 +16,10 @@ import {
   Phone,
   Calendar,
   Briefcase,
-  User as UserIcon,
   ArrowLeft,
-  KeyRound,
 } from "lucide-react";
 import Link from "next/link";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 
 interface UserItem {
   id: string;
@@ -236,7 +234,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb / Navigation Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Link
@@ -251,7 +249,7 @@ export default function AdminUsersPage() {
             จัดการผู้ใช้งานในระบบ (User Management)
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            สร้างบัญชี กำหนดตำแหน่ง เบอร์โทร วันเกิด (คำนวณอายุอัตโนมัติ) และกำหนดสิทธิ์ (ROOT / บุคลากร)
+            สร้างบัญชี อัปโหลดรูปประจำตัว กำหนดตำแหน่ง เบอร์โทร วันเกิด (คำนวณอายุอัตโนมัติ) และกำหนดสิทธิ์
           </p>
         </div>
 
@@ -332,7 +330,7 @@ export default function AdminUsersPage() {
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-6 py-4">ชื่อ - นามสกุล / อีเมล</th>
+                  <th className="px-6 py-4">รูปประจำตัว / ชื่อ - สกุล</th>
                   <th className="px-6 py-4">ยศ / สิทธิ์</th>
                   <th className="px-6 py-4">ตำแหน่ง / เบอร์โทร</th>
                   <th className="px-6 py-4">วดป. เกิด / อายุ</th>
@@ -347,9 +345,17 @@ export default function AdminUsersPage() {
                     <tr key={user.id} className="hover:bg-slate-50/60 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200">
-                            {user.name ? user.name.charAt(0) : "U"}
-                          </div>
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl}
+                              alt={user.name}
+                              className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                            />
+                          ) : (
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs">
+                              {user.name ? user.name.charAt(0) : "U"}
+                            </div>
+                          )}
                           <div>
                             <div className="font-bold text-slate-900">{user.name}</div>
                             <div className="text-xs text-slate-400">{user.email}</div>
@@ -475,6 +481,12 @@ export default function AdminUsersPage() {
             </div>
 
             <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
+              {/* Image Upload Component for รูปประจำตัว */}
+              <ImageUpload
+                value={formData.avatarUrl}
+                onChange={(url) => setFormData({ ...formData, avatarUrl: url || "" })}
+              />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -591,19 +603,6 @@ export default function AdminUsersPage() {
                       : "-"}
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  URL รูปโปรไฟล์ (Avatar URL)
-                </label>
-                <input
-                  type="url"
-                  value={formData.avatarUrl}
-                  onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                />
               </div>
 
               <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">

@@ -48,9 +48,17 @@ export default async function DashboardPage() {
       <div className="rounded-3xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div className="flex items-start gap-4 sm:gap-5">
-            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl shadow-lg shadow-blue-500/20 flex-shrink-0">
-              {user?.name ? user.name.charAt(0) : "U"}
-            </div>
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover border border-slate-200 shadow-md shadow-blue-500/10 flex-shrink-0 bg-white"
+              />
+            ) : (
+              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl shadow-lg shadow-blue-500/20 flex-shrink-0">
+                {user?.name ? user.name.charAt(0) : "U"}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <span
