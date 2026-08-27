@@ -9,11 +9,14 @@ import {
   ChevronDown,
   Shield,
   Menu,
+  PanelLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { useSidebar } from "./SidebarContext";
 
-export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void }) {
+export function Navbar() {
   const { data: session } = useSession();
+  const { toggleCollapse, toggleMobile, isCollapsed } = useSidebar();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,15 +38,28 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-8 backdrop-blur transition-all">
-      {/* Left side: Mobile Hamburger & Current App Context */}
+      {/* Left side: Hamburger Toggle & Breadcrumb Context */}
       <div className="flex items-center gap-3">
-        {onMobileMenuToggle && (
+        {/* Mobile Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleMobile}
+          className="md:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition active:scale-95"
+          aria-label="Toggle Navigation Drawer"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Desktop Quick Collapse/Expand Toggle (when collapsed) */}
+        {isCollapsed && (
           <button
-            onClick={onMobileMenuToggle}
-            className="md:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
-            aria-label="Toggle Menu"
+            type="button"
+            onClick={toggleCollapse}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition"
+            title="ขยายเมนู Sidebar"
           >
-            <Menu className="h-5 w-5" />
+            <PanelLeft className="h-4 w-4" />
+            <span>ขยายเมนู</span>
           </button>
         )}
 
@@ -59,8 +75,9 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
         {session?.user ? (
           <div className="relative" ref={dropdownRef}>
             <button
+              type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="flex items-center gap-2.5 p-1 sm:p-1.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
             >
               {/* Avatar Image or Initial */}
               {session.user.avatarUrl ? (
@@ -84,12 +101,16 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
                 </div>
               </div>
 
-              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                  dropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {/* Dropdown Menu */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 animate-in fade-in zoom-in-95 duration-100 z-50">
+              <div className="absolute right-0 mt-2 w-64 rounded-3xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-200/80 animate-in fade-in zoom-in-95 duration-100 z-50">
                 {/* Header in Dropdown */}
                 <div className="p-3 border-b border-slate-100 mb-1">
                   <p className="text-xs font-bold text-slate-900 truncate">
@@ -117,7 +138,7 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
                   <Link
                     href="/dashboard"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
                   >
                     <User className="h-4 w-4 text-slate-400" />
                     โปรไฟล์ของฉัน (Profile)
@@ -129,7 +150,7 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
                       setDropdownOpen(false);
                       alert("ระบบตั้งค่า (Setting) จะเปิดให้ใช้งานในเฟสถัดไป");
                     }}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition text-left"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition text-left"
                   >
                     <Settings className="h-4 w-4 text-slate-400" />
                     ตั้งค่าระบบ (Setting)
@@ -139,8 +160,9 @@ export function Navbar({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
                 {/* Divider & Logout */}
                 <div className="pt-1 mt-1 border-t border-slate-100">
                   <button
+                    type="button"
                     onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition text-left"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition text-left"
                   >
                     <LogOut className="h-4 w-4 text-rose-500" />
                     ออกจากระบบ (Logout)
