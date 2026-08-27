@@ -419,12 +419,12 @@ export default function SystemAdminPage() {
         {/* ================= NODE 1: WEB APPLICATION HOST ================= */}
         <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
           {/* Header Strip */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs flex-shrink-0">
                 <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase flex-shrink-0">
                     Node 1
@@ -433,13 +433,13 @@ export default function SystemAdminPage() {
                     เครื่องเว็บแอปพลิเคชัน (App Server)
                   </h2>
                 </div>
-                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate mt-0.5">
                   {web?.service} • Platform: {web?.platform}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0 self-start sm:self-center">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Active
             </div>
@@ -528,12 +528,12 @@ export default function SystemAdminPage() {
         {/* ================= NODE 2: DATABASE SERVER (PROXMOX CT 102) ================= */}
         <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
           {/* Header Strip */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs flex-shrink-0">
                 <Database className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase flex-shrink-0">
                     Node 2
@@ -542,13 +542,13 @@ export default function SystemAdminPage() {
                     เครื่องฐานข้อมูล (Database Server)
                   </h2>
                 </div>
-                <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate mt-0.5">
                   {dbNode?.hostname} • IP: {dbNode?.ip} ({dbNode?.tailscaleIp})
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0 self-start sm:self-center">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               LXC CT 102
             </div>
