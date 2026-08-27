@@ -19,12 +19,9 @@ import {
   Phone,
   Calendar,
   Briefcase,
-  KeyRound,
   ShieldCheck,
   Plus,
-  Lock,
   LayoutDashboard,
-  Settings,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { clsx } from "clsx";
@@ -397,38 +394,31 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="px-2.5 py-3 sm:p-8 max-w-7xl mx-auto space-y-3.5 sm:space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      {/* 1. Header with Breadcrumb & Action Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            กลับหน้า Dashboard
+            กลับหน้าหลัก (Dashboard)
           </Link>
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20 flex-shrink-0">
-              <Users className="h-5 w-5 sm:h-6 sm:w-6" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                จัดการผู้ใช้และสิทธิ์การใช้งาน
-              </h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 line-clamp-1">
-                กำหนดข้อมูลบุคลากร รูปประจำตัว และกำหนดสิทธิ์การเข้าถึงระบบ
-              </p>
-            </div>
-          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
+            จัดการบัญชีผู้ใช้และสิทธิ์การใช้งาน
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500">
+            กำหนดข้อมูลบุคลากร รูปประจำตัว และควบคุมสิทธิ์การเข้าถึงแต่ละหน้าเว็บ
+          </p>
         </div>
 
-        {/* Create Buttons */}
-        <div className="flex items-center gap-2">
+        {/* Create Button */}
+        <div>
           {activeTab === "users" ? (
             <button
               onClick={openCreateUserModal}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 flex-shrink-0"
             >
               <UserPlus className="h-4 w-4" />
               เพิ่มผู้ใช้งานใหม่
@@ -436,7 +426,7 @@ export default function AdminUsersPage() {
           ) : (
             <button
               onClick={openCreateRoleModal}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 flex-shrink-0"
             >
               <Plus className="h-4 w-4" />
               สร้างยศ/สิทธิ์ใหม่
@@ -445,23 +435,23 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Segmented Control Pill Tabs */}
-      <div className="grid grid-cols-2 p-1 bg-slate-100/90 rounded-2xl border border-slate-200/70 shadow-2xs">
+      {/* 2. Segmented Pill Tabs */}
+      <div className="grid grid-cols-2 p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs max-w-md">
         <button
           onClick={() => setActiveTab("users")}
           className={clsx(
-            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
+            "flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
             activeTab === "users"
-              ? "bg-white text-blue-600 shadow-sm shadow-slate-200/80"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
+              : "text-slate-600 hover:text-slate-900"
           )}
         >
           <Users className="h-4 w-4 flex-shrink-0" />
-          <span className="whitespace-nowrap">รายชื่อผู้ใช้งาน</span>
+          <span>รายชื่อผู้ใช้งาน</span>
           <span
             className={clsx(
-              "px-1.5 py-0.5 text-[10px] font-black rounded-md",
-              activeTab === "users" ? "bg-blue-50 text-blue-700" : "bg-slate-200/70 text-slate-600"
+              "px-2 py-0.5 text-xs font-black rounded-md",
+              activeTab === "users" ? "bg-blue-50 text-blue-700" : "bg-slate-300/70 text-slate-700"
             )}
           >
             {users.length}
@@ -471,18 +461,18 @@ export default function AdminUsersPage() {
         <button
           onClick={() => setActiveTab("roles")}
           className={clsx(
-            "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
+            "flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
             activeTab === "roles"
-              ? "bg-white text-blue-600 shadow-sm shadow-slate-200/80"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
+              : "text-slate-600 hover:text-slate-900"
           )}
         >
           <Shield className="h-4 w-4 flex-shrink-0" />
-          <span className="whitespace-nowrap">ยศและสิทธิ์</span>
+          <span>ยศและสิทธิ์</span>
           <span
             className={clsx(
-              "px-1.5 py-0.5 text-[10px] font-black rounded-md",
-              activeTab === "roles" ? "bg-blue-50 text-blue-700" : "bg-slate-200/70 text-slate-600"
+              "px-2 py-0.5 text-xs font-black rounded-md",
+              activeTab === "roles" ? "bg-blue-50 text-blue-700" : "bg-slate-300/70 text-slate-700"
             )}
           >
             {roles.length}
@@ -492,10 +482,10 @@ export default function AdminUsersPage() {
 
       {/* ================= TAB 1: USERS LIST ================= */}
       {activeTab === "users" && (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-3 sm:p-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
@@ -503,7 +493,7 @@ export default function AdminUsersPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="ค้นหาตามชื่อ, อีเมล, ตำแหน่ง, หรือเบอร์โทร..."
-                  className="w-full pl-10 pr-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
                 />
               </div>
 
@@ -512,7 +502,7 @@ export default function AdminUsersPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full sm:w-auto px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
                 >
                   <option value="ALL">ทุกสิทธิ์การใช้งาน (All Roles)</option>
                   {roles.map((r) => (
@@ -527,20 +517,20 @@ export default function AdminUsersPage() {
 
           {/* Users Content */}
           {loading ? (
-            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-10 sm:p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-              <span className="text-xs sm:text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
+              <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-10 sm:p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
               <Users className="h-10 w-10 text-slate-300 mb-2" />
-              <p className="font-bold text-slate-700 text-sm sm:text-base">ไม่พบข้อมูลผู้ใช้งาน</p>
+              <p className="font-bold text-slate-700">ไม่พบข้อมูลผู้ใช้งาน</p>
               <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มผู้ใช้งานใหม่" เพื่อสร้างผู้ใช้คนแรก</p>
             </div>
           ) : (
             <>
-              {/* 1. Mobile Cards View */}
-              <div className="block md:hidden space-y-2.5">
+              {/* 1. Mobile Cards View (Hidden on Desktop) */}
+              <div className="block lg:hidden space-y-3.5">
                 {filteredUsers.map((user) => {
                   const age = calculateAge(user.birthDate);
                   const roleDef = user.roleDefinition;
@@ -550,88 +540,46 @@ export default function AdminUsersPage() {
                   return (
                     <div
                       key={user.id}
-                      className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm transition hover:shadow-md space-y-3"
+                      className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-3.5"
                     >
-                      {/* Card Header: Avatar, Name, Email, Role */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          {user.avatarUrl ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.name}
-                              className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
-                            />
-                          ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs">
-                              {user.name ? user.name.charAt(0) : "U"}
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-slate-900 text-sm leading-tight truncate">
-                              {user.name}
-                            </h3>
-                            <p className="text-[11px] text-slate-400 truncate mt-0.5">{user.email}</p>
+                      {/* Row 1: Avatar + Name + Email */}
+                      <div className="flex items-center gap-3">
+                        {user.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt={user.name}
+                            className="h-12 w-12 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-base flex-shrink-0 border border-blue-200 shadow-2xs">
+                            {user.name ? user.name.charAt(0) : "U"}
                           </div>
-                        </div>
+                        )}
 
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-slate-900 text-sm leading-tight break-words">
+                            {user.name}
+                          </h3>
+                          <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Role Badge + Status Pill */}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100/80">
                         <span
                           className={clsx(
-                            "inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-lg border flex-shrink-0 whitespace-nowrap",
+                            "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border flex-shrink-0",
                             getBadgeStyle(roleColor)
                           )}
                         >
                           {user.roleCode === "ROOT" && <Shield className="h-3 w-3" />}
                           {roleTitle}
                         </span>
-                      </div>
 
-                      {/* Card Details: Position, Phone, Birth Date & Age */}
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
-                            <Briefcase className="h-3 w-3 text-slate-400" />
-                            ตำแหน่ง
-                          </span>
-                          <p className="font-bold text-slate-800 text-[11px] truncate">{user.position || "-"}</p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            เบอร์โทร
-                          </span>
-                          {user.phone ? (
-                            <a href={`tel:${user.phone}`} className="font-bold text-blue-600 underline text-[11px] truncate block">
-                              {user.phone}
-                            </a>
-                          ) : (
-                            <p className="font-bold text-slate-800 text-[11px]">-</p>
-                          )}
-                        </div>
-
-                        <div className="col-span-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-slate-600">
-                          <div className="flex items-center gap-1.5 text-[11px]">
-                            <Calendar className="h-3 w-3 text-slate-400" />
-                            <span>
-                              {user.birthDate
-                                ? new Date(user.birthDate).toLocaleDateString("th-TH")
-                                : "ไม่ระบุวันเกิด"}
-                            </span>
-                          </div>
-                          {age !== null && (
-                            <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-[10px]">
-                              อายุ {age} ปี
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Card Actions Footer */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(user)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold transition active:scale-95 ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 ${
                             user.isActive
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                               : "bg-slate-100 text-slate-500 border border-slate-200"
@@ -644,34 +592,76 @@ export default function AdminUsersPage() {
                           />
                           {user.isActive ? "ใช้งานปกติ" : "ระงับการใช้"}
                         </button>
+                      </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => openEditUserModal(user)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
-                          >
-                            <Edit2 className="h-3 w-3 text-blue-600" />
-                            แก้ไข
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteUser(user)}
-                            className="p-1 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
-                            title="ลบผู้ใช้งาน"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                      {/* Row 3: Position, Phone, Birth Date */}
+                      <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 text-xs">
+                        <div>
+                          <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
+                            <Briefcase className="h-3 w-3 text-slate-400" />
+                            ตำแหน่ง
+                          </span>
+                          <p className="font-bold text-slate-800 truncate">{user.position || "-"}</p>
                         </div>
+
+                        <div>
+                          <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
+                            <Phone className="h-3 w-3 text-slate-400" />
+                            เบอร์โทร
+                          </span>
+                          {user.phone ? (
+                            <a href={`tel:${user.phone}`} className="font-bold text-blue-600 underline truncate block">
+                              {user.phone}
+                            </a>
+                          ) : (
+                            <p className="font-bold text-slate-800">-</p>
+                          )}
+                        </div>
+
+                        <div className="col-span-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-slate-600">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            <span>
+                              {user.birthDate
+                                ? new Date(user.birthDate).toLocaleDateString("th-TH")
+                                : "ไม่ระบุวันเกิด"}
+                            </span>
+                          </div>
+                          {age !== null && (
+                            <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-[11px]">
+                              อายุ {age} ปี
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Row 4: Action Buttons */}
+                      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => openEditUserModal(user)}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 text-blue-600" />
+                          แก้ไขข้อมูล
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(user)}
+                          className="p-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
+                          title="ลบผู้ใช้งาน"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* 2. Desktop Table View */}
-              <div className="hidden md:block rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              {/* 2. Desktop Table View (Hidden on Mobile/Tablet) */}
+              <div className="hidden lg:block rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm text-slate-600">
                     <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -816,7 +806,7 @@ export default function AdminUsersPage() {
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4 flex flex-col justify-between"
+                className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between"
               >
                 <div>
                   {/* Role Top Info */}

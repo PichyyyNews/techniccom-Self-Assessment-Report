@@ -9,7 +9,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
   const { isMobileOpen, setMobileOpen } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50/70 flex">
       {/* 1. Left Sidebar (Full Height 100vh) */}
       <AppSidebar className="hidden md:flex sticky top-0 h-screen" />
 
@@ -29,7 +29,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
       {/* 3. Right Content Column (Top Navbar + Main Content) */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <Navbar />
-        <main className="flex-1 p-6 md:p-10 max-w-6xl w-full mx-auto overflow-y-auto">
+        <main className="flex-1 w-full overflow-y-auto">
           {children}
         </main>
       </div>
