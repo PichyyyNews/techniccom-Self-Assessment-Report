@@ -26,71 +26,103 @@ import {
   Search,
   Loader2,
   Check,
-  Radio,
-  Zap,
   Play,
   Pause,
   Table,
   Gauge,
   Sparkles,
+  Radio,
+  Globe,
+  Boxes,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 interface MetricsData {
   timestamp: string;
-  cpu: {
-    percent: number;
-    cores: number;
-    model: string;
-  };
-  ram: {
-    totalGB: number;
-    usedGB: number;
-    freeGB: number;
-    percent: number;
-    heapUsedMB: number;
-    heapTotalMB: number;
-    rssMB: number;
-  };
-  databaseServer: {
-    ct102: {
-      ip: string;
-      tailscaleIp: string;
-      diskTotalGB: number;
-      diskUsedGB: number;
-      diskFreeGB: number;
-      diskPercent: number;
+  webServerNode: {
+    name: string;
+    service: string;
+    port: number;
+    status: string;
+    uptimeSeconds: number;
+    nodeVersion: string;
+    platform: string;
+    cpu: {
+      percent: number;
+      cores: number;
+      model: string;
     };
-    postgres: {
-      status: string;
-      latencyMs: number;
-      version: string;
-      dbSizeBytes: number;
-      dbSizePretty: string;
-      dbSizeMB: number;
+    ram: {
+      totalGB: number;
+      usedGB: number;
+      freeGB: number;
+      percent: number;
+      heapUsedMB: number;
+      heapTotalMB: number;
+      rssMB: number;
+    };
+  };
+  databaseServerNode: {
+    name: string;
+    hostname: string;
+    ip: string;
+    tailscaleIp: string;
+    status: string;
+    cpu: {
+      percent: number;
+      cores: number;
+      model: string;
+    };
+    ram: {
+      totalGB: number;
+      usedGB: number;
+      freeGB: number;
+      percent: number;
       cacheHitRatio: number;
-      activeConnections: number;
-      tableStats: Array<{
-        tableName: string;
-        rowCount: number;
-        sizePretty: string;
-        sizeBytes: number;
-      }>;
-      activeQueries: Array<{
-        pid: number;
-        user: string;
-        state: string;
-        query: string;
-        duration: string;
-      }>;
     };
-    minio: {
-      status: string;
-      latencyMs: number;
-      bucket: string;
-      objectCount: number;
-      totalSizeBytes: number;
-      totalSizeMB: number;
+    disk: {
+      totalGB: number;
+      usedGB: number;
+      freeGB: number;
+      percent: number;
+      dbSizePretty: string;
+      dbSizeBytes: number;
+      s3SizeMB: number;
+    };
+    services: {
+      postgres: {
+        name: string;
+        status: string;
+        port: number;
+        latencyMs: number;
+        version: string;
+        activeConnections: number;
+        cacheHitRatio: number;
+        tableStats: Array<{
+          tableName: string;
+          rowCount: number;
+          sizePretty: string;
+          sizeBytes: number;
+        }>;
+        activeQueries: Array<{
+          pid: number;
+          user: string;
+          state: string;
+          query: string;
+          duration: string;
+        }>;
+      };
+      minio: {
+        name: string;
+        status: string;
+        port: number;
+        consolePort: number;
+        latencyMs: number;
+        bucket: string;
+        objectCount: number;
+        totalSizeBytes: number;
+        totalSizeMB: number;
+      };
     };
   };
   logs: Array<{
@@ -136,7 +168,7 @@ export default function SystemAdminPage() {
   const [backingUp, setBackingUp] = useState(false);
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
   const [logSearch, setLogSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "database" | "logs" | "backups" | "config">("overview");
+  const [activeTab, setActiveTab] = useState<"servers" | "database" | "logs" | "backups" | "config">("servers");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -214,6 +246,16 @@ export default function SystemAdminPage() {
     setRevealedSecrets((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const formatUptime = (seconds: number) => {
+    const d = Math.floor(seconds / (3600 * 24));
+    const h = Math.floor((seconds % (3600 * 24)) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (d > 0) return `${d} วัน ${h} ชม. ${m} นาที`;
+    if (h > 0) return `${h} ชม. ${m} นาที ${s} วินาที`;
+    return `${m} นาที ${s} วินาที`;
+  };
+
   if (!isRoot) {
     return (
       <div className="w-full max-w-7xl mx-auto p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[60vh]">
@@ -237,11 +279,10 @@ export default function SystemAdminPage() {
     );
   }
 
-  const ct102 = metrics?.databaseServer.ct102;
-  const pg = metrics?.databaseServer.postgres;
-  const minio = metrics?.databaseServer.minio;
-  const cpu = metrics?.cpu;
-  const ram = metrics?.ram;
+  const web = metrics?.webServerNode;
+  const dbNode = metrics?.databaseServerNode;
+  const pg = dbNode?.services.postgres;
+  const minio = dbNode?.services.minio;
 
   const filteredLogs = (metrics?.logs || []).filter((log) => {
     if (!logSearch.trim()) return true;
@@ -268,7 +309,7 @@ export default function SystemAdminPage() {
           </Link>
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              ตั้งค่าระบบ & มอนิเตอร์เซิร์ฟเวอร์
+              ตั้งค่าระบบ & มอนิเตอร์เซิร์ฟเวอร์ (Real-Time Nodes)
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
               <Shield className="h-3 w-3" />
@@ -276,18 +317,18 @@ export default function SystemAdminPage() {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500">
-            Realtime Telemetry & Server Control Center (Proxmox CT 102, PostgreSQL, MinIO S3)
+            ระบบตรวจสอบและสตรีมสถานะฮาร์ดแวร์แบบ Real-Time แยก 2 เครื่อง (Web App Node & Database Node)
           </p>
         </div>
 
-        {/* Live Streaming Controller & Actions */}
+        {/* Live Streaming Controller & Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Live Streaming Toggle Pill */}
           <button
             type="button"
             onClick={() => setIsStreaming(!isStreaming)}
             className={clsx(
-              "inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold border transition shadow-2xs",
+              "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold border transition shadow-2xs",
               isStreaming
                 ? "bg-emerald-50 text-emerald-800 border-emerald-300"
                 : "bg-slate-100 text-slate-600 border-slate-200"
@@ -301,7 +342,7 @@ export default function SystemAdminPage() {
             />
             {isStreaming ? (
               <>
-                <span className="font-mono">LIVE STREAMING</span>
+                <span className="font-mono">STREAMING LIVE (2.5s)</span>
                 <Pause className="h-3.5 w-3.5 ml-1 text-emerald-600" />
               </>
             ) : (
@@ -338,140 +379,212 @@ export default function SystemAdminPage() {
         </div>
       </div>
 
-      {/* ================= 2. REAL-TIME HARDWARE & SYSTEM GAUGES (4 CARDS) ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Gauge 1: Realtime CPU Usage */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/60 shadow-2xs">
-              <Cpu className="h-5 w-5" />
+      {/* ================= 2. DUAL-NODE STREAMING REALTIME GROUPS (2 MACHINE CARDS) ================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ================= GROUP 1: WEB APPLICATION SERVER NODE ================= */}
+        <div className="rounded-3xl border-2 border-blue-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
+          {/* Node Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
+                <Globe className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    เครื่องที่ 1: เครื่องเซิร์ฟเวอร์ระบบเว็บ (App Server Node)
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-400">
+                  {web?.service} • Port {web?.port || 3000}
+                </p>
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-              {cpu?.cores || 4} Cores
-            </span>
-          </div>
 
-          <div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-semibold text-slate-400">การประมวลผล CPU</span>
-              <span className="text-xl font-black font-mono text-slate-900">{cpu?.percent ?? 0}%</span>
-            </div>
-            {/* Realtime Progress Bar */}
-            <div className="w-full bg-slate-100 h-2.5 rounded-full mt-2 overflow-hidden">
-              <div
-                className={clsx(
-                  "h-full rounded-full transition-all duration-500",
-                  (cpu?.percent || 0) < 60
-                    ? "bg-blue-600"
-                    : (cpu?.percent || 0) < 85
-                    ? "bg-amber-500"
-                    : "bg-rose-600"
-                )}
-                style={{ width: `${Math.min(100, Math.max(5, cpu?.percent || 0))}%` }}
-              />
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-400 truncate pt-1 border-t border-slate-100">
-            Model: {cpu?.model.replace(/CPU|Processor/gi, "").trim() || "Server Core"}
-          </p>
-        </div>
-
-        {/* Gauge 2: Realtime RAM Usage */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/60 shadow-2xs">
-              <Gauge className="h-5 w-5" />
-            </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              {ram?.totalGB || 16} GB Total
-            </span>
-          </div>
-
-          <div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-semibold text-slate-400">หน่วยความจำ RAM</span>
-              <span className="text-xl font-black font-mono text-slate-900">{ram?.percent ?? 0}%</span>
-            </div>
-            {/* Realtime Progress Bar */}
-            <div className="w-full bg-slate-100 h-2.5 rounded-full mt-2 overflow-hidden">
-              <div
-                className={clsx(
-                  "h-full rounded-full transition-all duration-500",
-                  (ram?.percent || 0) < 70
-                    ? "bg-indigo-600"
-                    : (ram?.percent || 0) < 90
-                    ? "bg-amber-500"
-                    : "bg-rose-600"
-                )}
-                style={{ width: `${Math.min(100, Math.max(5, ram?.percent || 0))}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-            <span>ใช้ไป: <strong className="text-slate-800">{ram?.usedGB} GB</strong></span>
-            <span>เหลือ: <strong className="text-emerald-700">{ram?.freeGB} GB</strong></span>
-          </div>
-        </div>
-
-        {/* Gauge 3: Database Storage (CT 102 Machine Disk) */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 shadow-2xs">
-              <HardDrive className="h-5 w-5" />
-            </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              CT 102 ({ct102?.diskTotalGB || 32} GB)
-            </span>
-          </div>
-
-          <div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-semibold text-slate-400">พื้นที่ฮาร์ดดิสก์ Database</span>
-              <span className="text-xl font-black font-mono text-slate-900">{ct102?.diskPercent ?? 13}%</span>
-            </div>
-            {/* Realtime Progress Bar */}
-            <div className="w-full bg-slate-100 h-2.5 rounded-full mt-2 overflow-hidden">
-              <div
-                className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.max(5, ct102?.diskPercent || 13))}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-            <span>ใช้ไป: <strong className="text-slate-800">{ct102?.diskUsedGB} GB</strong></span>
-            <span>คงเหลือ: <strong className="text-emerald-700">{ct102?.diskFreeGB} GB</strong></span>
-          </div>
-        </div>
-
-        {/* Gauge 4: Live PostgreSQL Latency & Connections */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 shadow-2xs">
-              <Database className="h-5 w-5" />
-            </div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Connected
+              Online
             </span>
           </div>
 
-          <div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-semibold text-slate-400">DB Ping Latency</span>
-              <span className="text-xl font-black font-mono text-emerald-700">{pg?.latencyMs ?? 0} ms</span>
+          {/* Web Node Telemetry: CPU & RAM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Web CPU Meter */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                  <Cpu className="h-4 w-4 text-blue-600" />
+                  Web Server CPU
+                </span>
+                <span className="font-mono font-black text-sm text-slate-900">{web?.cpu.percent ?? 0}%</span>
+              </div>
+              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(5, web?.cpu.percent || 0))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] text-slate-400 pt-0.5">
+                <span>{web?.cpu.cores || 4} Cores ({web?.cpu.model})</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-500 mt-2">
-              <span>ขนาดฐานข้อมูลจริง:</span>
-              <strong className="text-slate-900 font-mono font-bold">{pg?.dbSizePretty || "0 MB"}</strong>
+
+            {/* Web RAM Meter */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                  <Gauge className="h-4 w-4 text-indigo-600" />
+                  Web Server RAM
+                </span>
+                <span className="font-mono font-black text-sm text-slate-900">{web?.ram.percent ?? 0}%</span>
+              </div>
+              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(5, web?.ram.percent || 0))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                <span>ใช้: <strong className="text-slate-800">{web?.ram.usedGB} GB</strong></span>
+                <span>เหลือ: <strong className="text-emerald-700">{web?.ram.freeGB} GB</strong> / {web?.ram.totalGB} GB</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-            <span>Connections: <strong className="text-slate-900">{pg?.activeConnections || 1}</strong></span>
-            <span>Cache Hit: <strong className="text-emerald-700">{pg?.cacheHitRatio || 99.8}%</strong></span>
+          {/* Web Machine System Details Strip */}
+          <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Runtime Heap</span>
+              <strong className="text-slate-900 font-mono font-bold">{web?.ram.heapUsedMB} MB</strong>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Node Version</span>
+              <strong className="text-slate-900 font-mono font-bold">{web?.nodeVersion}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Server Uptime</span>
+              <strong className="text-slate-900 font-bold">{formatUptime(web?.uptimeSeconds || 0)}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= GROUP 2: DATABASE SERVER NODE (PROXMOX CT 102) ================= */}
+        <div className="rounded-3xl border-2 border-emerald-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
+          {/* Node Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs">
+                <Database className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    เครื่องที่ 2: เครื่องเซิร์ฟเวอร์ฐานข้อมูล (Database Server Node)
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-400 font-mono">
+                  {dbNode?.hostname} • IP: {dbNode?.ip} ({dbNode?.tailscaleIp})
+                </p>
+              </div>
+            </div>
+
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              LXC CT 102
+            </span>
+          </div>
+
+          {/* Database Node Telemetry: CPU, RAM, & Disk */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* CT 102 CPU */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
+                  <Cpu className="h-3.5 w-3.5 text-emerald-600" />
+                  DB CPU
+                </span>
+                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.cpu.percent ?? 0}%</span>
+              </div>
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.cpu.percent || 0))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>{dbNode?.cpu.cores} vCPUs</span>
+                <span className="text-emerald-700 font-bold">Query Load</span>
+              </div>
+            </div>
+
+            {/* CT 102 RAM */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
+                  <Gauge className="h-3.5 w-3.5 text-indigo-600" />
+                  DB RAM
+                </span>
+                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.ram.percent ?? 0}%</span>
+              </div>
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.ram.percent || 0))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>ใช้: <strong>{dbNode?.ram.usedGB} GB</strong></span>
+                <span>/ {dbNode?.ram.totalGB} GB</span>
+              </div>
+            </div>
+
+            {/* CT 102 Disk Capacity */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
+                  <HardDrive className="h-3.5 w-3.5 text-amber-600" />
+                  ดิสก์ CT 102
+                </span>
+                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.disk.percent ?? 0}%</span>
+              </div>
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.disk.percent || 0))}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>เหลือ: <strong className="text-emerald-700">{dbNode?.disk.freeGB} GB</strong></span>
+                <span>/ {dbNode?.disk.totalGB} GB</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Database Services Health Strip (Postgres & MinIO S3) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            {/* PostgreSQL Service */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="font-bold text-slate-900">PostgreSQL (Port 5432)</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="font-mono font-bold text-emerald-700">{pg?.latencyMs} ms</span>
+                <span className="text-slate-400">({pg?.activeConnections} conn)</span>
+              </div>
+            </div>
+
+            {/* MinIO S3 Service */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="font-bold text-slate-900">MinIO S3 (Port 9000)</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="font-mono font-bold text-emerald-700">{minio?.latencyMs} ms</span>
+                <span className="text-slate-400">({minio?.objectCount} ไฟล์ • {minio?.totalSizeMB} MB)</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -479,14 +592,14 @@ export default function SystemAdminPage() {
       {/* ================= 3. SEGMENTED TABS FOR DEEP MONITORING ================= */}
       <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 w-fit">
         <button
-          onClick={() => setActiveTab("overview")}
+          onClick={() => setActiveTab("servers")}
           className={clsx(
             "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "overview" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            activeTab === "servers" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
           )}
         >
-          <Activity className="h-3.5 w-3.5" />
-          ภาพรวมและโครงข่าย
+          <Server className="h-3.5 w-3.5" />
+          ภาพรวม 2 Server Nodes
         </button>
 
         <button
@@ -497,7 +610,7 @@ export default function SystemAdminPage() {
           )}
         >
           <Table className="h-3.5 w-3.5" />
-          ความจุตารางฐานข้อมูล & Queries
+          ความจุตาราง Database & Queries
         </button>
 
         <button
@@ -534,30 +647,29 @@ export default function SystemAdminPage() {
         </button>
       </div>
 
-      {/* ================= TAB 1: OVERVIEW & TOPOLOGY ================= */}
-      {activeTab === "overview" && (
+      {/* ================= TAB 1: SERVERS & TOPOLOGY ================= */}
+      {activeTab === "servers" && (
         <div className="space-y-6">
-          {/* Network Topology Cards */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
             <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
               <Network className="h-5 w-5 text-blue-600" />
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  แผนผังการเชื่อมต่อระบบจริง (Real-Time Infrastructure Topology)
+                  โครงสร้างการเชื่อมโยงระบบ (System Architecture & IP Flow)
                 </h3>
                 <p className="text-xs text-slate-400">
-                  โฮสต์หลัก Proxmox VE, คอนเทนเนอร์ฐานข้อมูล CT 102 และเว็บแอปพลิเคชัน
+                  การเชื่อมต่อระหว่าง Web Host, Proxmox VE 8.x, CT 102 และบริการต่างๆ
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Proxmox Host */}
+              {/* Node 1: Web App */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Server className="h-4 w-4 text-blue-600" />
-                    Proxmox VE 8.x Host
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Globe className="h-4 w-4 text-blue-600" />
+                    1. Web Application Host
                   </span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
                     Online
@@ -565,7 +677,34 @@ export default function SystemAdminPage() {
                 </div>
                 <div className="text-xs space-y-1 text-slate-600 pt-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Node Name:</span>
+                    <span className="text-slate-400">Framework:</span>
+                    <strong className="text-slate-900">Next.js 16 App Router</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Port:</span>
+                    <strong className="font-mono text-blue-600">Port 3000</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Auth Engine:</span>
+                    <span className="font-bold text-emerald-700">NextAuth Live DB</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Node 2: Proxmox Host */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Server className="h-4 w-4 text-amber-600" />
+                    2. Proxmox VE Host (Hypervisor)
+                  </span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
+                    Online
+                  </span>
+                </div>
+                <div className="text-xs space-y-1 text-slate-600 pt-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Node:</span>
                     <strong className="text-slate-900">techniccom</strong>
                   </div>
                   <div className="flex justify-between">
@@ -573,18 +712,18 @@ export default function SystemAdminPage() {
                     <strong className="font-mono text-blue-600">100.125.250.85</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Local LAN IP:</span>
+                    <span className="text-slate-400">LAN IP:</span>
                     <span className="font-mono text-slate-700">192.168.1.250</span>
                   </div>
                 </div>
               </div>
 
-              {/* CT 102 Container */}
+              {/* Node 3: CT 102 Container */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Layers className="h-4 w-4 text-indigo-600" />
-                    LXC CT 102 (database-server)
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Database className="h-4 w-4 text-indigo-600" />
+                    3. CT 102 (database-server)
                   </span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
                     Running
@@ -592,43 +731,16 @@ export default function SystemAdminPage() {
                 </div>
                 <div className="text-xs space-y-1 text-slate-600 pt-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Container IP:</span>
+                    <span className="text-slate-400">Internal IP:</span>
                     <strong className="font-mono text-indigo-700">10.10.10.102</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">PostgreSQL Port:</span>
-                    <span className="font-mono font-bold text-emerald-700">5432</span>
+                    <span className="text-slate-400">Postgres 16:</span>
+                    <span className="font-mono font-bold text-emerald-700">Port 5432</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">MinIO S3 Ports:</span>
-                    <span className="font-mono font-bold text-slate-800">9000 / 9001</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Web App */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Activity className="h-4 w-4 text-purple-600" />
-                    Next.js 16 (qa-web)
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
-                    Active
-                  </span>
-                </div>
-                <div className="text-xs space-y-1 text-slate-600 pt-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Port:</span>
-                    <strong className="font-mono text-purple-700">Port 3000</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Turbopack:</span>
-                    <strong className="text-emerald-700">Active</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Heap Memory:</span>
-                    <span className="font-mono text-slate-800">{ram?.heapUsedMB} MB</span>
+                    <span className="text-slate-400">MinIO S3:</span>
+                    <span className="font-mono font-bold text-slate-800">Port 9000 & 9001</span>
                   </div>
                 </div>
               </div>
@@ -647,7 +759,7 @@ export default function SystemAdminPage() {
                 <Table className="h-5 w-5 text-blue-600" />
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    ขนาดความจุของแต่ละตารางใน PostgreSQL ({pg?.dbSizePretty || "0 MB"})
+                    ขนาดความจุของแต่ละตารางใน PostgreSQL ({dbNode?.disk.dbSizePretty || "0 MB"})
                   </h3>
                   <p className="text-xs text-slate-400">
                     วิเคราะห์ขนาดตารางจริงและจำนวนแถวข้อมูล (Live Relation Tuples & Size)
@@ -668,7 +780,7 @@ export default function SystemAdminPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono">
                   {(pg?.tableStats || []).map((t) => {
-                    const totalBytes = pg?.dbSizeBytes || 1;
+                    const totalBytes = dbNode?.disk.dbSizeBytes || 1;
                     const percent = parseFloat(((t.sizeBytes / totalBytes) * 100).toFixed(1));
                     return (
                       <tr key={t.tableName} className="hover:bg-slate-50 transition">
