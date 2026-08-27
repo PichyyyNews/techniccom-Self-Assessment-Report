@@ -312,147 +312,279 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Users Table Card */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center p-14 text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-            <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
+      {/* Users List: Responsive Container */}
+      {loading ? (
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+          <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
+          <Users className="h-10 w-10 text-slate-300 mb-2" />
+          <p className="font-bold text-slate-700">ไม่พบข้อมูลผู้ใช้งาน</p>
+          <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มผู้ใช้งานใหม่" เพื่อสร้างผู้ใช้คนแรก</p>
+        </div>
+      ) : (
+        <>
+          {/* 1. Mobile Cards View (Hidden on Desktop) */}
+          <div className="block md:hidden space-y-3.5">
+            {filteredUsers.map((user) => {
+              const age = calculateAge(user.birthDate);
+              return (
+                <div
+                  key={user.id}
+                  className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:shadow-md space-y-3.5"
+                >
+                  {/* Card Header: Avatar, Name, Email, Role */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={user.name}
+                          className="h-12 w-12 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-base flex-shrink-0 border border-blue-200 shadow-2xs">
+                          {user.name ? user.name.charAt(0) : "U"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-900 text-sm truncate">{user.name}</h3>
+                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                      </div>
+                    </div>
+
+                    {user.role === "ROOT" ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg bg-rose-50 text-rose-700 border border-rose-200 flex-shrink-0">
+                        <Shield className="h-3 w-3" />
+                        ROOT
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">
+                        บุคลากร
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Card Details: Position, Phone, Birth Date & Age */}
+                  <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 text-xs">
+                    <div>
+                      <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
+                        <Briefcase className="h-3 w-3 text-slate-400" />
+                        ตำแหน่ง
+                      </span>
+                      <p className="font-bold text-slate-800 truncate">{user.position || "-"}</p>
+                    </div>
+
+                    <div>
+                      <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
+                        <Phone className="h-3 w-3 text-slate-400" />
+                        เบอร์โทร
+                      </span>
+                      {user.phone ? (
+                        <a href={`tel:${user.phone}`} className="font-bold text-blue-600 underline truncate block">
+                          {user.phone}
+                        </a>
+                      ) : (
+                        <p className="font-bold text-slate-800">-</p>
+                      )}
+                    </div>
+
+                    <div className="col-span-2 pt-1 border-t border-slate-200/50 flex items-center justify-between text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span>
+                          {user.birthDate
+                            ? new Date(user.birthDate).toLocaleDateString("th-TH")
+                            : "ไม่ระบุวันเกิด"}
+                        </span>
+                      </div>
+                      {age !== null && (
+                        <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-[11px]">
+                          อายุ {age} ปี
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(user)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 ${
+                        user.isActive
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-slate-100 text-slate-500 border border-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          user.isActive ? "bg-emerald-500" : "bg-slate-400"
+                        }`}
+                      />
+                      {user.isActive ? "ใช้งานปกติ" : "ระงับการใช้"}
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(user)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                      >
+                        <Edit2 className="h-3.5 w-3.5 text-blue-600" />
+                        แก้ไข
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(user)}
+                        className="p-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
+                        title="ลบผู้ใช้งาน"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-14 text-center text-slate-500">
-            <Users className="h-10 w-10 text-slate-300 mb-2" />
-            <p className="font-bold text-slate-700">ไม่พบข้อมูลผู้ใช้งาน</p>
-            <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มผู้ใช้งานใหม่" เพื่อสร้างผู้ใช้คนแรก</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="px-6 py-4">รูปประจำตัว / ชื่อ - สกุล</th>
-                  <th className="px-6 py-4">ยศ / สิทธิ์</th>
-                  <th className="px-6 py-4">ตำแหน่ง / เบอร์โทร</th>
-                  <th className="px-6 py-4">วดป. เกิด / อายุ</th>
-                  <th className="px-6 py-4 text-center">สถานะ</th>
-                  <th className="px-6 py-4 text-right">การจัดการ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((user) => {
-                  const age = calculateAge(user.birthDate);
-                  return (
-                    <tr key={user.id} className="hover:bg-slate-50/60 transition">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {user.avatarUrl ? (
-                            <img
-                              src={user.avatarUrl}
-                              alt={user.name}
-                              className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
-                            />
-                          ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs">
-                              {user.name ? user.name.charAt(0) : "U"}
+
+          {/* 2. Desktop Table View (Hidden on Mobile) */}
+          <div className="hidden md:block rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">รูปประจำตัว / ชื่อ - สกุล</th>
+                    <th className="px-6 py-4">ยศ / สิทธิ์</th>
+                    <th className="px-6 py-4">ตำแหน่ง / เบอร์โทร</th>
+                    <th className="px-6 py-4">วดป. เกิด / อายุ</th>
+                    <th className="px-6 py-4 text-center">สถานะ</th>
+                    <th className="px-6 py-4 text-right">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.map((user) => {
+                    const age = calculateAge(user.birthDate);
+                    return (
+                      <tr key={user.id} className="hover:bg-slate-50/60 transition">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {user.avatarUrl ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.name}
+                                className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                              />
+                            ) : (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs">
+                                {user.name ? user.name.charAt(0) : "U"}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-bold text-slate-900">{user.name}</div>
+                              <div className="text-xs text-slate-400">{user.email}</div>
                             </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-slate-900">{user.name}</div>
-                            <div className="text-xs text-slate-400">{user.email}</div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-6 py-4">
-                        {user.role === "ROOT" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                            <Shield className="h-3.5 w-3.5" />
-                            ROOT
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                            บุคลากร
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="space-y-0.5">
-                          <div className="text-slate-800 font-semibold text-xs flex items-center gap-1">
-                            <Briefcase className="h-3 w-3 text-slate-400" />
-                            {user.position || "-"}
-                          </div>
-                          <div className="text-slate-400 text-xs flex items-center gap-1">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            {user.phone || "-"}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="space-y-0.5">
-                          <div className="text-slate-700 text-xs flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-slate-400" />
-                            {user.birthDate
-                              ? new Date(user.birthDate).toLocaleDateString("th-TH")
-                              : "-"}
-                          </div>
-                          <div className="text-slate-500 text-xs font-medium">
-                            {age !== null ? `อายุ ${age} ปี` : "-"}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          title="คลิกเพื่อสลับสถานะ"
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition ${
-                            user.isActive
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                              : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
-                          }`}
-                        >
-                          {user.isActive ? (
-                            <>
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              ปกติ
-                            </>
+                        <td className="px-6 py-4">
+                          {user.role === "ROOT" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                              <Shield className="h-3.5 w-3.5" />
+                              ROOT
+                            </span>
                           ) : (
-                            <>
-                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                              ระงับ
-                            </>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                              บุคลากร
+                            </span>
                           )}
-                        </button>
-                      </td>
+                        </td>
 
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <td className="px-6 py-4">
+                          <div className="space-y-0.5">
+                            <div className="text-slate-800 font-semibold text-xs flex items-center gap-1">
+                              <Briefcase className="h-3 w-3 text-slate-400" />
+                              {user.position || "-"}
+                            </div>
+                            <div className="text-slate-400 text-xs flex items-center gap-1">
+                              <Phone className="h-3 w-3 text-slate-400" />
+                              {user.phone || "-"}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <div className="space-y-0.5">
+                            <div className="text-slate-700 text-xs flex items-center gap-1">
+                              <Calendar className="h-3 w-3 text-slate-400" />
+                              {user.birthDate
+                                ? new Date(user.birthDate).toLocaleDateString("th-TH")
+                                : "-"}
+                            </div>
+                            <div className="text-slate-500 text-xs font-medium">
+                              {age !== null ? `อายุ ${age} ปี` : "-"}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 text-center">
                           <button
-                            onClick={() => openEditModal(user)}
-                            className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
-                            title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
+                            type="button"
+                            onClick={() => handleToggleStatus(user)}
+                            title="คลิกเพื่อสลับสถานะ"
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition ${
+                              user.isActive
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                                : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
+                            }`}
                           >
-                            <Edit2 className="h-4 w-4" />
+                            {user.isActive ? (
+                              <>
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                ปกติ
+                              </>
+                            ) : (
+                              <>
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                ระงับ
+                              </>
+                            )}
                           </button>
-                          <button
-                            onClick={() => handleDeleteUser(user)}
-                            className="p-2 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
-                            title="ลบผู้ใช้งาน"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(user)}
+                              className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
+                              title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(user)}
+                              className="p-2 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
+                              title="ลบผู้ใช้งาน"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Modal: Create or Edit User */}
       {showModal && (
