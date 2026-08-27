@@ -34,6 +34,15 @@ import {
   Radio,
   Globe,
   Boxes,
+  Zap,
+  ArrowUpRight,
+  ChevronRight,
+  Flame,
+  CheckCircle,
+  HardDriveDownload,
+  FolderLock,
+  CpuIcon,
+  CircleDot,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -169,6 +178,7 @@ export default function SystemAdminPage() {
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
   const [logSearch, setLogSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"servers" | "database" | "logs" | "backups" | "config">("servers");
+  const [lastStreamTime, setLastStreamTime] = useState<string>("");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -181,6 +191,7 @@ export default function SystemAdminPage() {
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
+        setLastStreamTime(new Date().toLocaleTimeString("th-TH"));
       }
     } catch (err) {
       console.error("Failed to fetch metrics", err);
@@ -251,7 +262,7 @@ export default function SystemAdminPage() {
     const h = Math.floor((seconds % (3600 * 24)) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    if (d > 0) return `${d} วัน ${h} ชม. ${m} นาที`;
+    if (d > 0) return `${d} วัน ${h} ชม. ${m} น.`;
     if (h > 0) return `${h} ชม. ${m} นาที ${s} วินาที`;
     return `${m} นาที ${s} วินาที`;
   };
@@ -259,10 +270,10 @@ export default function SystemAdminPage() {
   if (!isRoot) {
     return (
       <div className="w-full max-w-7xl mx-auto p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[60vh]">
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 border border-rose-200">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 border border-rose-200 shadow-lg shadow-rose-500/10">
           <ShieldAlert className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-slate-900">
+        <h1 className="text-xl font-black text-slate-900">
           จำกัดสิทธิ์การเข้าถึง (Access Restricted)
         </h1>
         <p className="text-sm text-slate-500 max-w-md">
@@ -270,7 +281,7 @@ export default function SystemAdminPage() {
         </p>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-500/20 hover:bg-blue-700 transition"
         >
           <ArrowLeft className="h-4 w-4" />
           กลับหน้าหลัก (Dashboard)
@@ -297,189 +308,245 @@ export default function SystemAdminPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      {/* ================= 1. PAGE HEADER & STREAMING CONTROLS ================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            กลับหน้าหลัก (Dashboard)
-          </Link>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              ตั้งค่าระบบ & มอนิเตอร์เซิร์ฟเวอร์ (Real-Time Nodes)
+      {/* ================= 1. PAGE HERO HEADER & LIVE STREAM BAR ================= */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 p-6 sm:p-8 text-white shadow-xl shadow-slate-900/15 border border-slate-800">
+        {/* Glow effect background */}
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-emerald-600/15 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                หน้าหลัก (Dashboard)
+              </Link>
+              <span className="text-slate-600">/</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md">
+                <Shield className="h-3 w-3" />
+                ROOT COMMAND CENTER
+              </span>
+            </div>
+
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+              ศูนย์มอนิเตอร์ & ตั้งค่าโครงสร้างระบบ
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
-              <Shield className="h-3 w-3" />
-              ROOT ONLY
-            </span>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+              สตรีมมิ่งสถานะฮาร์ดแวร์แบบ Real-Time แยก 2 เครื่องเซิร์ฟเวอร์ (Web Host & Proxmox CT 102) พร้อมตรวจจับขนาดฐานข้อมูลและบันทึกประวัติการทำงาน
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500">
-            ระบบตรวจสอบและสตรีมสถานะฮาร์ดแวร์แบบ Real-Time แยก 2 เครื่อง (Web App Node & Database Node)
-          </p>
+
+          {/* Real-time Stream Controller */}
+          <div className="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2.5 rounded-2xl border border-slate-700/70 backdrop-blur-xl shadow-inner">
+            {/* Live Indicator Pill */}
+            <button
+              type="button"
+              onClick={() => setIsStreaming(!isStreaming)}
+              className={clsx(
+                "inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-black transition active:scale-95 shadow-xs select-none",
+                isStreaming
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30"
+                  : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"
+              )}
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                {isStreaming && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={clsx(
+                    "relative inline-flex rounded-full h-2.5 w-2.5",
+                    isStreaming ? "bg-emerald-400" : "bg-slate-500"
+                  )}
+                />
+              </span>
+              <span className="tracking-wide">{isStreaming ? "LIVE STREAM (2.5s)" : "PAUSED"}</span>
+              {isStreaming ? (
+                <Pause className="h-3.5 w-3.5 ml-0.5 text-emerald-400" />
+              ) : (
+                <Play className="h-3.5 w-3.5 ml-0.5 text-slate-400" />
+              )}
+            </button>
+
+            {/* Quick Refresh */}
+            <button
+              type="button"
+              onClick={() => {
+                fetchMetrics();
+                fetchBackups();
+              }}
+              title="รีเฟรชข้อมูลทันที"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition active:scale-95 shadow-xs"
+            >
+              <RefreshCw className={clsx("h-4 w-4 text-blue-400", loading && "animate-spin")} />
+            </button>
+
+            {/* Snapshot Trigger Button */}
+            <button
+              type="button"
+              onClick={handleCreateBackup}
+              disabled={backingUp}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 transition active:scale-95 disabled:opacity-50"
+            >
+              {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDriveDownload className="h-4 w-4" />}
+              <span>สร้าง Snapshot</span>
+            </button>
+          </div>
         </div>
 
-        {/* Live Streaming Controller & Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Live Streaming Toggle Pill */}
-          <button
-            type="button"
-            onClick={() => setIsStreaming(!isStreaming)}
-            className={clsx(
-              "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold border transition shadow-2xs",
-              isStreaming
-                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                : "bg-slate-100 text-slate-600 border-slate-200"
-            )}
-          >
-            <span
-              className={clsx(
-                "h-2.5 w-2.5 rounded-full",
-                isStreaming ? "bg-emerald-500 animate-ping" : "bg-slate-400"
-              )}
-            />
-            {isStreaming ? (
-              <>
-                <span className="font-mono">STREAMING LIVE (2.5s)</span>
-                <Pause className="h-3.5 w-3.5 ml-1 text-emerald-600" />
-              </>
-            ) : (
-              <>
-                <span className="font-mono">PAUSED</span>
-                <Play className="h-3.5 w-3.5 ml-1 text-slate-500" />
-              </>
-            )}
-          </button>
+        {/* Mini Status Footer within Hero */}
+        <div className="relative z-10 mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <CircleDot className="h-3 w-3 text-emerald-400" />
+              Web Host: <strong className="text-white font-mono">{web?.port || 3000}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CircleDot className="h-3 w-3 text-blue-400" />
+              DB Node: <strong className="text-white font-mono">10.10.10.102</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CircleDot className="h-3 w-3 text-indigo-400" />
+              Tailscale: <strong className="text-white font-mono">100.125.250.85</strong>
+            </span>
+          </div>
 
-          {/* Refresh Ping Button */}
-          <button
-            type="button"
-            onClick={() => {
-              fetchMetrics();
-              fetchBackups();
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition active:scale-95"
-          >
-            <RefreshCw className={clsx("h-3.5 w-3.5 text-blue-600", loading && "animate-spin")} />
-            <span>รีเฟรช</span>
-          </button>
-
-          {/* Backup Snapshot Button */}
-          <button
-            type="button"
-            onClick={handleCreateBackup}
-            disabled={backingUp}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 disabled:opacity-70"
-          >
-            {backingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HardDrive className="h-3.5 w-3.5" />}
-            <span>สำรองข้อมูล (Snapshot)</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <span>อัปเดตล่าสุด:</span>
+            <span className="font-mono text-emerald-300 font-bold">{lastStreamTime || "กำลังสตรีม..."}</span>
+          </div>
         </div>
       </div>
 
-      {/* ================= 2. DUAL-NODE STREAMING REALTIME GROUPS (2 MACHINE CARDS) ================= */}
+      {/* ================= 2. DUAL-NODE STREAMING SYSTEM DASHBOARD (2 LUXURY MACHINE CARDS) ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ================= GROUP 1: WEB APPLICATION SERVER NODE ================= */}
-        <div className="rounded-3xl border-2 border-blue-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
-          {/* Node Header */}
+        {/* ================= NODE 1: WEB APPLICATION HOST ================= */}
+        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-lg shadow-blue-900/5 transition duration-300 hover:shadow-xl hover:border-blue-300">
+          {/* Header Strip */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25">
                 <Globe className="h-6 w-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
-                    เครื่องที่ 1: เครื่องเซิร์ฟเวอร์ระบบเว็บ (App Server Node)
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                    Node 1
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    เครื่องเว็บแอปพลิเคชัน (App Server)
                   </h2>
                 </div>
-                <p className="text-xs text-slate-400">
-                  {web?.service} • Port {web?.port || 3000}
+                <p className="text-xs text-slate-400 font-medium">
+                  {web?.service} • Host Platform: {web?.platform}
                 </p>
               </div>
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Online
-            </span>
+              Active
+            </div>
           </div>
 
-          {/* Web Node Telemetry: CPU & RAM */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Web CPU Meter */}
-            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+          {/* Web Telemetry Meters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+            {/* Meter 1: Web CPU */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                   <Cpu className="h-4 w-4 text-blue-600" />
-                  Web Server CPU
+                  Web CPU Usage
                 </span>
-                <span className="font-mono font-black text-sm text-slate-900">{web?.cpu.percent ?? 0}%</span>
+                <span className="font-mono font-black text-base text-slate-900">
+                  {web?.cpu.percent ?? 0}%
+                </span>
               </div>
-              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-200/80 h-3 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                  className={clsx(
+                    "h-full rounded-full transition-all duration-500",
+                    (web?.cpu.percent || 0) < 60
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                      : (web?.cpu.percent || 0) < 85
+                      ? "bg-amber-500"
+                      : "bg-rose-500"
+                  )}
                   style={{ width: `${Math.min(100, Math.max(5, web?.cpu.percent || 0))}%` }}
                 />
               </div>
               <div className="flex justify-between text-[11px] text-slate-400 pt-0.5">
-                <span>{web?.cpu.cores || 4} Cores ({web?.cpu.model})</span>
+                <span>{web?.cpu.cores || 4} Cores Total</span>
+                <span className="truncate max-w-[140px]">{web?.cpu.model}</span>
               </div>
             </div>
 
-            {/* Web RAM Meter */}
-            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+            {/* Meter 2: Web RAM */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                   <Gauge className="h-4 w-4 text-indigo-600" />
-                  Web Server RAM
+                  Web System RAM
                 </span>
-                <span className="font-mono font-black text-sm text-slate-900">{web?.ram.percent ?? 0}%</span>
+                <span className="font-mono font-black text-base text-slate-900">
+                  {web?.ram.percent ?? 0}%
+                </span>
               </div>
-              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-200/80 h-3 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  className={clsx(
+                    "h-full rounded-full transition-all duration-500",
+                    (web?.ram.percent || 0) < 70
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600"
+                      : (web?.ram.percent || 0) < 90
+                      ? "bg-amber-500"
+                      : "bg-rose-500"
+                  )}
                   style={{ width: `${Math.min(100, Math.max(5, web?.ram.percent || 0))}%` }}
                 />
               </div>
               <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
-                <span>ใช้: <strong className="text-slate-800">{web?.ram.usedGB} GB</strong></span>
+                <span>ใช้ไป: <strong className="text-slate-800">{web?.ram.usedGB} GB</strong></span>
                 <span>เหลือ: <strong className="text-emerald-700">{web?.ram.freeGB} GB</strong> / {web?.ram.totalGB} GB</span>
               </div>
             </div>
           </div>
 
-          {/* Web Machine System Details Strip */}
-          <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
-            <div>
-              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Runtime Heap</span>
-              <strong className="text-slate-900 font-mono font-bold">{web?.ram.heapUsedMB} MB</strong>
+          {/* Node 1 Hardware & Runtime Metrics Grid */}
+          <div className="grid grid-cols-3 gap-3 bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/70 text-xs mt-4">
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Heap Used</span>
+              <strong className="text-slate-900 font-mono font-bold text-sm">{web?.ram.heapUsedMB} MB</strong>
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Node Version</span>
-              <strong className="text-slate-900 font-mono font-bold">{web?.nodeVersion}</strong>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Node Version</span>
+              <strong className="text-slate-900 font-mono font-bold text-sm">{web?.nodeVersion}</strong>
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block font-semibold uppercase">Server Uptime</span>
-              <strong className="text-slate-900 font-bold">{formatUptime(web?.uptimeSeconds || 0)}</strong>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Server Uptime</span>
+              <strong className="text-slate-900 font-bold text-xs truncate block">{formatUptime(web?.uptimeSeconds || 0)}</strong>
             </div>
           </div>
         </div>
 
-        {/* ================= GROUP 2: DATABASE SERVER NODE (PROXMOX CT 102) ================= */}
-        <div className="rounded-3xl border-2 border-emerald-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
-          {/* Node Header */}
+        {/* ================= NODE 2: DATABASE SERVER (PROXMOX CT 102) ================= */}
+        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-lg shadow-emerald-900/5 transition duration-300 hover:shadow-xl hover:border-emerald-300">
+          {/* Header Strip */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
                 <Database className="h-6 w-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
-                    เครื่องที่ 2: เครื่องเซิร์ฟเวอร์ฐานข้อมูล (Database Server Node)
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                    Node 2
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    เครื่องฐานข้อมูล (Database Server)
                   </h2>
                 </div>
                 <p className="text-xs text-slate-400 font-mono">
@@ -488,26 +555,28 @@ export default function SystemAdminPage() {
               </div>
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-2xs">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               LXC CT 102
-            </span>
+            </div>
           </div>
 
-          {/* Database Node Telemetry: CPU, RAM, & Disk */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* CT 102 CPU */}
+          {/* Database Telemetry Meters (CPU, RAM, DISK) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+            {/* DB CPU */}
             <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
                   <Cpu className="h-3.5 w-3.5 text-emerald-600" />
                   DB CPU
                 </span>
-                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.cpu.percent ?? 0}%</span>
+                <span className="font-mono font-black text-sm text-slate-900">
+                  {dbNode?.cpu.percent ?? 0}%
+                </span>
               </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.cpu.percent || 0))}%` }}
                 />
               </div>
@@ -517,18 +586,20 @@ export default function SystemAdminPage() {
               </div>
             </div>
 
-            {/* CT 102 RAM */}
+            {/* DB RAM */}
             <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
                   <Gauge className="h-3.5 w-3.5 text-indigo-600" />
                   DB RAM
                 </span>
-                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.ram.percent ?? 0}%</span>
+                <span className="font-mono font-black text-sm text-slate-900">
+                  {dbNode?.ram.percent ?? 0}%
+                </span>
               </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.ram.percent || 0))}%` }}
                 />
               </div>
@@ -538,18 +609,20 @@ export default function SystemAdminPage() {
               </div>
             </div>
 
-            {/* CT 102 Disk Capacity */}
+            {/* CT 102 Disk Space */}
             <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
                   <HardDrive className="h-3.5 w-3.5 text-amber-600" />
                   ดิสก์ CT 102
                 </span>
-                <span className="font-mono font-black text-xs text-slate-900">{dbNode?.disk.percent ?? 0}%</span>
+                <span className="font-mono font-black text-sm text-slate-900">
+                  {dbNode?.disk.percent ?? 0}%
+                </span>
               </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
                 <div
-                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.disk.percent || 0))}%` }}
                 />
               </div>
@@ -561,88 +634,108 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Database Services Health Strip (Postgres & MinIO S3) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {/* PostgreSQL Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/90 border border-slate-200/70 text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="font-bold text-slate-900">PostgreSQL (Port 5432)</span>
+                <span className="font-bold text-slate-900">PostgreSQL (5432)</span>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="font-mono font-bold text-emerald-700">{pg?.latencyMs} ms</span>
-                <span className="text-slate-400">({pg?.activeConnections} conn)</span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
+                  {pg?.latencyMs} ms
+                </span>
+                <span className="text-slate-500">({pg?.activeConnections} conn)</span>
               </div>
             </div>
 
             {/* MinIO S3 Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/90 border border-slate-200/70 text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="font-bold text-slate-900">MinIO S3 (Port 9000)</span>
+                <span className="font-bold text-slate-900">MinIO S3 (9000)</span>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="font-mono font-bold text-emerald-700">{minio?.latencyMs} ms</span>
-                <span className="text-slate-400">({minio?.objectCount} ไฟล์ • {minio?.totalSizeMB} MB)</span>
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
+                  {minio?.latencyMs} ms
+                </span>
+                <span className="text-slate-500">({minio?.objectCount} ไฟล์ • {minio?.totalSizeMB} MB)</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= 3. SEGMENTED TABS FOR DEEP MONITORING ================= */}
-      <div className="flex flex-wrap gap-2 p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 w-fit">
+      {/* ================= 3. SEGMENTED TABS WITH HIGH-TECH PILLS ================= */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 w-fit backdrop-blur-md">
         <button
           onClick={() => setActiveTab("servers")}
           className={clsx(
-            "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "servers" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            "px-4 py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-2 shadow-2xs",
+            activeTab === "servers"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
           )}
         >
-          <Server className="h-3.5 w-3.5" />
-          ภาพรวม 2 Server Nodes
+          <Server className="h-3.5 w-3.5 text-blue-600" />
+          โครงข่าย 2 Server Nodes
         </button>
 
         <button
           onClick={() => setActiveTab("database")}
           className={clsx(
-            "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "database" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            "px-4 py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-2 shadow-2xs",
+            activeTab === "database"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
           )}
         >
-          <Table className="h-3.5 w-3.5" />
+          <Table className="h-3.5 w-3.5 text-emerald-600" />
           ความจุตาราง Database & Queries
         </button>
 
         <button
           onClick={() => setActiveTab("logs")}
           className={clsx(
-            "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "logs" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            "px-4 py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-2 shadow-2xs",
+            activeTab === "logs"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
           )}
         >
-          <Terminal className="h-3.5 w-3.5" />
-          Streaming Logs ({filteredLogs.length})
+          <Terminal className="h-3.5 w-3.5 text-purple-600" />
+          Streaming Logs
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800">
+            {filteredLogs.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab("backups")}
           className={clsx(
-            "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "backups" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            "px-4 py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-2 shadow-2xs",
+            activeTab === "backups"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
           )}
         >
-          <FileJson className="h-3.5 w-3.5" />
-          Snapshot & Backups ({backups.length})
+          <FileJson className="h-3.5 w-3.5 text-amber-600" />
+          Snapshot & Backups
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800">
+            {backups.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab("config")}
           className={clsx(
-            "px-4 py-2 rounded-xl text-xs font-bold transition select-none flex items-center gap-1.5",
-            activeTab === "config" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            "px-4 py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-2 shadow-2xs",
+            activeTab === "config"
+              ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
           )}
         >
-          <Key className="h-3.5 w-3.5" />
+          <Key className="h-3.5 w-3.5 text-slate-600" />
           Environment Config
         </button>
       </div>
@@ -650,24 +743,26 @@ export default function SystemAdminPage() {
       {/* ================= TAB 1: SERVERS & TOPOLOGY ================= */}
       {activeTab === "servers" && (
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3.5">
-              <Network className="h-5 w-5 text-blue-600" />
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
+                <Network className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  โครงสร้างการเชื่อมโยงระบบ (System Architecture & IP Flow)
+                <h3 className="text-base font-black text-slate-900">
+                  แผนผังการเชื่อมโยงระบบจริง (Live Network Topology & Data Flow)
                 </h3>
                 <p className="text-xs text-slate-400">
-                  การเชื่อมต่อระหว่าง Web Host, Proxmox VE 8.x, CT 102 และบริการต่างๆ
+                  โครงสร้างการสื่อสารและ Port Mapping ระหว่าง Web Host, Proxmox VE 8.x, CT 102, และ Docker Services
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Node 1: Web App */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="p-5 rounded-2xl bg-gradient-to-b from-blue-50/40 to-slate-50/80 border border-blue-200/70 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
                     <Globe className="h-4 w-4 text-blue-600" />
                     1. Web Application Host
                   </span>
@@ -675,14 +770,14 @@ export default function SystemAdminPage() {
                     Online
                   </span>
                 </div>
-                <div className="text-xs space-y-1 text-slate-600 pt-1">
+                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Framework:</span>
                     <strong className="text-slate-900">Next.js 16 App Router</strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Port:</span>
-                    <strong className="font-mono text-blue-600">Port 3000</strong>
+                    <strong className="font-mono text-blue-600 font-bold">Port 3000</strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Auth Engine:</span>
@@ -692,47 +787,47 @@ export default function SystemAdminPage() {
               </div>
 
               {/* Node 2: Proxmox Host */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="p-5 rounded-2xl bg-gradient-to-b from-amber-50/40 to-slate-50/80 border border-amber-200/70 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
                     <Server className="h-4 w-4 text-amber-600" />
-                    2. Proxmox VE Host (Hypervisor)
+                    2. Proxmox VE 8.x Host
                   </span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
                     Online
                   </span>
                 </div>
-                <div className="text-xs space-y-1 text-slate-600 pt-1">
+                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Node:</span>
+                    <span className="text-slate-400">Node Name:</span>
                     <strong className="text-slate-900">techniccom</strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Tailscale IP:</span>
-                    <strong className="font-mono text-blue-600">100.125.250.85</strong>
+                    <strong className="font-mono text-blue-600 font-bold">100.125.250.85</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">LAN IP:</span>
+                    <span className="text-slate-400">Local LAN IP:</span>
                     <span className="font-mono text-slate-700">192.168.1.250</span>
                   </div>
                 </div>
               </div>
 
               {/* Node 3: CT 102 Container */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="p-5 rounded-2xl bg-gradient-to-b from-emerald-50/40 to-slate-50/80 border border-emerald-200/70 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Database className="h-4 w-4 text-indigo-600" />
+                  <span className="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                    <Database className="h-4 w-4 text-emerald-600" />
                     3. CT 102 (database-server)
                   </span>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
                     Running
                   </span>
                 </div>
-                <div className="text-xs space-y-1 text-slate-600 pt-1">
+                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Internal IP:</span>
-                    <strong className="font-mono text-indigo-700">10.10.10.102</strong>
+                    <strong className="font-mono text-indigo-700 font-bold">10.10.10.102</strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Postgres 16:</span>
@@ -740,7 +835,7 @@ export default function SystemAdminPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">MinIO S3:</span>
-                    <span className="font-mono font-bold text-slate-800">Port 9000 & 9001</span>
+                    <span className="font-mono font-bold text-slate-800">Port 9000 / 9001</span>
                   </div>
                 </div>
               </div>
@@ -753,12 +848,14 @@ export default function SystemAdminPage() {
       {activeTab === "database" && (
         <div className="space-y-6">
           {/* Database Summary & Table Sizes */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <Table className="h-5 w-5 text-blue-600" />
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs">
+                  <Table className="h-5 w-5" />
+                </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-black text-slate-900">
                     ขนาดความจุของแต่ละตารางใน PostgreSQL ({dbNode?.disk.dbSizePretty || "0 MB"})
                   </h3>
                   <p className="text-xs text-slate-400">
@@ -768,14 +865,14 @@ export default function SystemAdminPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
                   <tr>
-                    <th className="p-3">ชื่อตาราง (Table Name)</th>
-                    <th className="p-3">จำนวนแถวข้อมูล (Row Count)</th>
-                    <th className="p-3">ขนาดความจุ (Size)</th>
-                    <th className="p-3 text-right">สัดส่วนใน DB</th>
+                    <th className="p-3.5">ชื่อตาราง (Table Name)</th>
+                    <th className="p-3.5">จำนวนแถวข้อมูล (Row Count)</th>
+                    <th className="p-3.5">ขนาดความจุ (Size)</th>
+                    <th className="p-3.5 text-right">สัดส่วนใน DB</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono">
@@ -783,18 +880,18 @@ export default function SystemAdminPage() {
                     const totalBytes = dbNode?.disk.dbSizeBytes || 1;
                     const percent = parseFloat(((t.sizeBytes / totalBytes) * 100).toFixed(1));
                     return (
-                      <tr key={t.tableName} className="hover:bg-slate-50 transition">
-                        <td className="p-3 font-bold text-slate-900 flex items-center gap-2">
-                          <Table className="h-3.5 w-3.5 text-blue-600" />
+                      <tr key={t.tableName} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
+                          <Table className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                           {t.tableName}
                         </td>
-                        <td className="p-3 text-slate-700 font-semibold">{t.rowCount.toLocaleString()} แถว</td>
-                        <td className="p-3 text-emerald-700 font-bold">{t.sizePretty}</td>
-                        <td className="p-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <span className="text-slate-500 text-[11px]">{percent}%</span>
-                            <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-600 rounded-full" style={{ width: `${Math.max(5, percent)}%` }} />
+                        <td className="p-3.5 text-slate-700 font-semibold">{t.rowCount.toLocaleString()} แถว</td>
+                        <td className="p-3.5 text-emerald-700 font-bold">{t.sizePretty}</td>
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2.5">
+                            <span className="text-slate-500 text-[11px] font-sans font-bold">{percent}%</span>
+                            <div className="w-20 bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5">
+                              <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${Math.max(5, percent)}%` }} />
                             </div>
                           </div>
                         </td>
@@ -807,12 +904,14 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Active Live Queries (pg_stat_activity) */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <Terminal className="h-5 w-5 text-indigo-600" />
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 shadow-2xs">
+                  <Terminal className="h-5 w-5" />
+                </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-black text-slate-900">
                     คำสั่ง SQL Query ที่กำลังทำงานสด (Active Queries)
                   </h3>
                   <p className="text-xs text-slate-400">ตรวจสอบคำสั่ง Database ที่กำลังรันในขณะนี้</p>
@@ -820,17 +919,21 @@ export default function SystemAdminPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {(pg?.activeQueries || []).length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-2">ไม่มีคำสั่งค้าง (Database ว่างพร้อมทำงาน)</p>
+                <p className="text-xs text-slate-400 italic py-3 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  ไม่มีคำสั่งค้าง (Database พร้อมรับงานใหม่)
+                </p>
               ) : (
                 pg?.activeQueries.map((q) => (
-                  <div key={q.pid} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono space-y-1">
+                  <div key={q.pid} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono space-y-1.5">
                     <div className="flex items-center justify-between text-[11px] text-slate-500">
                       <span>PID: <strong className="text-slate-900">{q.pid}</strong> ({q.user})</span>
-                      <span className="text-emerald-700 font-bold">{q.state} • {q.duration}</span>
+                      <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {q.state} • {q.duration}
+                      </span>
                     </div>
-                    <p className="text-slate-800 truncate font-semibold bg-white p-2 rounded-xl border border-slate-200">
+                    <p className="text-slate-800 truncate font-semibold bg-white p-2.5 rounded-xl border border-slate-200">
                       {q.query}
                     </p>
                   </div>
@@ -843,49 +946,53 @@ export default function SystemAdminPage() {
 
       {/* ================= TAB 3: STREAMING REAL-TIME LOGS ================= */}
       {activeTab === "logs" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <Terminal className="h-5 w-5 text-purple-600" />
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-200 shadow-2xs">
+                <Terminal className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                   บันทึกกิจกรรมสด (Live Streaming Audit Logs)
-                  {isStreaming && <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />}
+                  {isStreaming && <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />}
                 </h3>
                 <p className="text-xs text-slate-400">อัปเดตแบบ Realtime ทุก 2.5 วินาที</p>
               </div>
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
                 placeholder="ค้นหา Log ตามชื่อ, กิจกรรม..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-medium"
               />
             </div>
           </div>
 
           <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
             {filteredLogs.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">ไม่พบบันทึกกิจกรรม</div>
+              <div className="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                ไม่พบบันทึกกิจกรรม
+              </div>
             ) : (
               filteredLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs transition hover:bg-slate-100/70"
+                  className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs transition hover:bg-slate-100/80 shadow-2xs"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <span
                       className={clsx(
-                        "px-2 py-0.5 rounded-md text-[10px] font-black uppercase font-mono flex-shrink-0",
+                        "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase font-mono flex-shrink-0 shadow-2xs",
                         log.action.includes("BACKUP")
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                           : log.action.includes("UPDATE")
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-purple-100 text-purple-800"
+                          ? "bg-blue-100 text-blue-800 border border-blue-200"
+                          : "bg-purple-100 text-purple-800 border border-purple-200"
                       )}
                     >
                       {log.action}
@@ -898,7 +1005,7 @@ export default function SystemAdminPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 flex-shrink-0 font-medium">
                     <Clock className="h-3 w-3" />
                     <span>
                       {new Date(log.createdAt).toLocaleDateString("th-TH", {
@@ -919,12 +1026,14 @@ export default function SystemAdminPage() {
 
       {/* ================= TAB 4: SNAPSHOTS & BACKUPS ================= */}
       {activeTab === "backups" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <FileJson className="h-5 w-5 text-emerald-600" />
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs">
+                <FileJson className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-base font-black text-slate-900">
                   รายการสำรองข้อมูล Snapshot ใน MinIO S3 ({backups.length} ไฟล์)
                 </h3>
                 <p className="text-xs text-slate-400">
@@ -937,7 +1046,7 @@ export default function SystemAdminPage() {
               type="button"
               onClick={handleCreateBackup}
               disabled={backingUp}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md hover:bg-blue-700 transition active:scale-95 disabled:opacity-70"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-500/25 hover:bg-blue-700 transition active:scale-95 disabled:opacity-70"
             >
               {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDrive className="h-4 w-4" />}
               สร้าง Snapshot ทันที
@@ -949,25 +1058,25 @@ export default function SystemAdminPage() {
               ยังไม่มีไฟล์สำรองข้อมูล กดปุ่มสร้าง Snapshot เพื่อสำรองข้อมูล
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
                   <tr>
-                    <th className="p-3">ชื่อไฟล์สำรองข้อมูล (Snapshot)</th>
-                    <th className="p-3">ขนาดไฟล์</th>
-                    <th className="p-3">วันที่บันทึก</th>
-                    <th className="p-3 text-right">การจัดการ</th>
+                    <th className="p-3.5">ชื่อไฟล์สำรองข้อมูล (Snapshot)</th>
+                    <th className="p-3.5">ขนาดไฟล์</th>
+                    <th className="p-3.5">วันที่บันทึก</th>
+                    <th className="p-3.5 text-right">การจัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {backups.map((b) => (
-                    <tr key={b.key} className="hover:bg-slate-50 transition">
-                      <td className="p-3 font-mono font-bold text-slate-900 flex items-center gap-2 truncate">
+                    <tr key={b.key} className="hover:bg-slate-50/70 transition">
+                      <td className="p-3.5 font-mono font-bold text-slate-900 flex items-center gap-2.5 truncate">
                         <FileJson className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                         <span className="truncate">{b.filename}</span>
                       </td>
-                      <td className="p-3 text-slate-600 font-semibold">{b.sizeKB} KB</td>
-                      <td className="p-3 text-slate-500">
+                      <td className="p-3.5 text-slate-700 font-semibold">{b.sizeKB} KB</td>
+                      <td className="p-3.5 text-slate-500 font-medium">
                         {new Date(b.lastModified).toLocaleDateString("th-TH", {
                           day: "numeric",
                           month: "short",
@@ -976,15 +1085,15 @@ export default function SystemAdminPage() {
                           minute: "2-digit",
                         })}
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3.5 text-right">
                         <a
                           href={`/api/files/${b.key}`}
                           download={b.filename}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-black text-xs transition shadow-2xs border border-blue-200"
                         >
-                          <Download className="h-3 w-3" />
+                          <Download className="h-3.5 w-3.5" />
                           ดาวน์โหลด
                         </a>
                       </td>
@@ -999,45 +1108,51 @@ export default function SystemAdminPage() {
 
       {/* ================= TAB 5: ENVIRONMENT CONFIG ================= */}
       {activeTab === "config" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <Key className="h-5 w-5 text-amber-600" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs">
+                <Key className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  การตั้งค่าตัวแปรระบบ (Environment Variables)
+                <h3 className="text-base font-black text-slate-900">
+                  การตั้งค่าตัวแปรระบบ (Environment Variables Inspector)
                 </h3>
-                <p className="text-xs text-slate-400">ตรวจสอบค่าคอนฟิกที่โหลดในระบบ</p>
+                <p className="text-xs text-slate-400">ตรวจสอบค่าคอนฟิกที่โหลดในระบบ (ค่าสำคัญจะถูกปิดบัง)</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
                 <tr>
-                  <th className="p-3">Variable Key</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Configured Value</th>
-                  <th className="p-3 text-right">Status</th>
+                  <th className="p-3.5">Variable Key</th>
+                  <th className="p-3.5">Category</th>
+                  <th className="p-3.5">Configured Value</th>
+                  <th className="p-3.5 text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
                 {STATIC_ENV_CONFIG.map((env) => (
                   <tr key={env.key} className="hover:bg-slate-50/70 transition">
-                    <td className="p-3 font-bold text-slate-900 flex items-center gap-1.5">
-                      {env.isSecret && <Key className="h-3 w-3 text-amber-500" />}
+                    <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
+                      {env.isSecret && <Key className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
                       {env.key}
                     </td>
-                    <td className="p-3 font-sans font-semibold text-slate-600">{env.type}</td>
-                    <td className="p-3 text-slate-700">
+                    <td className="p-3.5 font-sans font-semibold text-slate-600">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[11px]">
+                        {env.type}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-slate-700">
                       {env.isSecret ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <span>{revealedSecrets[env.key] ? env.value : "••••••••••••••••"}</span>
                           <button
                             type="button"
                             onClick={() => toggleReveal(env.key)}
-                            className="font-sans text-[10px] text-blue-600 hover:underline p-0.5"
+                            className="font-sans text-[11px] font-bold text-blue-600 hover:underline px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200"
                           >
                             {revealedSecrets[env.key] ? "ซ่อน" : "แสดง"}
                           </button>
@@ -1046,9 +1161,9 @@ export default function SystemAdminPage() {
                         <span>{env.value}</span>
                       )}
                     </td>
-                    <td className="p-3 text-right font-sans">
+                    <td className="p-3.5 text-right font-sans">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                        <Check className="h-3 w-3" />
+                        <Check className="h-3.5 w-3.5" />
                         Loaded
                       </span>
                     </td>
