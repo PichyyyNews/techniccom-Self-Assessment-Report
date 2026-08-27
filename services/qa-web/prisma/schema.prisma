@@ -16,7 +16,7 @@ model RoleDefinition {
   title       String   // e.g. "ผู้ดูแลระบบสูงสุด (ROOT)", "บุคลากรทั่วไป (STAFF)"
   description String?
   color       String   @default("blue") // "rose" | "blue" | "emerald" | "purple" | "amber"
-  permissions String[] // Allowed paths e.g. ["/dashboard", "/admin/users"]
+  permissions String[] // Allowed paths e.g. ["/dashboard", "/admin/users", "/profile"]
   isSystem    Boolean  @default(false) // true for ROOT (cannot be deleted)
   users       User[]
   createdAt   DateTime @default(now())
@@ -35,6 +35,11 @@ model User {
   phone            String?         // เบอร์โทรศัพท์
   birthDate        DateTime?       // วันเดือนปีเกิด
   avatarUrl        String?         // URL รูปประจำตัว
+  coverUrl         String?         // ภาพหน้าปกโปรไฟล์ (Cover photo)
+  bio              String?         // คำแนะนำตัว / ปรัชญาการศึกษา
+  education        Json?           // วุฒิการศึกษา [{ degree, major, institution, year }]
+  workHistory      Json?           // ประวัติการทำงาน [{ role, organization, period }]
+  skills           String[]        // ทักษะ / ความเชี่ยวชาญ
   isActive         Boolean         @default(true)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt

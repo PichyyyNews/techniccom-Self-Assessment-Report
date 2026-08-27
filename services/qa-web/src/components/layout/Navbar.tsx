@@ -40,6 +40,7 @@ export function Navbar() {
   // Dynamic Page Title
   const getPageTitle = () => {
     if (pathname === "/dashboard") return "ภาพรวมและข้อมูลส่วนตัว";
+    if (pathname === "/profile") return "โปรไฟล์และประวัติการทำงาน";
     if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งาน";
     return "ระบบงานประกันคุณภาพ";
   };
@@ -130,7 +131,7 @@ export function Navbar() {
                 {/* Menu Items */}
                 <div className="space-y-0.5">
                   <Link
-                    href="/dashboard"
+                    href="/profile"
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
                   >
