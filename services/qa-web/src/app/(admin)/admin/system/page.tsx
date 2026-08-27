@@ -37,11 +37,7 @@ import {
   Zap,
   ArrowUpRight,
   ChevronRight,
-  Flame,
-  CheckCircle,
   HardDriveDownload,
-  FolderLock,
-  CpuIcon,
   CircleDot,
 } from "lucide-react";
 import { clsx } from "clsx";
@@ -270,7 +266,7 @@ export default function SystemAdminPage() {
   if (!isRoot) {
     return (
       <div className="w-full max-w-7xl mx-auto p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[60vh]">
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 border border-rose-200 shadow-lg shadow-rose-500/10">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 border border-rose-200 shadow-sm">
           <ShieldAlert className="h-8 w-8" />
         </div>
         <h1 className="text-xl font-black text-slate-900">
@@ -308,48 +304,45 @@ export default function SystemAdminPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      {/* ================= 1. PAGE HERO HEADER & LIVE STREAM BAR ================= */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 p-6 sm:p-8 text-white shadow-xl shadow-slate-900/15 border border-slate-800">
-        {/* Glow effect background */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-emerald-600/15 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2.5 flex-wrap">
+      {/* ================= 1. CLEAN LIGHT THEME HERO HEADER ================= */}
+      <div className="rounded-3xl bg-white border border-slate-200/80 p-6 sm:p-7 shadow-sm space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          {/* Title & Navigation */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 หน้าหลัก (Dashboard)
               </Link>
-              <span className="text-slate-600">/</span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30 backdrop-blur-md">
+              <span className="text-slate-300">/</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200">
                 <Shield className="h-3 w-3" />
                 ROOT COMMAND CENTER
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
               ศูนย์มอนิเตอร์ & ตั้งค่าโครงสร้างระบบ
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl">
               สตรีมมิ่งสถานะฮาร์ดแวร์แบบ Real-Time แยก 2 เครื่องเซิร์ฟเวอร์ (Web Host & Proxmox CT 102) พร้อมตรวจจับขนาดฐานข้อมูลและบันทึกประวัติการทำงาน
             </p>
           </div>
 
-          {/* Real-time Stream Controller */}
-          <div className="flex flex-wrap items-center gap-3 bg-slate-900/80 p-2.5 rounded-2xl border border-slate-700/70 backdrop-blur-xl shadow-inner">
+          {/* Real-time Streaming Controls Bar */}
+          <div className="flex flex-wrap items-center gap-2.5 bg-slate-50 p-2 rounded-2xl border border-slate-200/70">
             {/* Live Indicator Pill */}
             <button
               type="button"
               onClick={() => setIsStreaming(!isStreaming)}
               className={clsx(
-                "inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-black transition active:scale-95 shadow-xs select-none",
+                "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition active:scale-95 shadow-2xs select-none",
                 isStreaming
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30"
-                  : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100/60"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
               )}
             >
               <span className="relative flex h-2.5 w-2.5">
@@ -359,19 +352,19 @@ export default function SystemAdminPage() {
                 <span
                   className={clsx(
                     "relative inline-flex rounded-full h-2.5 w-2.5",
-                    isStreaming ? "bg-emerald-400" : "bg-slate-500"
+                    isStreaming ? "bg-emerald-500" : "bg-slate-400"
                   )}
                 />
               </span>
               <span className="tracking-wide">{isStreaming ? "LIVE STREAM (2.5s)" : "PAUSED"}</span>
               {isStreaming ? (
-                <Pause className="h-3.5 w-3.5 ml-0.5 text-emerald-400" />
+                <Pause className="h-3.5 w-3.5 ml-0.5 text-emerald-600" />
               ) : (
-                <Play className="h-3.5 w-3.5 ml-0.5 text-slate-400" />
+                <Play className="h-3.5 w-3.5 ml-0.5 text-slate-500" />
               )}
             </button>
 
-            {/* Quick Refresh */}
+            {/* Quick Refresh Button */}
             <button
               type="button"
               onClick={() => {
@@ -379,9 +372,9 @@ export default function SystemAdminPage() {
                 fetchBackups();
               }}
               title="รีเฟรชข้อมูลทันที"
-              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition active:scale-95 shadow-xs"
+              className="p-2 rounded-xl bg-white hover:bg-slate-100/80 text-slate-700 border border-slate-200 transition active:scale-95 shadow-2xs"
             >
-              <RefreshCw className={clsx("h-4 w-4 text-blue-400", loading && "animate-spin")} />
+              <RefreshCw className={clsx("h-4 w-4 text-blue-600", loading && "animate-spin")} />
             </button>
 
             {/* Snapshot Trigger Button */}
@@ -389,46 +382,46 @@ export default function SystemAdminPage() {
               type="button"
               onClick={handleCreateBackup}
               disabled={backingUp}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-blue-500/30 transition active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition active:scale-95 disabled:opacity-50"
             >
-              {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDriveDownload className="h-4 w-4" />}
+              {backingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HardDriveDownload className="h-3.5 w-3.5" />}
               <span>สร้าง Snapshot</span>
             </button>
           </div>
         </div>
 
-        {/* Mini Status Footer within Hero */}
-        <div className="relative z-10 mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-[11px] text-slate-400">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <CircleDot className="h-3 w-3 text-emerald-400" />
-              Web Host: <strong className="text-white font-mono">{web?.port || 3000}</strong>
+        {/* Header Summary Sub-Bar */}
+        <div className="pt-3.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CircleDot className="h-3 w-3 text-emerald-500" />
+              Web Host: <strong className="text-slate-900 font-mono">Port {web?.port || 3000}</strong>
             </span>
-            <span className="flex items-center gap-1.5">
-              <CircleDot className="h-3 w-3 text-blue-400" />
-              DB Node: <strong className="text-white font-mono">10.10.10.102</strong>
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CircleDot className="h-3 w-3 text-blue-500" />
+              DB Node: <strong className="text-slate-900 font-mono">10.10.10.102</strong>
             </span>
-            <span className="flex items-center gap-1.5">
-              <CircleDot className="h-3 w-3 text-indigo-400" />
-              Tailscale: <strong className="text-white font-mono">100.125.250.85</strong>
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CircleDot className="h-3 w-3 text-indigo-500" />
+              Tailscale: <strong className="text-slate-900 font-mono">100.125.250.85</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
             <span>อัปเดตล่าสุด:</span>
-            <span className="font-mono text-emerald-300 font-bold">{lastStreamTime || "กำลังสตรีม..."}</span>
+            <strong className="font-mono text-emerald-700 font-bold">{lastStreamTime || "กำลังเชื่อมต่อ..."}</strong>
           </div>
         </div>
       </div>
 
-      {/* ================= 2. DUAL-NODE STREAMING SYSTEM DASHBOARD (2 LUXURY MACHINE CARDS) ================= */}
+      {/* ================= 2. DUAL-NODE STREAMING SYSTEM DASHBOARD (2 LIGHT CARDS) ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ================= NODE 1: WEB APPLICATION HOST ================= */}
-        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-lg shadow-blue-900/5 transition duration-300 hover:shadow-xl hover:border-blue-300">
+        <div className="rounded-3xl bg-white border border-slate-200/80 p-6 sm:p-7 shadow-sm space-y-5">
           {/* Header Strip */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
                 <Globe className="h-6 w-6" />
               </div>
               <div>
@@ -441,7 +434,7 @@ export default function SystemAdminPage() {
                   </h2>
                 </div>
                 <p className="text-xs text-slate-400 font-medium">
-                  {web?.service} • Host Platform: {web?.platform}
+                  {web?.service} • Platform: {web?.platform}
                 </p>
               </div>
             </div>
@@ -453,7 +446,7 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Web Telemetry Meters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Meter 1: Web CPU */}
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
               <div className="flex items-center justify-between">
@@ -465,12 +458,12 @@ export default function SystemAdminPage() {
                   {web?.cpu.percent ?? 0}%
                 </span>
               </div>
-              <div className="w-full bg-slate-200/80 h-3 rounded-full overflow-hidden p-0.5">
+              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
                 <div
                   className={clsx(
                     "h-full rounded-full transition-all duration-500",
                     (web?.cpu.percent || 0) < 60
-                      ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                      ? "bg-blue-600"
                       : (web?.cpu.percent || 0) < 85
                       ? "bg-amber-500"
                       : "bg-rose-500"
@@ -495,12 +488,12 @@ export default function SystemAdminPage() {
                   {web?.ram.percent ?? 0}%
                 </span>
               </div>
-              <div className="w-full bg-slate-200/80 h-3 rounded-full overflow-hidden p-0.5">
+              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
                 <div
                   className={clsx(
                     "h-full rounded-full transition-all duration-500",
                     (web?.ram.percent || 0) < 70
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-600"
+                      ? "bg-indigo-600"
                       : (web?.ram.percent || 0) < 90
                       ? "bg-amber-500"
                       : "bg-rose-500"
@@ -516,7 +509,7 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Node 1 Hardware & Runtime Metrics Grid */}
-          <div className="grid grid-cols-3 gap-3 bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/70 text-xs mt-4">
+          <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 text-xs">
             <div className="space-y-0.5">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Heap Used</span>
               <strong className="text-slate-900 font-mono font-bold text-sm">{web?.ram.heapUsedMB} MB</strong>
@@ -533,11 +526,11 @@ export default function SystemAdminPage() {
         </div>
 
         {/* ================= NODE 2: DATABASE SERVER (PROXMOX CT 102) ================= */}
-        <div className="group relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-lg shadow-emerald-900/5 transition duration-300 hover:shadow-xl hover:border-emerald-300">
+        <div className="rounded-3xl bg-white border border-slate-200/80 p-6 sm:p-7 shadow-sm space-y-5">
           {/* Header Strip */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs">
                 <Database className="h-6 w-6" />
               </div>
               <div>
@@ -562,7 +555,7 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Database Telemetry Meters (CPU, RAM, DISK) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* DB CPU */}
             <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
               <div className="flex items-center justify-between">
@@ -574,9 +567,9 @@ export default function SystemAdminPage() {
                   {dbNode?.cpu.percent ?? 0}%
                 </span>
               </div>
-              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all duration-500"
+                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.cpu.percent || 0))}%` }}
                 />
               </div>
@@ -597,9 +590,9 @@ export default function SystemAdminPage() {
                   {dbNode?.ram.percent ?? 0}%
                 </span>
               </div>
-              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.ram.percent || 0))}%` }}
                 />
               </div>
@@ -620,9 +613,9 @@ export default function SystemAdminPage() {
                   {dbNode?.disk.percent ?? 0}%
                 </span>
               </div>
-              <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden p-0.5">
+              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(5, dbNode?.disk.percent || 0))}%` }}
                 />
               </div>
@@ -634,9 +627,9 @@ export default function SystemAdminPage() {
           </div>
 
           {/* Database Services Health Strip (Postgres & MinIO S3) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* PostgreSQL Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/90 border border-slate-200/70 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span className="font-bold text-slate-900">PostgreSQL (5432)</span>
@@ -650,7 +643,7 @@ export default function SystemAdminPage() {
             </div>
 
             {/* MinIO S3 Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/90 border border-slate-200/70 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span className="font-bold text-slate-900">MinIO S3 (9000)</span>
@@ -667,7 +660,7 @@ export default function SystemAdminPage() {
       </div>
 
       {/* ================= 3. SEGMENTED TABS WITH HIGH-TECH PILLS ================= */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 w-fit backdrop-blur-md">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 w-fit">
         <button
           onClick={() => setActiveTab("servers")}
           className={clsx(
@@ -760,9 +753,9 @@ export default function SystemAdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Node 1: Web App */}
-              <div className="p-5 rounded-2xl bg-gradient-to-b from-blue-50/40 to-slate-50/80 border border-blue-200/70 space-y-3 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                     <Globe className="h-4 w-4 text-blue-600" />
                     1. Web Application Host
                   </span>
@@ -787,9 +780,9 @@ export default function SystemAdminPage() {
               </div>
 
               {/* Node 2: Proxmox Host */}
-              <div className="p-5 rounded-2xl bg-gradient-to-b from-amber-50/40 to-slate-50/80 border border-amber-200/70 space-y-3 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                     <Server className="h-4 w-4 text-amber-600" />
                     2. Proxmox VE 8.x Host
                   </span>
@@ -814,9 +807,9 @@ export default function SystemAdminPage() {
               </div>
 
               {/* Node 3: CT 102 Container */}
-              <div className="p-5 rounded-2xl bg-gradient-to-b from-emerald-50/40 to-slate-50/80 border border-emerald-200/70 space-y-3 shadow-2xs">
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                     <Database className="h-4 w-4 text-emerald-600" />
                     3. CT 102 (database-server)
                   </span>
