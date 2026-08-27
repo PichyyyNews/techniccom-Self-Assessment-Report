@@ -39,6 +39,11 @@ import {
   ChevronRight,
   HardDriveDownload,
   CircleDot,
+  Plus,
+  X,
+  FileText,
+  User,
+  Info,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -146,6 +151,9 @@ interface MetricsData {
 interface BackupItem {
   key: string;
   filename: string;
+  name: string;
+  description: string;
+  creator: string;
   sizeBytes: number;
   sizeKB: number;
   lastModified: string;
@@ -175,6 +183,11 @@ export default function SystemAdminPage() {
   const [logSearch, setLogSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"servers" | "database" | "logs" | "backups" | "config">("servers");
   const [lastStreamTime, setLastStreamTime] = useState<string>("");
+
+  // Modal State for Creating Snapshot
+  const [showSnapshotModal, setShowSnapshotModal] = useState(false);
+  const [snapshotName, setSnapshotName] = useState("");
+  const [snapshotDescription, setSnapshotDescription] = useState("");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -228,14 +241,35 @@ export default function SystemAdminPage() {
     };
   }, [isRoot, isStreaming]);
 
-  const handleCreateBackup = async () => {
-    if (!confirm("คุณต้องการสร้าง Snapshot สำรองข้อมูลระบบทั้งหมดไปยัง MinIO S3 ใช่หรือไม่?")) return;
+  const openCreateSnapshotModal = () => {
+    const defaultName = `Snapshot_${new Date().toLocaleDateString("th-TH").replace(/\//g, "-")}_${new Date().toLocaleTimeString("th-TH").replace(/:/g, "")}`;
+    setSnapshotName(defaultName);
+    setSnapshotDescription("");
+    setShowSnapshotModal(true);
+  };
+
+  const handleCreateBackupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!snapshotName.trim()) {
+      alert("กรุณากรอกชื่อ Snapshot");
+      return;
+    }
+
     setBackingUp(true);
     try {
-      const res = await fetch("/api/admin/system/backup", { method: "POST" });
+      const res = await fetch("/api/admin/system/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: snapshotName.trim(),
+          description: snapshotDescription.trim(),
+        }),
+      });
+
       const data = await res.json();
       if (res.ok) {
-        alert(`สร้าง Snapshot สำรองข้อมูลสำเร็จ!\nไฟล์: ${data.backup.filename} (${data.backup.sizeKB} KB)`);
+        setShowSnapshotModal(false);
+        alert(`สร้าง Snapshot สำรองข้อมูลสำเร็จ!\nชื่อ: ${data.backup.name} (${data.backup.sizeKB} KB)`);
         fetchBackups();
         fetchMetrics();
       } else {
@@ -377,14 +411,13 @@ export default function SystemAdminPage() {
               <RefreshCw className={clsx("h-4 w-4 text-blue-600", loading && "animate-spin")} />
             </button>
 
-            {/* Snapshot Trigger Button */}
+            {/* Snapshot Trigger Button -> Opens Modal */}
             <button
               type="button"
-              onClick={handleCreateBackup}
-              disabled={backingUp}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition active:scale-95 disabled:opacity-50 min-h-[42px]"
+              onClick={openCreateSnapshotModal}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition active:scale-95 min-h-[42px]"
             >
-              {backingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HardDriveDownload className="h-3.5 w-3.5" />}
+              <HardDriveDownload className="h-3.5 w-3.5" />
               <span className="truncate">สร้าง Snapshot</span>
             </button>
           </div>
@@ -714,7 +747,7 @@ export default function SystemAdminPage() {
             )}
           >
             <FileJson className="h-3.5 w-3.5 text-amber-600" />
-            Snapshot
+            Snapshot & Backups
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800">
               {backups.length}
             </span>
@@ -1069,12 +1102,11 @@ export default function SystemAdminPage() {
 
             <button
               type="button"
-              onClick={handleCreateBackup}
-              disabled={backingUp}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-500/25 hover:bg-blue-700 transition active:scale-95 disabled:opacity-70 w-full sm:w-auto"
+              onClick={openCreateSnapshotModal}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-500/25 hover:bg-blue-700 transition active:scale-95 w-full sm:w-auto"
             >
-              {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDrive className="h-4 w-4" />}
-              สร้าง Snapshot ทันที
+              <Plus className="h-4 w-4" />
+              สร้าง Snapshot ใหม่
             </button>
           </div>
 
@@ -1089,20 +1121,35 @@ export default function SystemAdminPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
                     <tr>
-                      <th className="p-3.5">ชื่อไฟล์สำรองข้อมูล (Snapshot)</th>
+                      <th className="p-3.5">ชื่อ Snapshot / คำอธิบาย</th>
+                      <th className="p-3.5">ผู้สร้าง (Creator)</th>
                       <th className="p-3.5">ขนาดไฟล์</th>
                       <th className="p-3.5">วันที่บันทึก</th>
-                      <th className="p-3.5 text-right">การจัดการ</th>
+                      <th className="p-3.5 text-right">ดาวน์โหลด</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {backups.map((b) => (
                       <tr key={b.key} className="hover:bg-slate-50/70 transition">
-                        <td className="p-3.5 font-mono font-bold text-slate-900 flex items-center gap-2.5 truncate">
-                          <FileJson className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                          <span className="truncate">{b.filename}</span>
+                        <td className="p-3.5">
+                          <div className="flex items-start gap-2.5">
+                            <FileJson className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-900 text-xs block">{b.name}</span>
+                              {b.description && (
+                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{b.description}</p>
+                              )}
+                              <span className="font-mono text-[10px] text-slate-400 block mt-0.5">{b.filename}</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="p-3.5 text-slate-700 font-semibold">{b.sizeKB} KB</td>
+                        <td className="p-3.5 text-slate-600 font-medium">
+                          <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                            <User className="h-3 w-3 text-slate-400" />
+                            {b.creator}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-slate-700 font-semibold font-mono">{b.sizeKB} KB</td>
                         <td className="p-3.5 text-slate-500 font-medium">
                           {new Date(b.lastModified).toLocaleDateString("th-TH", {
                             day: "numeric",
@@ -1134,12 +1181,18 @@ export default function SystemAdminPage() {
               <div className="sm:hidden space-y-2.5">
                 {backups.map((b) => (
                   <div key={b.key} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileJson className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                      <span className="font-mono font-bold text-xs text-slate-900 truncate">{b.filename}</span>
+                    <div className="flex items-start gap-2 min-w-0">
+                      <FileJson className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-xs text-slate-900 block truncate">{b.name}</span>
+                        {b.description && (
+                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{b.description}</p>
+                        )}
+                        <span className="font-mono text-[10px] text-slate-400 block truncate mt-0.5">{b.filename}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>ขนาด: <strong className="text-slate-800">{b.sizeKB} KB</strong></span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                      <span>ขนาด: <strong className="text-slate-800 font-mono">{b.sizeKB} KB</strong></span>
                       <span>
                         {new Date(b.lastModified).toLocaleDateString("th-TH", {
                           day: "numeric",
@@ -1267,6 +1320,107 @@ export default function SystemAdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ================= SNAPSHOT CREATION MODAL ================= */}
+      {showSnapshotModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
+                  <HardDriveDownload className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">สร้าง Snapshot สำรองข้อมูลระบบ</h3>
+                  <p className="text-xs text-slate-400">บันทึกข้อมูล Users, Roles และ ActivityLogs ไปยัง MinIO S3</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSnapshotModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleCreateBackupSubmit} className="space-y-4">
+              {/* Snapshot Name */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  ชื่อ Snapshot <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={snapshotName}
+                  onChange={(e) => setSnapshotName(e.target.value)}
+                  placeholder="เช่น Snapshot_ก่อนเริ่มเทอมใหม่ หรือ Full_Backup_2026"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Snapshot Description */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  คำอธิบายเพิ่มเติม / บันทึกช่วยจำ (Description)
+                </label>
+                <textarea
+                  rows={3}
+                  value={snapshotDescription}
+                  onChange={(e) => setSnapshotDescription(e.target.value)}
+                  placeholder="เช่น สำรองข้อมูลผู้ใช้งานและยศสิทธิ์ทั้งหมดก่อนอัปเดตระบบ หรือ สำรองข้อมูลประจำสัปดาห์..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              {/* Data Summary Box */}
+              <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200/70 space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 text-blue-900 font-bold">
+                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span>ข้อมูลที่จะถูกสำรองและบันทึกลงในไฟล์ Snapshot:</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                  <div className="bg-white p-2 rounded-xl border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-semibold">บัญชีผู้ใช้</span>
+                    <strong className="text-slate-900 font-bold text-xs">{metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "User")?.rowCount ?? "-"} บัญชี</strong>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-semibold">ยศ/สิทธิ์</span>
+                    <strong className="text-slate-900 font-bold text-xs">{metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "RoleDefinition")?.rowCount ?? "-"} สิทธิ์</strong>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-blue-100">
+                    <span className="text-[10px] text-slate-400 block font-semibold">ปลายทาง</span>
+                    <strong className="text-indigo-700 font-bold text-[11px] truncate block">MinIO S3</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowSnapshotModal(false)}
+                  disabled={backingUp}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={backingUp}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition active:scale-95 disabled:opacity-50"
+                >
+                  {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDriveDownload className="h-4 w-4" />}
+                  <span>{backingUp ? "กำลังสร้าง Snapshot..." : "ยืนยันการสร้าง Snapshot"}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

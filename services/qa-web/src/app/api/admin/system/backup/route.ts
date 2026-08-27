@@ -3,10 +3,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { s3Client, S3_BUCKET_NAME } from "@/lib/s3";
-import { PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { PutObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { logActivity } from "@/lib/activity";
 
-// GET /api/admin/system/backup - List all database snapshots and backups
+// GET /api/admin/system/backup - List all database snapshots and backups with metadata
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -22,13 +22,44 @@ export async function GET() {
     });
 
     const s3Result = await s3Client.send(listCommand);
-    const backups = (s3Result.Contents || [])
-      .filter((obj) => obj.Key && obj.Key !== "system-backups/")
+    const objects = (s3Result.Contents || []).filter((obj) => obj.Key && obj.Key !== "system-backups/");
+
+    // Get recent backup activity logs to map names and descriptions quickly
+    const backupLogs = await prisma.activityLog.findMany({
+      where: { action: "SYSTEM_BACKUP_CREATED" },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
+      },
+    });
+
+    const logsMap: Record<string, { name: string; description: string; creator: string }> = {};
+    for (const l of backupLogs) {
+      if (l.metadata && typeof l.metadata === "object") {
+        const meta = l.metadata as any;
+        if (meta.filename) {
+          logsMap[meta.filename] = {
+            name: meta.name || l.title.replace("สำรองข้อมูลระบบ (Snapshot): ", ""),
+            description: meta.description || "",
+            creator: l.user?.name || "ROOT Admin",
+          };
+        }
+      }
+    }
+
+    const backups = objects
       .map((obj) => {
         const filename = obj.Key?.replace("system-backups/", "") || "";
+        const logInfo = logsMap[filename];
         return {
           key: obj.Key,
           filename,
+          name: logInfo?.name || filename.replace(".json", ""),
+          description: logInfo?.description || "",
+          creator: logInfo?.creator || "ROOT Admin",
           sizeBytes: obj.Size || 0,
           sizeKB: parseFloat(((obj.Size || 0) / 1024).toFixed(2)),
           lastModified: obj.LastModified?.toISOString(),
@@ -43,14 +74,24 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/system/backup - Trigger instant database snapshot
-export async function POST() {
+// POST /api/admin/system/backup - Trigger instant database snapshot with custom name & description
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user?.role !== "ROOT") {
       return NextResponse.json({ error: "สำหรับ ROOT เท่านั้น" }, { status: 403 });
     }
+
+    let body: { name?: string; description?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      // Body is optional
+    }
+
+    const snapshotName = body.name?.trim() || `Snapshot_${new Date().toLocaleDateString("th-TH").replace(/\//g, "-")}`;
+    const snapshotDesc = body.description?.trim() || "";
 
     const [users, roles, activityLogs] = await Promise.all([
       prisma.user.findMany({
@@ -78,10 +119,16 @@ export async function POST() {
     ]);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const sanitizedName = snapshotName.replace(/[^a-zA-Z0-9_\-\u0E00-\u0E7F]/g, "_");
+    const filename = `snapshot_${sanitizedName}_${timestamp}.json`;
+    const s3Key = `system-backups/${filename}`;
+
     const snapshotData = {
       meta: {
         system: "TechSAR Educational QA System",
         snapshotVersion: "1.0",
+        name: snapshotName,
+        description: snapshotDesc,
         createdAt: new Date().toISOString(),
         createdBy: session.user.email,
         counts: {
@@ -99,8 +146,6 @@ export async function POST() {
 
     const jsonString = JSON.stringify(snapshotData, null, 2);
     const buffer = Buffer.from(jsonString, "utf-8");
-    const filename = `snapshot_techsar_${timestamp}.json`;
-    const s3Key = `system-backups/${filename}`;
 
     // Upload snapshot to MinIO S3
     await s3Client.send(
@@ -109,6 +154,10 @@ export async function POST() {
         Key: s3Key,
         Body: buffer,
         ContentType: "application/json",
+        Metadata: {
+          name: encodeURIComponent(snapshotName),
+          description: encodeURIComponent(snapshotDesc),
+        },
       })
     );
 
@@ -116,13 +165,21 @@ export async function POST() {
     await logActivity(
       session.user.id,
       "SYSTEM_BACKUP_CREATED",
-      `สำรองข้อมูลระบบ (Snapshot) ไฟล์ ${filename}`,
-      { filename, sizeBytes: buffer.length }
+      `สร้าง Snapshot สำรองข้อมูล: "${snapshotName}"`,
+      {
+        name: snapshotName,
+        description: snapshotDesc,
+        filename,
+        sizeBytes: buffer.length,
+        sizeKB: parseFloat((buffer.length / 1024).toFixed(2)),
+      }
     );
 
     return NextResponse.json({
       message: "สำรองข้อมูลและสร้าง Snapshot ระบบสำเร็จ",
       backup: {
+        name: snapshotName,
+        description: snapshotDesc,
         filename,
         key: s3Key,
         sizeKB: parseFloat((buffer.length / 1024).toFixed(2)),
