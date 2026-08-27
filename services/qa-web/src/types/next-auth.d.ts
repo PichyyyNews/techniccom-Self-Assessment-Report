@@ -10,6 +10,7 @@ declare module "next-auth" {
     role: Role;
     departmentId?: string | null;
     departmentName?: string | null;
+    isActive?: boolean;
   }
 
   interface Session {
@@ -20,6 +21,7 @@ declare module "next-auth" {
       role: Role;
       departmentId?: string | null;
       departmentName?: string | null;
+      isActive?: boolean;
     };
   }
 }
@@ -30,5 +32,6 @@ declare module "next-auth/jwt" {
     role: Role;
     departmentId?: string | null;
     departmentName?: string | null;
+    isActive?: boolean;
   }
 }

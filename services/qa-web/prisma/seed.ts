@@ -1,5 +1,9 @@
-﻿import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import * as dotenv from "dotenv";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 const prisma = new PrismaClient();
 
@@ -39,52 +43,65 @@ async function main() {
   }
   console.log("Created Departments:", Object.keys(depts).length);
 
-  // 3. Create Users
-  const defaultPassword = await bcrypt.hash("admin1234", 10);
+  // 3. Create Users with Root Admin from Env
+  const rootEmail = process.env.ROOT_ADMIN_EMAIL || "admin@technic.ac.th";
+  const rootPasswordPlain = process.env.ROOT_ADMIN_PASSWORD || "admin1234";
+  const rootPasswordHash = await bcrypt.hash(rootPasswordPlain, 10);
   const headPassword = await bcrypt.hash("head1234", 10);
   const teacherPassword = await bcrypt.hash("teacher1234", 10);
   const auditorPassword = await bcrypt.hash("auditor1234", 10);
-  const execPassword = await bcrypt.hash("exec1234", 10);
+  const qaHeadPassword = await bcrypt.hash("qa1234", 10);
 
   const users = [
     {
-      email: "admin@technic.ac.th",
-      name: "ผู้ดูแลระบบประกันคุณภาพ (Super Admin)",
-      passwordHash: defaultPassword,
+      email: rootEmail,
+      name: "ผู้ดูแลระบบไอทีวิทยาลัย (Super Admin)",
+      passwordHash: rootPasswordHash,
       role: Role.SUPER_ADMIN,
+      isActive: true,
+    },
+    {
+      email: "qa.head@technic.ac.th",
+      name: "หัวหน้างานประกันคุณภาพ (QA Head)",
+      passwordHash: qaHeadPassword,
+      role: Role.QA_HEAD,
+      isActive: true,
     },
     {
       email: "head.com@technic.ac.th",
       name: "นายหัวหน้า แผนกคอมฯ (Department Head)",
       passwordHash: headPassword,
-      role: Role.DEPARTMENT_HEAD,
+      role: Role.DEPT_HEAD,
       departmentId: depts["TECH-COM"].id,
+      isActive: true,
     },
     {
       email: "teacher.com@technic.ac.th",
-      name: "อาจารย์ผู้รับผิดชอบตัวบ่งชี้ (Faculty)",
+      name: "อาจารย์ผู้รับผิดชอบตัวบ่งชี้ (Teacher)",
       passwordHash: teacherPassword,
-      role: Role.FACULTY,
+      role: Role.TEACHER,
       departmentId: depts["TECH-COM"].id,
+      isActive: true,
     },
     {
       email: "auditor@technic.ac.th",
       name: "ดร.กรรมการ ประเมินภายใน (Auditor)",
       passwordHash: auditorPassword,
       role: Role.AUDITOR,
-    },
-    {
-      email: "executive@technic.ac.th",
-      name: "ผู้อำนวยการวิทยาลัยเทคนิค (Executive)",
-      passwordHash: execPassword,
-      role: Role.EXECUTIVE,
+      isActive: true,
     },
   ];
 
   for (const user of users) {
     await prisma.user.upsert({
       where: { email: user.email },
-      update: {},
+      update: {
+        name: user.name,
+        role: user.role,
+        departmentId: user.departmentId || null,
+        isActive: user.isActive,
+        passwordHash: user.passwordHash,
+      },
       create: user,
     });
   }
@@ -150,25 +167,31 @@ async function main() {
   ];
 
   for (const std of standardsData) {
-    const createdStd = await prisma.standard.create({
-      data: {
-        academicYearId: year2569.id,
-        standardNumber: std.number,
-        title: std.title,
-        weight: std.weight,
-        indicators: {
-          create: std.indicators.map((ind) => ({
-            indicatorCode: ind.code,
-            title: ind.title,
-            criteria: ind.criteria,
-            maxScore: ind.maxScore,
-            weight: ind.weight,
-          })),
-        },
-      },
-      include: { indicators: true },
+    const existing = await prisma.standard.findFirst({
+      where: { academicYearId: year2569.id, standardNumber: std.number },
     });
-    console.log("Created Standard " + std.number + " with " + createdStd.indicators.length + " indicators");
+
+    if (!existing) {
+      const createdStd = await prisma.standard.create({
+        data: {
+          academicYearId: year2569.id,
+          standardNumber: std.number,
+          title: std.title,
+          weight: std.weight,
+          indicators: {
+            create: std.indicators.map((ind) => ({
+              indicatorCode: ind.code,
+              title: ind.title,
+              criteria: ind.criteria,
+              maxScore: ind.maxScore,
+              weight: ind.weight,
+            })),
+          },
+        },
+        include: { indicators: true },
+      });
+      console.log("Created Standard " + std.number + " with " + createdStd.indicators.length + " indicators");
+    }
   }
 
   console.log("Seeding TechSAR Completed Successfully!");

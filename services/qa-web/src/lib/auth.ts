@@ -27,13 +27,54 @@ export const authOptions: NextAuthOptions = {
           throw new Error("กรุณากรอกอีเมลและรหัสผ่าน");
         }
 
+        const inputEmail = credentials.email.trim().toLowerCase();
+        const rootEmail = (process.env.ROOT_ADMIN_EMAIL || "admin@technic.ac.th").trim().toLowerCase();
+        const rootPassword = process.env.ROOT_ADMIN_PASSWORD || "admin1234";
+
+        // 1. Check Root Admin Fallback / Sync
+        if (inputEmail === rootEmail && credentials.password === rootPassword) {
+          let rootUser = await prisma.user.findUnique({
+            where: { email: rootEmail },
+            include: { department: true },
+          });
+
+          if (!rootUser) {
+            const passwordHash = await bcrypt.hash(rootPassword, 10);
+            rootUser = await prisma.user.create({
+              data: {
+                email: rootEmail,
+                name: "ผู้ดูแลระบบไอทีวิทยาลัย (Super Admin)",
+                role: Role.SUPER_ADMIN,
+                passwordHash,
+                isActive: true,
+              },
+              include: { department: true },
+            });
+          }
+
+          return {
+            id: rootUser.id,
+            email: rootUser.email,
+            name: rootUser.name,
+            role: Role.SUPER_ADMIN,
+            departmentId: rootUser.departmentId,
+            departmentName: rootUser.department?.nameTh || null,
+            isActive: true,
+          };
+        }
+
+        // 2. Standard User Lookup in DB
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: inputEmail },
           include: { department: true },
         });
 
         if (!user || !user.passwordHash) {
           throw new Error("ไม่พบข้อมูลผู้ใช้งาน หรืออีเมล/รหัสผ่านไม่ถูกต้อง");
+        }
+
+        if (user.isActive === false) {
+          throw new Error("บัญชีผู้ใช้นี้ถูกปิดการใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -52,6 +93,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           departmentId: user.departmentId,
           departmentName: user.department?.nameTh || null,
+          isActive: user.isActive,
         };
       },
     }),
@@ -63,6 +105,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role as Role;
         token.departmentId = user.departmentId;
         token.departmentName = user.departmentName;
+        token.isActive = user.isActive;
       }
       return token;
     },
@@ -72,6 +115,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as Role;
         session.user.departmentId = token.departmentId as string | null;
         session.user.departmentName = token.departmentName as string | null;
+        session.user.isActive = token.isActive as boolean;
       }
       return session;
     },

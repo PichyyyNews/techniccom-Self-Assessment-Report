@@ -11,11 +11,11 @@ datasource db {
 }
 
 enum Role {
-  SUPER_ADMIN      // ผู้ดูแลระบบระดับวิทยาลัย
-  EXECUTIVE        // ผู้บริหาร
-  DEPARTMENT_HEAD  // หัวหน้าแผนกวิชา
-  FACULTY          // ครูผู้รับผิดชอบตัวบ่งชี้ / ครูในแผนก
-  AUDITOR          // คณะกรรมการประเมินคุณภาพภายใน
+  SUPER_ADMIN     // ผู้ดูแลระบบไอทีวิทยาลัย
+  QA_HEAD         // หัวหน้างานประกันคุณภาพแผนก/วิทยาลัย
+  DEPT_HEAD       // หัวหน้าแผนกวิชา
+  TEACHER         // ครูผู้รับผิดชอบตัวบ่งชี้
+  AUDITOR         // กรรมการตรวจประเมิน
 }
 
 enum AssessmentStatus {
@@ -31,17 +31,20 @@ enum AssessmentStatus {
 // ----------------------------------------------------
 model User {
   id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
+  email         String       @unique
   passwordHash  String?
-  role          Role         @default(FACULTY)
+  name          String
+  role          Role         @default(TEACHER)
   departmentId  String?
   department    Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  isActive      Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   assignedIndicators IndicatorAssignment[]
   auditFeedbacks     AuditFeedback[]
+
+  @@index([email])
 }
 
 model Department {
