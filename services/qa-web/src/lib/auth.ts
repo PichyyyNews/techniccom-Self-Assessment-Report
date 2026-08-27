@@ -101,7 +101,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role as Role;
@@ -111,10 +111,45 @@ export const authOptions: NextAuthOptions = {
         token.avatarUrl = user.avatarUrl;
         token.isActive = user.isActive;
       }
+      if (trigger === "update" && session) {
+        return { ...token, ...session.user };
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              position: true,
+              phone: true,
+              birthDate: true,
+              avatarUrl: true,
+              isActive: true,
+            },
+          });
+
+          if (dbUser) {
+            session.user.id = dbUser.id;
+            session.user.email = dbUser.email;
+            session.user.name = dbUser.name;
+            session.user.role = dbUser.role;
+            session.user.position = dbUser.position;
+            session.user.phone = dbUser.phone;
+            session.user.birthDate = dbUser.birthDate ? dbUser.birthDate.toISOString() : null;
+            session.user.avatarUrl = dbUser.avatarUrl;
+            session.user.isActive = dbUser.isActive;
+            return session;
+          }
+        } catch (e) {
+          console.error("Error refreshing session from DB:", e);
+        }
+
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
         session.user.position = token.position as string | null;
