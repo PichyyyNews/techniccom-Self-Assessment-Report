@@ -8,6 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "TechSAR - ระบบประกันคุณภาพและประเมินตนเองระดับแผนกวิชา",
   description: "ระบบบริหารจัดการงานประกันคุณภาพการศึกษาและจัดทำรายงาน SAR ระดับแผนกวิชา วิทยาลัยเทคนิค",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

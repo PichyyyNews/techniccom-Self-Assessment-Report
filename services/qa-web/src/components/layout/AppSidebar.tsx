@@ -76,9 +76,11 @@ export function AppSidebar({
             )}
             title="TechSAR - หน้าหลัก"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/25 flex-shrink-0">
-              <Shield className="h-5 w-5" />
-            </div>
+            <img
+              src="/logo.svg"
+              alt="TechSAR Logo"
+              className="h-10 w-10 rounded-xl object-contain flex-shrink-0 shadow-md shadow-blue-500/20"
+            />
 
             {!effectiveCollapsed && (
               <div className="overflow-hidden whitespace-nowrap animate-in fade-in duration-200">

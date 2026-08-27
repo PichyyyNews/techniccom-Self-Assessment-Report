@@ -43,8 +43,12 @@ export default function LoginPage() {
     <div className="w-full max-w-md px-4 sm:px-0">
       {/* Header & Logo */}
       <div className="mb-8 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-500/25">
-          <Shield className="h-9 w-9" />
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-white p-2 shadow-xl shadow-blue-500/20 border border-slate-200">
+          <img
+            src="/logo.svg"
+            alt="TechSAR Logo"
+            className="h-full w-full object-contain rounded-2xl"
+          />
         </div>
         <h1 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
           เข้าสู่ระบบ TechSAR
