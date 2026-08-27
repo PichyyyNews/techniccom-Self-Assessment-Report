@@ -1,0 +1,168 @@
+// Prisma Schema for TechSAR - Educational Quality Assurance System
+// Database: PostgreSQL 16 (Proxmox CT 102)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN      // ผู้ดูแลระบบระดับวิทยาลัย
+  EXECUTIVE        // ผู้บริหาร
+  DEPARTMENT_HEAD  // หัวหน้าแผนกวิชา
+  FACULTY          // ครูผู้รับผิดชอบตัวบ่งชี้ / ครูในแผนก
+  AUDITOR          // คณะกรรมการประเมินคุณภาพภายใน
+}
+
+enum AssessmentStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+// ----------------------------------------------------
+// NextAuth & User Models
+// ----------------------------------------------------
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  passwordHash  String?
+  role          Role         @default(FACULTY)
+  departmentId  String?
+  department    Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  assignedIndicators IndicatorAssignment[]
+  auditFeedbacks     AuditFeedback[]
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "TECH-COM", "AUTO", "ELEC"
+  nameTh      String   // e.g. "แผนกวิชาเทคโนโลยีคอมพิวเตอร์"
+  nameEn      String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  sarReports  SarReport[]
+}
+
+// ----------------------------------------------------
+// Quality Assurance Standards & Indicators
+// ----------------------------------------------------
+model AcademicYear {
+  id          String      @id @default(cuid())
+  year        Int         @unique // e.g. 2569
+  isActive    Boolean     @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  standards   Standard[]
+  sarReports  SarReport[]
+}
+
+model Standard {
+  id              String       @id @default(cuid())
+  academicYearId  String
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  standardNumber  Int          // 1, 2, 3, 4, 5
+  title           String       // e.g. "มาตรฐานที่ 1 คุณลักษณะของผู้สำเร็จการศึกษาอาชีวศึกษาที่พึงประสงค์"
+  description     String?
+  weight          Float        @default(1.0)
+  indicators      Indicator[]
+}
+
+model Indicator {
+  id              String       @id @default(cuid())
+  standardId      String
+  standard        Standard     @relation(fields: [standardId], references: [id], onDelete: Cascade)
+  indicatorCode   String       // e.g. "1.1", "1.2"
+  title           String       // e.g. "ด้านความรู้และทักษะวิชาชีพ"
+  criteria        String?      // เกณฑ์การประเมิน
+  maxScore        Float        @default(5.0)
+  weight          Float        @default(1.0)
+
+  assignments     IndicatorAssignment[]
+  evaluations     IndicatorEvaluation[]
+}
+
+// ----------------------------------------------------
+// SAR Reports, Evidence, & Evaluations
+// ----------------------------------------------------
+model SarReport {
+  id              String           @id @default(cuid())
+  departmentId    String
+  department      Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  academicYearId  String
+  academicYear    AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  status          AssessmentStatus @default(DRAFT)
+  totalScore      Float?
+  summaryStrengths String?         // จุดเด่น
+  summaryNeedsImprovement String?  // จุดที่ควรพัฒนา
+  actionPlan      String?          // แผนพัฒนาคุณภาพ
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  evaluations     IndicatorEvaluation[]
+
+  @@unique([departmentId, academicYearId])
+}
+
+model IndicatorAssignment {
+  id           String     @id @default(cuid())
+  indicatorId  String
+  indicator    Indicator  @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([indicatorId, userId])
+}
+
+model IndicatorEvaluation {
+  id              String     @id @default(cuid())
+  sarReportId     String
+  sarReport       SarReport  @relation(fields: [sarReportId], references: [id], onDelete: Cascade)
+  indicatorId     String
+  indicator       Indicator  @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  selfScore       Float?     // คะแนนประเมินตนเอง
+  auditScore      Float?     // คะแนนจากกรรมการ
+  performanceDesc String?    // ผลการดำเนินงาน
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  evidences       EvidenceFile[]
+  feedbacks       AuditFeedback[]
+
+  @@unique([sarReportId, indicatorId])
+}
+
+model EvidenceFile {
+  id                    String              @id @default(cuid())
+  indicatorEvaluationId String
+  indicatorEvaluation   IndicatorEvaluation @relation(fields: [indicatorEvaluationId], references: [id], onDelete: Cascade)
+  fileName              String
+  fileUrl               String              // MinIO Object Key / External URL
+  fileSize              Int?
+  mimeType              String?
+  isExternalLink        Boolean             @default(false)
+  uploadedAt            DateTime            @default(now())
+}
+
+model AuditFeedback {
+  id                    String              @id @default(cuid())
+  indicatorEvaluationId String
+  indicatorEvaluation   IndicatorEvaluation @relation(fields: [indicatorEvaluationId], references: [id], onDelete: Cascade)
+  auditorId             String
+  auditor               User                @relation(fields: [auditorId], references: [id], onDelete: Cascade)
+  comment               String
+  createdAt             DateTime            @default(now())
+}

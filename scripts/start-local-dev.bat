@@ -1,0 +1,9 @@
+@echo off
+echo Starting TechSAR Local Development Environment...
+cd ..\services\qa-web
+if not exist .env.local (
+    echo Copying .env.example to .env.local...
+    copy .env.example .env.local
+)
+echo Running npm run dev...
+npm run dev
