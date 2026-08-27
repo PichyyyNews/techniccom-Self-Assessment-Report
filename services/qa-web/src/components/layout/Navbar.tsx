@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import {
   User,
   Settings,
@@ -9,14 +10,14 @@ import {
   ChevronDown,
   Shield,
   Menu,
-  PanelLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 
 export function Navbar() {
   const { data: session } = useSession();
-  const { toggleCollapse, toggleMobile, isCollapsed } = useSidebar();
+  const pathname = usePathname();
+  const { toggleMobile } = useSidebar();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,9 +37,16 @@ export function Navbar() {
   const isRoot = session?.user?.role === "ROOT";
   const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
 
+  // Dynamic Page Title
+  const getPageTitle = () => {
+    if (pathname === "/dashboard") return "ภาพรวมและข้อมูลส่วนตัว";
+    if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งาน";
+    return "ระบบงานประกันคุณภาพ";
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-8 backdrop-blur transition-all">
-      {/* Left side: Hamburger Toggle & Breadcrumb Context */}
+      {/* Left side: Mobile Toggle & Page Title */}
       <div className="flex items-center gap-3">
         {/* Mobile Toggle Button */}
         <button
@@ -50,23 +58,9 @@ export function Navbar() {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Desktop Quick Collapse/Expand Toggle (when collapsed) */}
-        {isCollapsed && (
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition"
-            title="ขยายเมนู Sidebar"
-          >
-            <PanelLeft className="h-4 w-4" />
-            <span>ขยายเมนู</span>
-          </button>
-        )}
-
-        <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <span>ระบบบริหารจัดการประกันคุณภาพ</span>
-          <span>•</span>
-          <span className="text-blue-600 font-bold">TechSAR</span>
+        {/* Page Title (No redundant logo text) */}
+        <div className="text-sm font-bold text-slate-800">
+          {getPageTitle()}
         </div>
       </div>
 

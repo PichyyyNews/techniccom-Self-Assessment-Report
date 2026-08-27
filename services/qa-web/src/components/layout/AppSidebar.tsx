@@ -10,7 +10,6 @@ import {
   Shield,
   PanelLeftClose,
   PanelLeftOpen,
-  Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSidebar } from "./SidebarContext";
@@ -60,13 +59,14 @@ export function AppSidebar({
         isMobile
           ? "w-72 h-full p-5"
           : effectiveCollapsed
-          ? "w-20 min-h-screen p-3"
-          : "w-72 min-h-screen p-5"
+          ? "w-20 h-screen p-3"
+          : "w-72 h-screen p-5",
+        className
       )}
     >
       <div className="space-y-6">
-        {/* Top Header: Logo & Collapse Button */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 min-h-[48px]">
+        {/* Top Header: Logo & Collapse Button (Aligned with 64px Topbar) */}
+        <div className="flex h-12 items-center justify-between pb-3 border-b border-slate-100">
           <Link
             href="/dashboard"
             onClick={handleLinkClick}
@@ -111,7 +111,7 @@ export function AppSidebar({
 
         {/* Expand button when collapsed (Center top) */}
         {!isMobile && effectiveCollapsed && (
-          <div className="flex justify-center pt-1">
+          <div className="flex justify-center">
             <button
               type="button"
               onClick={toggleCollapse}
