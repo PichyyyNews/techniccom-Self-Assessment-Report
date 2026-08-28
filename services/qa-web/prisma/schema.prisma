@@ -11,11 +11,14 @@ datasource db {
 }
 
 enum LicenseType {
-  BASIC_TEACHER          // ใบอนุญาตประกอบวิชาชีพครู (ชั้นต้น)
-  ADVANCED_TEACHER       // ใบอนุญาตประกอบวิชาชีพครู (ชั้นสูง)
-  PROVISIONAL_TEACHING   // หนังสืออนุญาตให้ประกอบวิชาชีพทางการศึกษาโดยไม่มีใบอนุญาตประกอบวิชาชีพ
-  ADMINISTRATOR          // ใบอนุญาตประกอบวิชาชีพผู้บริหารสถานศึกษา
-  OTHER                  // อื่นๆ
+  KSP_A_LICENSE          // ใบอนุญาตประกอบวิชาชีพครูชั้นสูง (A-License - คุรุสภา)
+  KSP_B_LICENSE          // ใบอนุญาตประกอบวิชาชีพครูชั้นต้น (B-License - คุรุสภา)
+  KSP_P_LICENSE          // ใบอนุญาตปฏิบัติหน้าที่ครู (P-License - คุรุสภา)
+  KSP_PROVISIONAL        // หนังสืออนุญาตปฏิบัติการสอนโดยไม่มีใบประกอบฯ (หนังสือผ่อนผัน)
+  TPQI_CERTIFICATE       // หนังสือรับรองคุณวุฒิวิชาชีพ (สถาบันคุณวุฒิวิชาชีพ)
+  DSD_STANDARD           // หนังสือรับรองมาตรฐานฝีมือแรงงานแห่งชาติ (กรมพัฒนาฝีมือแรงงาน)
+  COE_ENGINEER           // ใบประกอบวิชาชีพวิศวกรรมควบคุม (กว.)
+  OTHER_PROFESSIONAL     // ใบประกอบวิชาชีพควบคุมอื่นๆ
 }
 
 enum LicenseStatus {
@@ -51,53 +54,56 @@ model ActivityLog {
 }
 
 model TeacherLicense {
-  id              String         @id @default(cuid())
-  userId          String         @unique // ครู 1 คนต่อ 1 ข้อมูลใบอนุญาตหลัก
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  licenseType     LicenseType    @default(BASIC_TEACHER)
-  licenseNumber   String         // เลขที่ใบอนุญาต
-  requestNumber   String?        // เลขที่คำขอ (กรณีอยู่ระหว่างต่ออายุหรือขอรับใบอนุญาต)
-  nameTh          String?        // ชื่อ-นามสกุลภาษาไทยตามหน้าบัตร
-  nameEn          String?        // ชื่อ-นามสกุลภาษาอังกฤษตามหน้าบัตร
-  issuedDate      DateTime       // วันที่ออกบัตร
-  expiredDate     DateTime       // วันที่หมดอายุ
-  status          LicenseStatus  @default(ACTIVE)
+  licenseType       LicenseType   @default(KSP_B_LICENSE)
+  licenseNumber     String        // เลขที่ใบอนุญาต หรือ เลขที่หนังสือรับรอง
+  title             String?       // ระบุสาขา/ระดับ (เช่น "สาขาวิศวกรรมคอมพิวเตอร์", "ระดับ 2", "สาขาเทคโนโลยีสารสนเทศ ระดับ 4")
+  provisionalRound  Int?          // ครั้งที่ได้รับการผ่อนผัน (เฉพาะกรณี KSP_PROVISIONAL: 1, 2, 3)
+  
+  nameTh            String?       // ชื่อ-นามสกุลภาษาไทยตามหน้าบัตร
+  nameEn            String?       // ชื่อ-นามสกุลภาษาอังกฤษตามหน้าบัตร
+  issuedDate        DateTime      // วันที่ออกบัตร / วันที่ได้รับหนังสือรับรอง
+  expiredDate       DateTime      // วันที่หมดอายุ
+  status            LicenseStatus @default(ACTIVE)
 
-  // ไฟล์แนบหลักฐาน (สแกนบัตร / PDF จากคุรุสภา KSP Self-Service)
-  attachmentKey   String?        // S3/MinIO Key หรือ Application URL ของไฟล์เอกสาร
-  attachmentName  String?        // ชื่อไฟล์เดิม
+  // ไฟล์แนบหลักฐาน (สแกนบัตร / PDF จากคุรุสภา KSP Self-Service / TPQI / DSD)
+  attachmentKey     String?       // S3/MinIO Key หรือ Application URL ของไฟล์เอกสาร
+  attachmentName    String?       // ชื่อไฟล์เดิม
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([userId])
+  @@index([licenseType])
   @@index([expiredDate])
 }
 
 model User {
-  id               String          @id @default(cuid())
-  email            String          @unique
+  id               String           @id @default(cuid())
+  email            String           @unique
   passwordHash     String?
   name             String
-  roleCode         String          @default("STAFF") // code reference
+  roleCode         String           @default("STAFF") // code reference
   roleDefinitionId String?
-  roleDefinition   RoleDefinition? @relation(fields: [roleDefinitionId], references: [id])
-  position         String?         // ตำแหน่ง เช่น ครูผู้ช่วย, ครูชำนาญการ, เจ้าหน้าที่ธุรการ
-  phone            String?         // เบอร์โทรศัพท์
-  birthDate        DateTime?       // วันเดือนปีเกิด
-  avatarUrl        String?         // URL รูปประจำตัว
-  coverUrl         String?         // ภาพหน้าปกโปรไฟล์ (Cover photo)
-  bio              String?         // คำแนะนำตัว / ปรัชญาการศึกษา
-  education        Json?           // วุฒิการศึกษา [{ degree, major, institution, year }]
-  workHistory      Json?           // ประวัติการทำงาน [{ role, organization, period }]
-  licenses         Json?           // ใบอนุญาตประกอบวิชาชีพทั่วไป / อื่นๆ
-  teacherLicense   TeacherLicense? // ข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)
-  skills           String[]        // ทักษะ / ความเชี่ยวชาญ
-  isActive         Boolean         @default(true)
+  roleDefinition   RoleDefinition?  @relation(fields: [roleDefinitionId], references: [id])
+  position         String?          // ตำแหน่ง เช่น ครูผู้ช่วย, ครูชำนาญการ, เจ้าหน้าที่ธุรการ
+  phone            String?          // เบอร์โทรศัพท์
+  birthDate        DateTime?        // วันเดือนปีเกิด
+  avatarUrl        String?          // URL รูปประจำตัว
+  coverUrl         String?          // ภาพหน้าปกโปรไฟล์ (Cover photo)
+  bio              String?          // คำแนะนำตัว / ปรัชญาการศึกษา
+  education        Json?            // วุฒิการศึกษา [{ degree, major, institution, year }]
+  workHistory      Json?            // ประวัติการทำงาน [{ role, organization, period }]
+  licenses         Json?            // ใบอนุญาตประกอบวิชาชีพทั่วไป / อื่นๆ
+  teacherLicenses  TeacherLicense[] // ข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาและคุณวุฒิวิชาชีพ (คุรุสภา / TPQI / DSD / กว.)
+  skills           String[]         // ทักษะ / ความเชี่ยวชาญ
+  isActive         Boolean          @default(true)
   activities       ActivityLog[]
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([email])
 }

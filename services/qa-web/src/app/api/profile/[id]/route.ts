@@ -42,7 +42,7 @@ export async function GET(
       userPermissions.includes("profile.edit_all") ||
       userPermissions.includes("/admin/users");
 
-    // 1. Fetch user data with role definition and teacher license
+    // 1. Fetch user data with role definition and teacher licenses
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -55,7 +55,9 @@ export async function GET(
             permissions: true,
           },
         },
-        teacherLicense: true,
+        teacherLicenses: {
+          orderBy: { issuedDate: "desc" },
+        },
       },
     });
 
@@ -141,18 +143,52 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { section } = body;
+    const { section, action } = body;
 
     const updateData: any = {};
     let activityTitle = "อัปเดตข้อมูลโปรไฟล์";
     let activityAction = "UPDATE_PROFILE";
 
-    // Handle TeacherLicense (คุรุสภา) Upsert
+    // Handle TeacherLicense (คุรุสภา / TPQI / DSD / กว.)
     if (section === "teacherLicense") {
+      // 1. Delete Action
+      if (action === "delete") {
+        const { licenseId } = body;
+        if (!licenseId) {
+          return NextResponse.json({ error: "ไม่พบรหัสใบอนุญาตที่ต้องการลบ" }, { status: 400 });
+        }
+
+        await prisma.teacherLicense.deleteMany({
+          where: { id: licenseId, userId: id },
+        });
+
+        await logActivity(
+          id,
+          "DELETE_TEACHER_LICENSE",
+          isSelf
+            ? "ลบข้อมูลใบอนุญาต/คุณวุฒิวิชาชีพ"
+            : `ลบข้อมูลใบอนุญาต/คุณวุฒิวิชาชีพ (โดย ${session.user.name || "ผู้ดูแลระบบ"})`,
+          { licenseId, editorId: session.user.id }
+        );
+
+        const updatedUser = await prisma.user.findUnique({
+          where: { id },
+          include: { roleDefinition: true, teacherLicenses: { orderBy: { issuedDate: "desc" } } },
+        });
+
+        return NextResponse.json({
+          message: "ลบข้อมูลใบอนุญาต/คุณวุฒิวิชาชีพเรียบร้อยแล้ว",
+          user: updatedUser,
+        });
+      }
+
+      // 2. Create or Update Action
       const {
+        licenseId,
         licenseType,
         licenseNumber,
-        requestNumber,
+        title,
+        provisionalRound,
         nameTh,
         nameEn,
         issuedDate,
@@ -163,11 +199,11 @@ export async function PUT(
       } = body;
 
       if (!licenseNumber || !licenseNumber.trim()) {
-        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาต" }, { status: 400 });
+        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาตหรือเลขที่หนังสือรับรอง" }, { status: 400 });
       }
 
       if (!issuedDate || !expiredDate) {
-        return NextResponse.json({ error: "กรุณาระบุวันที่ออกบัตรและวันหมดอายุ" }, { status: 400 });
+        return NextResponse.json({ error: "กรุณาระบุวันที่ออกและวันหมดอายุ" }, { status: 400 });
       }
 
       const issueDt = new Date(issuedDate);
@@ -187,54 +223,55 @@ export async function PUT(
         }
       }
 
-      const savedLicense = await prisma.teacherLicense.upsert({
-        where: { userId: id },
-        create: {
-          userId: id,
-          licenseType: licenseType || "BASIC_TEACHER",
-          licenseNumber: licenseNumber.trim(),
-          requestNumber: requestNumber ? requestNumber.trim() : null,
-          nameTh: nameTh ? nameTh.trim() : null,
-          nameEn: nameEn ? nameEn.trim() : null,
-          issuedDate: issueDt,
-          expiredDate: expireDt,
-          status: computedStatus,
-          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
-          attachmentName: attachmentName ? attachmentName.trim() : null,
-        },
-        update: {
-          licenseType: licenseType || "BASIC_TEACHER",
-          licenseNumber: licenseNumber.trim(),
-          requestNumber: requestNumber ? requestNumber.trim() : null,
-          nameTh: nameTh ? nameTh.trim() : null,
-          nameEn: nameEn ? nameEn.trim() : null,
-          issuedDate: issueDt,
-          expiredDate: expireDt,
-          status: computedStatus,
-          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
-          attachmentName: attachmentName ? attachmentName.trim() : null,
-        },
-      });
+      const payload = {
+        licenseType: licenseType || "KSP_B_LICENSE",
+        licenseNumber: licenseNumber.trim(),
+        title: title ? title.trim() : null,
+        provisionalRound: licenseType === "KSP_PROVISIONAL" && provisionalRound ? Number(provisionalRound) : null,
+        nameTh: nameTh ? nameTh.trim() : null,
+        nameEn: nameEn ? nameEn.trim() : null,
+        issuedDate: issueDt,
+        expiredDate: expireDt,
+        status: computedStatus,
+        attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+        attachmentName: attachmentName ? attachmentName.trim() : null,
+      };
+
+      let savedLicense;
+      if (licenseId) {
+        savedLicense = await prisma.teacherLicense.update({
+          where: { id: licenseId },
+          data: payload,
+        });
+      } else {
+        savedLicense = await prisma.teacherLicense.create({
+          data: {
+            userId: id,
+            ...payload,
+          },
+        });
+      }
 
       activityTitle = isSelf
-        ? "อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)"
-        : `อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
+        ? "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพ / คุณวุฒิวิชาชีพ"
+        : `บันทึกข้อมูลใบอนุญาต/คุณวุฒิวิชาชีพ (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
       activityAction = "UPDATE_TEACHER_LICENSE";
 
       await logActivity(id, activityAction, activityTitle, {
         licenseType,
         licenseNumber,
+        title,
         editorId: session.user.id,
         editorName: session.user.name,
       });
 
       const updatedUser = await prisma.user.findUnique({
         where: { id },
-        include: { roleDefinition: true, teacherLicense: true },
+        include: { roleDefinition: true, teacherLicenses: { orderBy: { issuedDate: "desc" } } },
       });
 
       return NextResponse.json({
-        message: "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาสำเร็จ",
+        message: "บันทึกข้อมูลใบอนุญาตและคุณวุฒิวิชาชีพเรียบร้อยแล้ว",
         user: updatedUser,
         teacherLicense: savedLicense,
       });
@@ -315,7 +352,9 @@ export async function PUT(
       data: updateData,
       include: {
         roleDefinition: true,
-        teacherLicense: true,
+        teacherLicenses: {
+          orderBy: { issuedDate: "desc" },
+        },
       },
     });
 

@@ -40,11 +40,16 @@ function calculateAge(birthDateString?: string | Date | null) {
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // Fetch full user details from DB including teacherLicense
+  // Fetch full user details from DB including teacherLicenses
   const user = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { roleDefinition: true, teacherLicense: true },
+        include: {
+          roleDefinition: true,
+          teacherLicenses: {
+            orderBy: { issuedDate: "desc" },
+          },
+        },
       })
     : null;
 
@@ -86,29 +91,37 @@ export default async function DashboardPage() {
 
   // Personal Teacher License Status Check
   let licenseAlert: {
-    type: "expired" | "expiring" | "renewal" | "missing";
+    type: "expired" | "expiring" | "renewal" | "missing" | "provisional3";
     title: string;
     description: string;
     daysLeft?: number;
   } | null = null;
 
   if (user) {
-    if (!user.teacherLicense) {
+    const kspLicense = user.teacherLicenses?.find((l) =>
+      ["KSP_A_LICENSE", "KSP_B_LICENSE", "KSP_P_LICENSE", "KSP_PROVISIONAL"].includes(l.licenseType)
+    );
+
+    if (!kspLicense) {
       licenseAlert = {
         type: "missing",
-        title: "ยังไม่ได้บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)",
+        title: "ยังไม่ได้บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา / หนังสือผ่อนผัน)",
         description: "กรุณากรอกข้อมูลและแนบไฟล์หลักฐานเพื่อใช้ในรายงานประเมินตนเอง (SAR)",
       };
-    } else if (user.teacherLicense.status === "IN_RENEWAL") {
+    } else if (kspLicense.licenseType === "KSP_PROVISIONAL" && kspLicense.provisionalRound === 3) {
+      licenseAlert = {
+        type: "provisional3",
+        title: "หนังสือผ่อนผันคุรุสภาครั้งที่ 3 (ครั้งสุดท้ายตามระเบียบ สอศ.)",
+        description: "กรุณาเร่งสำเร็จคุณวุฒิครู / ป.บัณฑิต หรือสอบผ่านเกณฑ์คุรุสภาเพื่อขอ B-License ก่อนหนังสือผ่อนผันหมดอายุ",
+      };
+    } else if (kspLicense.status === "IN_RENEWAL") {
       licenseAlert = {
         type: "renewal",
         title: "ใบอนุญาตประกอบวิชาชีพอยู่ระหว่างดำเนินการต่ออายุ",
-        description: user.teacherLicense.requestNumber
-          ? `เลขที่คำขอ: ${user.teacherLicense.requestNumber} (รอผลการพิจารณาจากคุรุสภา)`
-          : "รอผลการพิจารณาจากคุรุสภา",
+        description: "รอผลการพิจารณาอนุมัติจากคุรุสภา",
       };
-    } else if (user.teacherLicense.expiredDate) {
-      const exp = new Date(user.teacherLicense.expiredDate);
+    } else if (kspLicense.expiredDate) {
+      const exp = new Date(kspLicense.expiredDate);
       const today = new Date();
       const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 

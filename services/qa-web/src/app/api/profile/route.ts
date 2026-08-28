@@ -16,7 +16,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // 1. Fetch user data with role definition and teacher license
+    // 1. Fetch user data with role definition and teacher licenses
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -29,7 +29,9 @@ export async function GET() {
             permissions: true,
           },
         },
-        teacherLicense: true,
+        teacherLicenses: {
+          orderBy: { issuedDate: "desc" },
+        },
       },
     });
 
@@ -84,14 +86,46 @@ export async function PUT(req: Request) {
 
     const userId = session.user.id;
     const body = await req.json();
-    const { section } = body;
+    const { section, action } = body;
 
-    // Handle TeacherLicense (คุรุสภา) Upsert
+    // Handle TeacherLicense (คุรุสภา / คุณวุฒิวิชาชีพ TPQI / มาตรฐานฝีมือแรงงาน DSD / กว.)
     if (section === "teacherLicense") {
+      // 1. Delete Action
+      if (action === "delete") {
+        const { licenseId } = body;
+        if (!licenseId) {
+          return NextResponse.json({ error: "ไม่พบรหัสใบอนุญาตที่ต้องการลบ" }, { status: 400 });
+        }
+
+        await prisma.teacherLicense.deleteMany({
+          where: { id: licenseId, userId },
+        });
+
+        await logActivity(
+          userId,
+          "DELETE_TEACHER_LICENSE",
+          "ลบข้อมูลใบอนุญาตประกอบวิชาชีพ/คุณวุฒิวิชาชีพ",
+          { licenseId }
+        );
+
+        const updatedUser = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { roleDefinition: true, teacherLicenses: { orderBy: { issuedDate: "desc" } } },
+        });
+
+        return NextResponse.json({
+          message: "ลบข้อมูลใบอนุญาต/คุณวุฒิวิชาชีพเรียบร้อยแล้ว",
+          user: updatedUser,
+        });
+      }
+
+      // 2. Create or Update Action
       const {
+        licenseId,
         licenseType,
         licenseNumber,
-        requestNumber,
+        title,
+        provisionalRound,
         nameTh,
         nameEn,
         issuedDate,
@@ -102,11 +136,11 @@ export async function PUT(req: Request) {
       } = body;
 
       if (!licenseNumber || !licenseNumber.trim()) {
-        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาต" }, { status: 400 });
+        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาตหรือเลขที่หนังสือรับรอง" }, { status: 400 });
       }
 
       if (!issuedDate || !expiredDate) {
-        return NextResponse.json({ error: "กรุณาระบุวันที่ออกบัตรและวันหมดอายุ" }, { status: 400 });
+        return NextResponse.json({ error: "กรุณาระบุวันที่ออกและวันหมดอายุ" }, { status: 400 });
       }
 
       const issueDt = new Date(issuedDate);
@@ -127,49 +161,51 @@ export async function PUT(req: Request) {
         }
       }
 
-      const savedLicense = await prisma.teacherLicense.upsert({
-        where: { userId },
-        create: {
-          userId,
-          licenseType: licenseType || "BASIC_TEACHER",
-          licenseNumber: licenseNumber.trim(),
-          requestNumber: requestNumber ? requestNumber.trim() : null,
-          nameTh: nameTh ? nameTh.trim() : null,
-          nameEn: nameEn ? nameEn.trim() : null,
-          issuedDate: issueDt,
-          expiredDate: expireDt,
-          status: computedStatus,
-          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
-          attachmentName: attachmentName ? attachmentName.trim() : null,
-        },
-        update: {
-          licenseType: licenseType || "BASIC_TEACHER",
-          licenseNumber: licenseNumber.trim(),
-          requestNumber: requestNumber ? requestNumber.trim() : null,
-          nameTh: nameTh ? nameTh.trim() : null,
-          nameEn: nameEn ? nameEn.trim() : null,
-          issuedDate: issueDt,
-          expiredDate: expireDt,
-          status: computedStatus,
-          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
-          attachmentName: attachmentName ? attachmentName.trim() : null,
-        },
-      });
+      const payload = {
+        licenseType: licenseType || "KSP_B_LICENSE",
+        licenseNumber: licenseNumber.trim(),
+        title: title ? title.trim() : null,
+        provisionalRound: licenseType === "KSP_PROVISIONAL" && provisionalRound ? Number(provisionalRound) : null,
+        nameTh: nameTh ? nameTh.trim() : null,
+        nameEn: nameEn ? nameEn.trim() : null,
+        issuedDate: issueDt,
+        expiredDate: expireDt,
+        status: computedStatus,
+        attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+        attachmentName: attachmentName ? attachmentName.trim() : null,
+      };
+
+      let savedLicense;
+      if (licenseId) {
+        // Update existing license
+        savedLicense = await prisma.teacherLicense.update({
+          where: { id: licenseId },
+          data: payload,
+        });
+      } else {
+        // Create new license
+        savedLicense = await prisma.teacherLicense.create({
+          data: {
+            userId,
+            ...payload,
+          },
+        });
+      }
 
       await logActivity(
         userId,
         "UPDATE_TEACHER_LICENSE",
-        "อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)",
-        { licenseType, licenseNumber }
+        "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพ / คุณวุฒิวิชาชีพ",
+        { licenseType, licenseNumber, title }
       );
 
       const updatedUser = await prisma.user.findUnique({
         where: { id: userId },
-        include: { roleDefinition: true, teacherLicense: true },
+        include: { roleDefinition: true, teacherLicenses: { orderBy: { issuedDate: "desc" } } },
       });
 
       return NextResponse.json({
-        message: "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาสำเร็จ",
+        message: "บันทึกข้อมูลใบอนุญาตและคุณวุฒิวิชาชีพเรียบร้อยแล้ว",
         user: updatedUser,
         teacherLicense: savedLicense,
       });
@@ -240,7 +276,9 @@ export async function PUT(req: Request) {
       data: updateData,
       include: {
         roleDefinition: true,
-        teacherLicense: true,
+        teacherLicenses: {
+          orderBy: { issuedDate: "desc" },
+        },
       },
     });
 
