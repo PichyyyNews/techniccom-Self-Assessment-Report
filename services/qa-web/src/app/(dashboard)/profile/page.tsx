@@ -727,25 +727,25 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
       <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         {/* Cover Graphic Banner */}
-        <div className="h-36 sm:h-52 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative">
+        <div className="h-28 sm:h-52 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative">
           <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
         </div>
 
         {/* Profile Identity Layout */}
-        <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-0">
+        <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-0">
           {/* Top Floating Row: Avatar (Left) + Action Buttons (Right) */}
-          <div className="flex items-end justify-between -mt-14 sm:-mt-20 mb-4 sm:mb-5">
+          <div className="flex items-end justify-between -mt-10 sm:-mt-20 mb-3 sm:mb-5">
             {/* Avatar with Camera Trigger */}
-            <div className="relative group">
+            <div className="relative group flex-shrink-0">
               {user?.avatarUrl && !avatarError ? (
                 <img
                   src={user.avatarUrl}
                   alt={user.name}
                   onError={() => setAvatarError(true)}
-                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
+                  className="h-20 w-20 sm:h-36 sm:w-36 rounded-2xl sm:rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
                 />
               ) : (
-                <div className="flex h-28 w-28 sm:h-36 sm:w-36 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-3xl sm:text-4xl border-4 border-white shadow-xl shadow-slate-900/10">
+                <div className="flex h-20 w-20 sm:h-36 sm:w-36 items-center justify-center rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl sm:text-4xl border-4 border-white shadow-xl shadow-slate-900/10">
                   {user?.name ? user.name.charAt(0) : "U"}
                 </div>
               )}
@@ -755,22 +755,21 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 <button
                   type="button"
                   onClick={openBasicModal}
-                  className="absolute bottom-1 right-1 p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
+                  className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 p-1.5 sm:p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
                   title="เปลี่ยนรูปประจำตัว"
                 >
-                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
                 </button>
               )}
             </div>
 
-            {/* Quick Action Buttons (Share Profile + Edit if canEdit) */}
-            <div className="flex items-center gap-2">
-              {/* Share / Copy Profile Link Button */}
+            {/* Desktop Action Buttons (sm:flex) */}
+            <div className="hidden sm:flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleCopyLink}
                 className={clsx(
-                  "inline-flex items-center justify-center gap-1.5 rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition active:scale-95 shadow-2xs border",
+                  "inline-flex items-center justify-center gap-1.5 rounded-2xl px-4 py-3 text-sm font-bold transition active:scale-95 shadow-2xs border",
                   copied
                     ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/25"
                     : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -790,38 +789,74 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 )}
               </button>
 
-              {/* Edit Buttons if authorized */}
-              {canEdit ? (
+              {canEdit && (
                 <>
                   <button
                     onClick={openBasicModal}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
                   >
                     <Edit3 className="h-4 w-4" />
-                    แก้ไขข้อมูลส่วนตัว
+                    <span>แก้ไขข้อมูลส่วนตัว</span>
                   </button>
 
                   <button
                     onClick={openPasswordModal}
-                    className="p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    className="p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
                     title="เปลี่ยนรหัสผ่าน"
                   >
                     <Key className="h-4 w-4 text-slate-500" />
                   </button>
                 </>
-              ) : null}
+              )}
+            </div>
+
+            {/* Mobile Action Buttons (sm:hidden - compact & robust) */}
+            <div className="flex sm:hidden items-center gap-1.5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className={clsx(
+                  "p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 shadow-2xs flex items-center justify-center",
+                  copied
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                )}
+                title="แชร์โปรไฟล์"
+              >
+                {copied ? <Check className="h-4 w-4 text-white" /> : <Share2 className="h-4 w-4 text-slate-600" />}
+              </button>
+
+              {canEdit && (
+                <>
+                  <button
+                    onClick={openBasicModal}
+                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>แก้ไข</span>
+                  </button>
+
+                  <button
+                    onClick={openPasswordModal}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    title="เปลี่ยนรหัสผ่าน"
+                  >
+                    <Key className="h-4 w-4 text-slate-600" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* User Name & Details Section (100% Inside White Card) */}
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
                 {user?.name}
               </h1>
               <span
                 className={clsx(
-                  "inline-flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-black border",
+                  "inline-flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xl text-xs font-black border",
                   getBadgeStyle(roleColor)
                 )}
               >
@@ -918,43 +953,43 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
         return (
           <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/20 flex-shrink-0">
+                <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/20 flex-shrink-0">
                   <Scroll className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                      ใบอนุญาตประกอบวิชาชีพและคุณวุฒิวิชาชีพครู (สอศ.)
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base lg:text-lg font-black text-slate-900 leading-tight">
+                      ใบอนุญาตประกอบวิชาชีพและคุณวุฒิวิชาชีพครู
                     </h3>
                     <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[10px] font-black bg-teal-50 text-teal-700 border border-teal-200">
                       SAR มาตรฐานวิชาชีพครูและสาขาช่าง
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    คุรุสภา (A/B/P-License / ผ่อนผัน) • คุณวุฒิวิชาชีพ (TPQI) • มาตรฐานฝีมือแรงงาน (DSD) • สภาวิศวกร (กว.)
+                  <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                    คุรุสภา (A/B/P-License / ผ่อนผัน) • TPQI • มาตรฐานฝีมือแรงงาน (DSD) • กว.
                   </p>
                 </div>
               </div>
 
               {canEdit && (
-                <div className="flex items-center gap-2 flex-wrap flex-shrink-0 self-start sm:self-auto">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => openTeacherLicenseModal(undefined, "KSP_B_LICENSE")}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-sm shadow-teal-500/20 active:scale-95"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-sm shadow-teal-500/20 active:scale-95 whitespace-nowrap"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    + ใบอนุญาตคุรุสภา / ผ่อนผัน
+                    <span>+ คุรุสภา/ผ่อนผัน</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => openTeacherLicenseModal(undefined, "TPQI_CERTIFICATE")}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900 transition shadow-sm active:scale-95"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900 transition shadow-sm active:scale-95 whitespace-nowrap"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    + คุณวุฒิ TPQI / DSD / กว.
+                    <span>+ คุณวุฒิ TPQI/DSD</span>
                   </button>
                 </div>
               )}
@@ -962,31 +997,33 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
             {/* Subsection 1: Khurusapha Teaching Licenses */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-teal-800 flex items-center gap-1.5">
-                    <GraduationCap className="h-4 w-4 text-teal-600" />
-                    1. ใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา / หนังสือผ่อนผัน)
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-                    {kspLicenses.length} รายการ
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <GraduationCap className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                  <span className="text-xs font-black uppercase tracking-wider text-teal-800 leading-snug">
+                    1. ใบอนุญาตคุรุสภา / หนังสือผ่อนผัน
+                    <span className="hidden sm:inline"> (วิชาชีพทางการศึกษา)</span>
                   </span>
                 </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 flex-shrink-0 whitespace-nowrap">
+                  {kspLicenses.length} รายการ
+                </span>
               </div>
 
               {kspLicenses.length === 0 ? (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-teal-50/50 via-slate-50 to-white border border-teal-100 text-xs">
-                  <div className="flex items-center gap-2.5 text-slate-600">
-                    <FileBadge className="h-4 w-4 text-teal-600 flex-shrink-0" />
-                    <span>ยังไม่มีข้อมูลใบอนุญาตคุรุสภา (A-License / B-License / P-License หรือหนังสือผ่อนผันสำหรับครูพิเศษสอน)</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-teal-50/50 via-slate-50 to-white border border-teal-100 text-xs">
+                  <div className="flex items-start sm:items-center gap-2.5 text-slate-600">
+                    <FileBadge className="h-4 w-4 text-teal-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <span className="leading-relaxed">ยังไม่มีข้อมูลใบอนุญาตคุรุสภา (A-License / B-License / P-License หรือหนังสือผ่อนผันสำหรับครูพิเศษสอน)</span>
                   </div>
                   {canEdit && (
                     <button
                       type="button"
                       onClick={() => openTeacherLicenseModal(undefined, "KSP_B_LICENSE")}
-                      className="text-teal-700 font-bold hover:underline flex-shrink-0"
+                      className="inline-flex items-center justify-center gap-1 text-teal-700 font-bold hover:underline self-end sm:self-auto flex-shrink-0 py-1"
                     >
-                      + กรอกข้อมูลคุรุสภา
+                      <Plus className="h-3 w-3" />
+                      <span>กรอกข้อมูลคุรุสภา</span>
                     </button>
                   )}
                 </div>
@@ -1139,33 +1176,35 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
             {/* Subsection 2: Vocational & Technical Skill Standards (TPQI / DSD / COE / International) */}
             <div className="space-y-3 pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Award className="h-4 w-4 text-emerald-600" />
-                    2. คุณวุฒิวิชาชีพและมาตรฐานฝีมือแรงงานเฉพาะทาง (TPQI / DSD / กว. / สากล)
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {vocationalLicenses.length} รายการ
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Award className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 leading-snug">
+                    2. คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ
+                    <span className="hidden sm:inline"> (TPQI / DSD / กว. / สากล)</span>
                   </span>
                 </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0 whitespace-nowrap">
+                  {vocationalLicenses.length} รายการ
+                </span>
               </div>
 
               {vocationalLicenses.length === 0 ? (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-emerald-50/50 via-slate-50 to-white border border-emerald-100 text-xs">
-                  <div className="flex items-center gap-2.5 text-slate-600">
-                    <Sparkles className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                    <span>
-                      ยังไม่มีข้อมูลคุณวุฒิวิชาชีพ (TPQI), มาตรฐานฝีมือแรงงาน (DSD), หรือใบประกอบวิชาชีพวิศวกรรม (กว.) สำหรับแผนกเทคโนโลยีคอมพิวเตอร์/ช่าง
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50/50 via-slate-50 to-white border border-emerald-100 text-xs">
+                  <div className="flex items-start sm:items-center gap-2.5 text-slate-600">
+                    <Sparkles className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <span className="leading-relaxed">
+                      ยังไม่มีข้อมูลคุณวุฒิวิชาชีพ (TPQI), มาตรฐานฝีมือแรงงาน (DSD), หรือใบประกอบวิชาชีพวิศวกรรม (กว.)
                     </span>
                   </div>
                   {canEdit && (
                     <button
                       type="button"
                       onClick={() => openTeacherLicenseModal(undefined, "TPQI_CERTIFICATE")}
-                      className="text-emerald-700 font-bold hover:underline flex-shrink-0"
+                      className="inline-flex items-center justify-center gap-1 text-emerald-700 font-bold hover:underline self-end sm:self-auto flex-shrink-0 py-1"
                     >
-                      + เพิ่มคุณวุฒิสายอาชีพ
+                      <Plus className="h-3 w-3" />
+                      <span>เพิ่มคุณวุฒิสายอาชีพ</span>
                     </button>
                   )}
                 </div>
