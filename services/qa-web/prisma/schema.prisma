@@ -17,6 +17,22 @@ enum LicenseStatus {
   IN_RENEWAL
 }
 
+model LicenseCategoryConfig {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "ksp", "vocational", "other", "custom_..."
+  title       String   // e.g. "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)"
+  description String?  // e.g. "มาตรฐานวิชาชีพครูสำหรับสถานศึกษา"
+  icon        String   @default("GraduationCap") // "GraduationCap" | "Award" | "Shield" | "FileBadge" | "Briefcase" | "Sparkles"
+  color       String   @default("teal") // "teal" | "emerald" | "blue" | "purple" | "amber" | "indigo" | "rose" | "slate"
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
 model LicenseTypeConfig {
   id                      String   @id @default(cuid())
   code                    String   @unique // e.g. "KSP_B_LICENSE", "TPQI_CERTIFICATE", "CUSTOM_..."

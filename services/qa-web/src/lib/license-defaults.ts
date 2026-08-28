@@ -187,8 +187,65 @@ export const DEFAULT_LICENSE_CONFIGS: DefaultLicenseConfigItem[] = [
   },
 ];
 
+export interface DefaultLicenseCategoryItem {
+  code: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+  isSystem: boolean;
+}
+
+export const DEFAULT_LICENSE_CATEGORIES: DefaultLicenseCategoryItem[] = [
+  {
+    code: "ksp",
+    title: "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)",
+    description: "มาตรฐานวิชาชีพครูและหนังสือผ่อนผันคุรุสภาสำหรับครูพิเศษสอน",
+    icon: "GraduationCap",
+    color: "teal",
+    sortOrder: 1,
+    isActive: true,
+    isSystem: true,
+  },
+  {
+    code: "vocational",
+    title: "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)",
+    description: "คุณวุฒิวิชาชีพและมาตรฐานฝีมือแรงงานเฉพาะทางสายช่างและเทคโนโลยี",
+    icon: "Award",
+    color: "emerald",
+    sortOrder: 2,
+    isActive: true,
+    isSystem: true,
+  },
+  {
+    code: "other",
+    title: "ใบรับรองมาตรฐานสากลและอื่นๆ",
+    description: "ใบรับรองมาตรฐานสากล Certifications เฉพาะทาง",
+    icon: "Sparkles",
+    color: "blue",
+    sortOrder: 3,
+    isActive: true,
+    isSystem: false,
+  },
+];
+
 export async function ensureDefaultLicenseConfigs() {
   try {
+    // Seed Categories
+    const categoryCount = await prisma.licenseCategoryConfig.count();
+    if (categoryCount === 0) {
+      for (const cat of DEFAULT_LICENSE_CATEGORIES) {
+        await prisma.licenseCategoryConfig.upsert({
+          where: { code: cat.code },
+          create: cat,
+          update: {},
+        });
+      }
+    }
+
+    // Seed License Types
     const count = await prisma.licenseTypeConfig.count();
     if (count === 0) {
       for (const item of DEFAULT_LICENSE_CONFIGS) {

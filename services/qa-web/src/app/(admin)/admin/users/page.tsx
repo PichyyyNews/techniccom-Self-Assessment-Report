@@ -36,9 +36,25 @@ import {
   Check,
   AlertTriangle,
   Layers,
+  FolderPlus,
+  Folder,
+  Settings2,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { clsx } from "clsx";
+
+export interface LicenseCategoryItem {
+  id: string;
+  code: string;
+  title: string;
+  description?: string | null;
+  icon: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+  isSystem: boolean;
+  licenseCount?: number;
+}
 
 interface RoleDef {
   id: string;
@@ -297,6 +313,24 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Category State
+  const [categories, setCategories] = useState<LicenseCategoryItem[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [showCategoryManagerModal, setShowCategoryManagerModal] = useState(false);
+  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
+  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">("create");
+  const [selectedCategory, setSelectedCategory] = useState<LicenseCategoryItem | null>(null);
+  const [categoryFormSubmitting, setCategoryFormSubmitting] = useState(false);
+  const [categoryFormData, setCategoryFormData] = useState({
+    code: "",
+    title: "",
+    description: "",
+    icon: "GraduationCap",
+    color: "teal",
+    sortOrder: 0,
+    isActive: true,
+  });
+
   // Fetch License Configs
   const fetchLicenseConfigs = async () => {
     try {
@@ -313,11 +347,150 @@ export default function AdminUsersPage() {
     }
   };
 
+  // Fetch Categories
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const res = await fetch("/api/admin/license-categories");
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data.categories || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchRoles();
     fetchLicenseConfigs();
+    fetchCategories();
   }, []);
+
+  // Category Actions
+  const openCreateCategoryModal = () => {
+    setCategoryModalMode("create");
+    setSelectedCategory(null);
+    setCategoryFormData({
+      code: "",
+      title: "",
+      description: "",
+      icon: "GraduationCap",
+      color: "teal",
+      sortOrder: categories.length + 1,
+      isActive: true,
+    });
+    setShowCategoryEditModal(true);
+  };
+
+  const openEditCategoryModal = (cat: LicenseCategoryItem) => {
+    setCategoryModalMode("edit");
+    setSelectedCategory(cat);
+    setCategoryFormData({
+      code: cat.code,
+      title: cat.title,
+      description: cat.description || "",
+      icon: cat.icon || "GraduationCap",
+      color: cat.color || "teal",
+      sortOrder: cat.sortOrder || 0,
+      isActive: cat.isActive,
+    });
+    setShowCategoryEditModal(true);
+  };
+
+  const handleCategoryFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryFormData.title || !categoryFormData.code) {
+      alert("กรุณากรอกรหัสและชื่อหมวดหมู่");
+      return;
+    }
+
+    try {
+      setCategoryFormSubmitting(true);
+      const url = "/api/admin/license-categories";
+      const method = categoryModalMode === "create" ? "POST" : "PUT";
+      const payload =
+        categoryModalMode === "create"
+          ? categoryFormData
+          : { id: selectedCategory?.id, ...categoryFormData };
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหมู่");
+        return;
+      }
+
+      setShowCategoryEditModal(false);
+      fetchCategories();
+      fetchLicenseConfigs();
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    } finally {
+      setCategoryFormSubmitting(false);
+    }
+  };
+
+  const handleToggleCategoryActive = async (cat: LicenseCategoryItem) => {
+    try {
+      const res = await fetch("/api/admin/license-categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle-active", id: cat.id }),
+      });
+      if (res.ok) {
+        fetchCategories();
+        fetchLicenseConfigs();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteCategory = async (cat: LicenseCategoryItem) => {
+    if (!confirm(`คุณต้องการลบหมวดหมู่ "${cat.title}" ใช่หรือไม่?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/license-categories?id=${cat.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchCategories();
+        fetchLicenseConfigs();
+      } else {
+        alert(data.error || "ไม่สามารถลบหมวดหมู่นี้ได้");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleResetCategories = async () => {
+    if (!confirm("คุณต้องการคืนค่าหมวดหมู่ใบอนุญาตเป็นค่าเริ่มต้นมาตรฐานใช่หรือไม่?")) return;
+    try {
+      const res = await fetch("/api/admin/license-categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset-defaults" }),
+      });
+      if (res.ok) {
+        fetchCategories();
+        fetchLicenseConfigs();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Calculate age helper
   const calculateAge = (birthDateString?: string | null) => {
@@ -820,13 +993,24 @@ export default function AdminUsersPage() {
           )}
 
           {activeTab === "licenses" && (
-            <button
-              onClick={openCreateLicenseModal}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700 active:scale-95 flex-shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              เพิ่มประเภทใบอนุญาตใหม่
-            </button>
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <button
+                type="button"
+                onClick={() => setShowCategoryManagerModal(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:border-slate-400 active:scale-95 flex-shrink-0"
+              >
+                <FolderPlus className="h-4 w-4 text-teal-600" />
+                <span>จัดการหมวดหมู่ ({categories.length})</span>
+              </button>
+
+              <button
+                onClick={openCreateLicenseModal}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700 active:scale-95 flex-shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+                <span>เพิ่มประเภทใบอนุญาตใหม่</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -1388,21 +1572,19 @@ export default function AdminUsersPage() {
           {/* Category Filter & Reset Defaults Bar */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1 flex-shrink-0">
                 <Filter className="h-3.5 w-3.5" /> หมวดหมู่:
               </span>
               {[
                 { key: "ALL", label: "ทั้งหมด" },
-                { key: "ksp", label: "คุรุสภา (KSP)" },
-                { key: "vocational", label: "คุณวุฒิวิชาชีพ (TPQI/DSD/กว.)" },
-                { key: "other", label: "อื่นๆ" },
+                ...categories.map((c) => ({ key: c.code, label: c.title })),
               ].map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => setLicenseCategoryFilter(item.key)}
                   className={clsx(
-                    "px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap",
+                    "px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex-shrink-0",
                     licenseCategoryFilter === item.key
                       ? "bg-slate-900 text-white shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -2047,28 +2229,43 @@ export default function AdminUsersPage() {
                 {/* 2. Category & Issuer */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      หมวดหมู่ <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700">
+                        หมวดหมู่ <span className="text-rose-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={openCreateCategoryModal}
+                        className="text-[11px] font-bold text-teal-600 hover:underline"
+                      >
+                        + เพิ่มหมวดหมู่ใหม่
+                      </button>
+                    </div>
                     <select
                       value={licenseFormData.category}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const selectedCat = categories.find((c) => c.code === e.target.value);
                         setLicenseFormData({
                           ...licenseFormData,
                           category: e.target.value,
-                          categoryLabel:
-                            e.target.value === "ksp"
-                              ? "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)"
-                              : e.target.value === "vocational"
-                              ? "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)"
-                              : "หมวดหมู่อื่นๆ",
-                        })
-                      }
+                          categoryLabel: selectedCat?.title || e.target.value,
+                        });
+                      }}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition font-medium"
                     >
-                      <option value="ksp">คุรุสภา (KSP)</option>
-                      <option value="vocational">คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)</option>
-                      <option value="other">หมวดหมู่อื่นๆ</option>
+                      {categories.length === 0 ? (
+                        <>
+                          <option value="ksp">คุรุสภา (KSP)</option>
+                          <option value="vocational">คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)</option>
+                          <option value="other">หมวดหมู่อื่นๆ</option>
+                        </>
+                      ) : (
+                        categories.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.title}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
 
@@ -2291,6 +2488,302 @@ export default function AdminUsersPage() {
                 >
                   {licenseFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   {licenseModalMode === "create" ? "สร้างประเภทใหม่" : "บันทึกการเปลี่ยนแปลง"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 4: CATEGORY MANAGER MODAL ================= */}
+      {showCategoryManagerModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-3xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Sticky Header */}
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 border border-teal-200">
+                  <FolderPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                    จัดการหมวดหมู่ใบอนุญาตและคุณวุฒิ
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    เพิ่ม ลบ แก้ไขหมวดหมู่หลัก และควบคุมการแสดงผลแท็บในหน้าโปรไฟล์
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCategoryManagerModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
+              {/* Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <div className="text-xs text-slate-600">
+                  มีหมวดหมู่ทั้งหมด <span className="font-bold text-slate-900">{categories.length}</span> หมวดหมู่
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetCategories}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-2xs"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
+                    <span>คืนค่ามาตรฐาน</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openCreateCategoryModal}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition active:scale-95"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ เพิ่มหมวดหมู่ใหม่</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Categories List */}
+              <div className="space-y-3">
+                {categories.map((cat) => {
+                  const Icon = getLicenseIcon(cat.icon);
+                  const colorBadge = getBadgeStyle(cat.color);
+
+                  return (
+                    <div
+                      key={cat.id}
+                      className={clsx(
+                        "rounded-2xl p-4 sm:p-5 border transition flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+                        cat.isActive
+                          ? "bg-white border-slate-200/80 shadow-2xs hover:border-slate-300"
+                          : "bg-slate-50/70 border-dashed border-slate-200 opacity-60"
+                      )}
+                    >
+                      <div className="flex items-start gap-3.5 min-w-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
+                          <Icon className="h-5 w-5 text-slate-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-black text-slate-900">
+                              {cat.title}
+                            </h4>
+                            <span className={clsx("px-2 py-0.5 text-[10px] font-black rounded-md border", colorBadge)}>
+                              {cat.code}
+                            </span>
+                            {cat.isSystem && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                ระบบ
+                              </span>
+                            )}
+                          </div>
+                          {cat.description && (
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                              {cat.description}
+                            </p>
+                          )}
+                          <div className="text-[11px] text-teal-700 font-semibold mt-1.5 flex items-center gap-2">
+                            <span>มีประเภทใบอนุญาต: {cat.licenseCount || 0} รายการ</span>
+                            <span>•</span>
+                            <span>ลำดับที่: {cat.sortOrder}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 w-full sm:w-auto justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCategoryActive(cat)}
+                          className={clsx(
+                            "px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs border",
+                            cat.isActive
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                          )}
+                        >
+                          {cat.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openEditCategoryModal(cat)}
+                          className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                          title="แก้ไขหมวดหมู่"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+
+                        {!cat.isSystem && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCategory(cat)}
+                            disabled={(cat.licenseCount || 0) > 0}
+                            className="p-2 rounded-xl border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 transition shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={
+                              (cat.licenseCount || 0) > 0
+                                ? "ไม่สามารถลบได้เนื่องจากมีประเภทใบอนุญาตอยู่ภายใน"
+                                : "ลบหมวดหมู่"
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCategoryManagerModal(false)}
+                className="w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs active:scale-95"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL 5: CATEGORY CREATE / EDIT ================= */}
+      {showCategoryEditModal && (
+        <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <FolderPlus className="h-5 w-5 text-teal-600" />
+                {categoryModalMode === "create" ? "เพิ่มหมวดหมู่ใหม่" : "แก้ไขข้อมูลหมวดหมู่"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCategoryEditModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleCategoryFormSubmit} className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    ชื่อหมวดหมู่ (Display Title) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={categoryFormData.title}
+                    onChange={(e) => setCategoryFormData({ ...categoryFormData, title: e.target.value })}
+                    placeholder="เช่น ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP), คุณวุฒิความปลอดภัยในการทำงาน"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    รหัสหมวดหมู่ (Code) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={categoryModalMode === "edit"}
+                    value={categoryFormData.code}
+                    onChange={(e) => setCategoryFormData({ ...categoryFormData, code: e.target.value })}
+                    placeholder="เช่น ksp, vocational, safety, health"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 font-mono lowercase disabled:opacity-60 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
+                  />
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    ตัวอักษรภาษาอังกฤษตัวพิมพ์เล็กและตัวเลข ไม่มีเว้นวรรค
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    คำอธิบายหมวดหมู่ (Description)
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryFormData.description}
+                    onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                    placeholder="เช่น มาตรฐานวิชาชีพครูสำหรับสถานศึกษา"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">โทนสี</label>
+                    <select
+                      value={categoryFormData.color}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
+                    >
+                      {COLOR_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">ไอคอน</label>
+                    <select
+                      value={categoryFormData.icon}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, icon: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
+                    >
+                      {ICON_OPTIONS.map((i) => (
+                        <option key={i.value} value={i.value}>
+                          {i.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">ลำดับแสดงผล</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={categoryFormData.sortOrder}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, sortOrder: Number(e.target.value) })}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryEditModal(false)}
+                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={categoryFormSubmitting}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-700 active:scale-95 disabled:opacity-70"
+                >
+                  {categoryFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {categoryModalMode === "create" ? "สร้างหมวดหมู่ใหม่" : "บันทึกการเปลี่ยนแปลง"}
                 </button>
               </div>
             </form>
