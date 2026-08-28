@@ -680,9 +680,9 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      {/* Top Breadcrumb navigation (If viewing someone else or from admin) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Top Breadcrumb navigation */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           {!isSelf ? (
             <Link
               href="/admin/users"
@@ -702,26 +702,30 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
           )}
 
           {!isSelf && (
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-slate-400 truncate">
               / ดูโปรไฟล์ของ <span className="text-slate-700 font-bold">{user.name}</span>
             </span>
           )}
         </div>
 
-        {/* Permission Status Pill */}
-        <div>
-          {canEdit ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-2xs">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              {isSelf ? "โปรไฟล์ของคุณ (แก้ไขได้)" : "สิทธิ์แก้ไขโปรไฟล์ (Can Edit)"}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 shadow-2xs">
-              <Eye className="h-3.5 w-3.5 text-slate-500" />
-              โหมดดูข้อมูลอย่างเดียว (Read-Only)
-            </span>
-          )}
-        </div>
+        {/* Permission Status Pill (Only shown when viewing other users) */}
+        {!isSelf && (
+          <div>
+            {canEdit ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] sm:text-xs font-bold border border-emerald-200 shadow-2xs whitespace-nowrap">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">สิทธิ์แก้ไขโปรไฟล์ (Can Edit)</span>
+                <span className="sm:hidden">แก้ไขได้</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-slate-100 text-slate-600 text-[11px] sm:text-xs font-bold border border-slate-200 shadow-2xs whitespace-nowrap">
+                <Eye className="h-3.5 w-3.5 text-slate-500" />
+                <span className="hidden sm:inline">โหมดดูข้อมูลอย่างเดียว (Read-Only)</span>
+                <span className="sm:hidden">ดูอย่างเดียว</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
