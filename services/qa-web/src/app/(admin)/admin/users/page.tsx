@@ -832,19 +832,18 @@ export default function AdminUsersPage() {
       </div>
 
       {/* 2. Segmented Pill Tabs (3 Tabs) */}
-      <div className="grid grid-cols-3 p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs max-w-2xl">
+      <div className="flex p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs overflow-x-auto gap-1.5 max-w-2xl">
         <button
           onClick={() => setActiveTab("users")}
           className={clsx(
-            "flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
+            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
             activeTab === "users"
               ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
           )}
         >
           <Users className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">รายชื่อผู้ใช้งาน</span>
-          <span className="sm:hidden">ผู้ใช้</span>
+          <span>รายชื่อผู้ใช้งาน</span>
           <span
             className={clsx(
               "px-2 py-0.5 text-xs font-black rounded-md",
@@ -858,15 +857,14 @@ export default function AdminUsersPage() {
         <button
           onClick={() => setActiveTab("roles")}
           className={clsx(
-            "flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
+            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
             activeTab === "roles"
               ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
           )}
         >
           <Shield className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">ยศและสิทธิ์</span>
-          <span className="sm:hidden">ยศ/สิทธิ์</span>
+          <span>ยศและสิทธิ์</span>
           <span
             className={clsx(
               "px-2 py-0.5 text-xs font-black rounded-md",
@@ -880,15 +878,14 @@ export default function AdminUsersPage() {
         <button
           onClick={() => setActiveTab("licenses")}
           className={clsx(
-            "flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none",
+            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
             activeTab === "licenses"
               ? "bg-white text-teal-700 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
           )}
         >
           <FileBadge className="h-4 w-4 flex-shrink-0" />
-          <span className="hidden sm:inline">ประเภทใบประกอบ</span>
-          <span className="sm:hidden">ใบประกอบ</span>
+          <span>ประเภทใบประกอบ</span>
           <span
             className={clsx(
               "px-2 py-0.5 text-xs font-black rounded-md",
