@@ -682,22 +682,22 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
       {/* Top Breadcrumb navigation (If viewing someone else or from admin) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {!isSelf ? (
             <Link
               href="/admin/users"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs"
+              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              กลับหน้ารายชื่อผู้ใช้งาน
+              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
+              <span>กลับหน้ารายชื่อผู้ใช้งาน</span>
             </Link>
           ) : (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs"
+              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              กลับหน้าหลัก
+              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
+              <span>กลับหน้าหลัก (Dashboard)</span>
             </Link>
           )}
 

@@ -775,14 +775,16 @@ export default function AdminUsersPage() {
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
       {/* 1. Header with Breadcrumb & Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            กลับหน้าหลัก (Dashboard)
-          </Link>
+        <div className="space-y-2">
+          <div>
+            <Link
+              href="/dashboard"
+              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
+              <span>กลับหน้าหลัก (Dashboard)</span>
+            </Link>
+          </div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
             {activeTab === "licenses"
               ? "จัดการประเภทและตัวเลือกใบประกอบวิชาชีพ"
