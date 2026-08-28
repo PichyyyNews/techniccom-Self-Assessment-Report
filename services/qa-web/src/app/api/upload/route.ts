@@ -36,26 +36,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ไม่พบไฟล์ที่ต้องการอัปโหลด" }, { status: 400 });
     }
 
-    // Validate image format
+    // Validate format (Images & PDF documents for SAR/KSP licenses)
     const validMimeTypes = [
       "image/jpeg",
       "image/png",
       "image/webp",
       "image/gif",
       "image/svg+xml",
+      "application/pdf",
     ];
 
     if (!validMimeTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP, GIF, SVG) เท่านั้น" },
+        { error: "รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP) และเอกสาร PDF เท่านั้น" },
         { status: 400 }
       );
     }
 
-    // Limit size to 5MB
-    if (file.size > 5 * 1024 * 1024) {
+    // Limit size to 10MB
+    if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "ขนาดไฟล์ต้องไม่เกิน 5MB" },
+        { error: "ขนาดไฟล์ต้องไม่เกิน 10MB" },
         { status: 400 }
       );
     }
@@ -75,13 +76,14 @@ export async function POST(req: Request) {
       })
     );
 
-    // Return application-routed image URL
+    // Return application-routed image/document URL
     const fileUrl = `/api/files/${key}`;
 
     return NextResponse.json({
-      message: "อัปโหลดรูปภาพสำเร็จ",
+      message: "อัปโหลดไฟล์สำเร็จ",
       url: fileUrl,
       key: key,
+      originalName: file.name,
     });
   } catch (error: any) {
     console.error("POST /api/upload error:", error);

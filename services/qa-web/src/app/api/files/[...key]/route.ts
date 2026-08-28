@@ -27,7 +27,14 @@ export async function GET(
     }
 
     const byteArray = await response.Body.transformToByteArray();
-    const contentType = response.ContentType || "image/jpeg";
+    let contentType = response.ContentType || "application/octet-stream";
+    if (key.toLowerCase().endsWith(".pdf")) {
+      contentType = "application/pdf";
+    } else if (key.toLowerCase().endsWith(".jpg") || key.toLowerCase().endsWith(".jpeg")) {
+      contentType = "image/jpeg";
+    } else if (key.toLowerCase().endsWith(".png")) {
+      contentType = "image/png";
+    }
 
     return new NextResponse(Buffer.from(byteArray), {
       status: 200,

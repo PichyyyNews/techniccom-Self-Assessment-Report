@@ -42,7 +42,7 @@ export async function GET(
       userPermissions.includes("profile.edit_all") ||
       userPermissions.includes("/admin/users");
 
-    // 1. Fetch user data with role definition
+    // 1. Fetch user data with role definition and teacher license
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -55,6 +55,7 @@ export async function GET(
             permissions: true,
           },
         },
+        teacherLicense: true,
       },
     });
 
@@ -146,6 +147,99 @@ export async function PUT(
     let activityTitle = "อัปเดตข้อมูลโปรไฟล์";
     let activityAction = "UPDATE_PROFILE";
 
+    // Handle TeacherLicense (คุรุสภา) Upsert
+    if (section === "teacherLicense") {
+      const {
+        licenseType,
+        licenseNumber,
+        requestNumber,
+        nameTh,
+        nameEn,
+        issuedDate,
+        expiredDate,
+        status,
+        attachmentKey,
+        attachmentName,
+      } = body;
+
+      if (!licenseNumber || !licenseNumber.trim()) {
+        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาต" }, { status: 400 });
+      }
+
+      if (!issuedDate || !expiredDate) {
+        return NextResponse.json({ error: "กรุณาระบุวันที่ออกบัตรและวันหมดอายุ" }, { status: 400 });
+      }
+
+      const issueDt = new Date(issuedDate);
+      const expireDt = new Date(expiredDate);
+
+      let computedStatus = status || "ACTIVE";
+      if (computedStatus !== "IN_RENEWAL") {
+        const today = new Date();
+        const diffTime = expireDt.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) {
+          computedStatus = "EXPIRED";
+        } else if (diffDays <= 180) {
+          computedStatus = "EXPIRING_SOON";
+        } else {
+          computedStatus = "ACTIVE";
+        }
+      }
+
+      const savedLicense = await prisma.teacherLicense.upsert({
+        where: { userId: id },
+        create: {
+          userId: id,
+          licenseType: licenseType || "BASIC_TEACHER",
+          licenseNumber: licenseNumber.trim(),
+          requestNumber: requestNumber ? requestNumber.trim() : null,
+          nameTh: nameTh ? nameTh.trim() : null,
+          nameEn: nameEn ? nameEn.trim() : null,
+          issuedDate: issueDt,
+          expiredDate: expireDt,
+          status: computedStatus,
+          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+          attachmentName: attachmentName ? attachmentName.trim() : null,
+        },
+        update: {
+          licenseType: licenseType || "BASIC_TEACHER",
+          licenseNumber: licenseNumber.trim(),
+          requestNumber: requestNumber ? requestNumber.trim() : null,
+          nameTh: nameTh ? nameTh.trim() : null,
+          nameEn: nameEn ? nameEn.trim() : null,
+          issuedDate: issueDt,
+          expiredDate: expireDt,
+          status: computedStatus,
+          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+          attachmentName: attachmentName ? attachmentName.trim() : null,
+        },
+      });
+
+      activityTitle = isSelf
+        ? "อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)"
+        : `อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
+      activityAction = "UPDATE_TEACHER_LICENSE";
+
+      await logActivity(id, activityAction, activityTitle, {
+        licenseType,
+        licenseNumber,
+        editorId: session.user.id,
+        editorName: session.user.name,
+      });
+
+      const updatedUser = await prisma.user.findUnique({
+        where: { id },
+        include: { roleDefinition: true, teacherLicense: true },
+      });
+
+      return NextResponse.json({
+        message: "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาสำเร็จ",
+        user: updatedUser,
+        teacherLicense: savedLicense,
+      });
+    }
+
     if (section === "basic") {
       const { name, position, phone, birthDate, avatarUrl, bio } = body;
       if (name !== undefined) updateData.name = name.trim();
@@ -221,6 +315,7 @@ export async function PUT(
       data: updateData,
       include: {
         roleDefinition: true,
+        teacherLicense: true,
       },
     });
 

@@ -33,10 +33,41 @@ import {
   Building2,
   ExternalLink,
   FileText,
+  AlertTriangle,
+  Scroll,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { DocumentUpload } from "@/components/ui/DocumentUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
 import { clsx } from "clsx";
+
+export type LicenseTypeEnum =
+  | "BASIC_TEACHER"
+  | "ADVANCED_TEACHER"
+  | "PROVISIONAL_TEACHING"
+  | "ADMINISTRATOR"
+  | "OTHER";
+
+export type LicenseStatusEnum =
+  | "ACTIVE"
+  | "EXPIRING_SOON"
+  | "EXPIRED"
+  | "IN_RENEWAL";
+
+export interface TeacherLicenseData {
+  id?: string;
+  userId?: string;
+  licenseType: LicenseTypeEnum;
+  licenseNumber: string;
+  requestNumber?: string | null;
+  nameTh?: string | null;
+  nameEn?: string | null;
+  issuedDate: string;
+  expiredDate: string;
+  status: LicenseStatusEnum;
+  attachmentKey?: string | null;
+  attachmentName?: string | null;
+}
 
 export interface LicenseItem {
   name: string;
@@ -89,12 +120,13 @@ interface ProfileUser {
   education?: EducationItem[] | null;
   workHistory?: WorkHistoryItem[] | null;
   licenses?: LicenseItem[] | null;
+  teacherLicense?: TeacherLicenseData | null;
   skills?: string[];
   isActive: boolean;
   createdAt: string;
 }
 
-type ModalType = "none" | "basic" | "education" | "workHistory" | "skills" | "licenses" | "password";
+type ModalType = "none" | "basic" | "education" | "workHistory" | "skills" | "licenses" | "teacherLicense" | "password";
 
 export default function ProfilePage({ targetId }: { targetId?: string }) {
   const params = useParams();
@@ -129,6 +161,19 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
   const [educationList, setEducationList] = useState<EducationItem[]>([]);
   const [workHistoryList, setWorkHistoryList] = useState<WorkHistoryItem[]>([]);
   const [licensesList, setLicensesList] = useState<LicenseItem[]>([]);
+  const [teacherLicenseForm, setTeacherLicenseForm] = useState<TeacherLicenseData>({
+    licenseType: "BASIC_TEACHER",
+    licenseNumber: "",
+    requestNumber: "",
+    nameTh: "",
+    nameEn: "",
+    issuedDate: "",
+    expiredDate: "",
+    status: "ACTIVE",
+    attachmentKey: "",
+    attachmentName: "",
+  });
+  const [isRenewalPending, setIsRenewalPending] = useState(false);
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [passwordForm, setPasswordForm] = useState({
@@ -257,6 +302,136 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       },
     ]);
     setActiveModal("licenses");
+  };
+
+  const openTeacherLicenseModal = () => {
+    if (!user) return;
+    const lic = user.teacherLicense;
+    if (lic) {
+      setTeacherLicenseForm({
+        licenseType: lic.licenseType || "BASIC_TEACHER",
+        licenseNumber: lic.licenseNumber || "",
+        requestNumber: lic.requestNumber || "",
+        nameTh: lic.nameTh || user.name || "",
+        nameEn: lic.nameEn || "",
+        issuedDate: lic.issuedDate ? lic.issuedDate.split("T")[0] : "",
+        expiredDate: lic.expiredDate ? lic.expiredDate.split("T")[0] : "",
+        status: lic.status || "ACTIVE",
+        attachmentKey: lic.attachmentKey || "",
+        attachmentName: lic.attachmentName || "",
+      });
+      setIsRenewalPending(lic.status === "IN_RENEWAL" || Boolean(lic.requestNumber));
+    } else {
+      setTeacherLicenseForm({
+        licenseType: "BASIC_TEACHER",
+        licenseNumber: "",
+        requestNumber: "",
+        nameTh: user.name || "",
+        nameEn: "",
+        issuedDate: "",
+        expiredDate: "",
+        status: "ACTIVE",
+        attachmentKey: "",
+        attachmentName: "",
+      });
+      setIsRenewalPending(false);
+    }
+    setActiveModal("teacherLicense");
+  };
+
+  const getTeacherLicenseTypeInfo = (type?: LicenseTypeEnum) => {
+    switch (type) {
+      case "BASIC_TEACHER":
+        return {
+          title: "ใบอนุญาตประกอบวิชาชีพครู (ชั้นต้น)",
+          enTitle: "Basic Teaching License (Khurusapha)",
+          badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+          icon: GraduationCap,
+        };
+      case "ADVANCED_TEACHER":
+        return {
+          title: "ใบอนุญาตประกอบวิชาชีพครู (ชั้นสูง)",
+          enTitle: "Advanced Teaching License (Khurusapha)",
+          badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+          icon: Award,
+        };
+      case "PROVISIONAL_TEACHING":
+        return {
+          title: "หนังสืออนุญาตให้ประกอบวิชาชีพทางการศึกษาโดยไม่มีใบอนุญาต",
+          enTitle: "Provisional Teaching Permission",
+          badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+          icon: FileText,
+        };
+      case "ADMINISTRATOR":
+        return {
+          title: "ใบอนุญาตประกอบวิชาชีพผู้บริหารสถานศึกษา",
+          enTitle: "Educational Administrator License",
+          badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          icon: Shield,
+        };
+      case "OTHER":
+      default:
+        return {
+          title: "ใบอนุญาตประกอบวิชาชีพทางการศึกษาอื่นๆ",
+          enTitle: "Other Educational License",
+          badgeColor: "bg-slate-50 text-slate-700 border-slate-200",
+          icon: FileBadge,
+        };
+    }
+  };
+
+  const getTeacherLicenseStatusInfo = (lic?: TeacherLicenseData | null) => {
+    if (!lic || !lic.expiredDate) return null;
+    if (lic.status === "IN_RENEWAL") {
+      return {
+        label: "อยู่ระหว่างยื่นคำขอต่ออายุ (In Renewal)",
+        sublabel: lic.requestNumber ? `เลขที่คำขอ: ${lic.requestNumber}` : "รอผลการพิจารณาจากคุรุสภา",
+        style: "bg-blue-50 text-blue-700 border-blue-200",
+        alertType: "info" as const,
+        daysLeft: null,
+      };
+    }
+    const expire = new Date(lic.expiredDate);
+    if (isNaN(expire.getTime())) return null;
+
+    const today = new Date();
+    const diffTime = expire.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return {
+        label: "หมดอายุแล้ว (Expired)",
+        sublabel: `หมดอายุเมื่อ ${Math.abs(diffDays)} วันที่แล้ว กรุณาดำเนินการต่ออายุผ่าน KSP Self-Service`,
+        style: "bg-rose-50 text-rose-700 border-rose-200",
+        alertType: "danger" as const,
+        daysLeft: diffDays,
+      };
+    }
+    if (diffDays <= 90) {
+      return {
+        label: `ใกล้หมดอายุเร่งด่วน (เหลือ ${diffDays} วัน)`,
+        sublabel: "ควรยื่นคำขอต่ออายุผ่านระบบ KSP Self-Service ทันที",
+        style: "bg-rose-50 text-rose-700 border-rose-200 animate-pulse",
+        alertType: "warning" as const,
+        daysLeft: diffDays,
+      };
+    }
+    if (diffDays <= 180) {
+      return {
+        label: `ใกล้หมดอายุ (เหลือ ${diffDays} วัน)`,
+        sublabel: "สามารถยื่นคำขอต่ออายุล่วงหน้าได้แล้วในระบบ KSP Self-Service (ยื่นได้ล่วงหน้า 180 วัน)",
+        style: "bg-amber-50 text-amber-700 border-amber-200",
+        alertType: "warning" as const,
+        daysLeft: diffDays,
+      };
+    }
+    return {
+      label: "ใช้งานได้ปกติ (Active)",
+      sublabel: `เหลืออายุการใช้งานอีก ${diffDays} วัน`,
+      style: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      alertType: "success" as const,
+      daysLeft: diffDays,
+    };
   };
 
   const getLicenseStatus = (item: LicenseItem) => {
@@ -594,7 +769,250 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
         recentActivities={recentActivities}
       />
 
-      {/* ================= 3. TWO-COLUMN DETAILS (EDUCATION & WORK HISTORY) ================= */}
+      {/* ================= 3. KHURUSAPHA TEACHER LICENSE (ใบอนุญาตประกอบวิชาชีพทางการศึกษา - คุรุสภา) ================= */}
+      {(() => {
+        const teacherLicense = user?.teacherLicense;
+        const typeInfo = getTeacherLicenseTypeInfo(teacherLicense?.licenseType);
+        const statusInfo = getTeacherLicenseStatusInfo(teacherLicense);
+        const TypeIcon = typeInfo.icon;
+
+        return (
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/20 flex-shrink-0">
+                  <Scroll className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                      ใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)
+                    </h3>
+                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[10px] font-black bg-teal-50 text-teal-700 border border-teal-200">
+                      SAR มาตรฐานวิชาชีพครู
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Khurusapha Educational Teaching License • ข้อมูลหลักฐานสำหรับงานประกันคุณภาพการศึกษา
+                  </p>
+                </div>
+              </div>
+
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={openTeacherLicenseModal}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-sm shadow-teal-500/20 active:scale-95 flex-shrink-0 self-start sm:self-auto"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  {teacherLicense ? "แก้ไขข้อมูลใบประกอบวิชาชีพ" : "+ กรอกข้อมูลใบประกอบวิชาชีพ"}
+                </button>
+              )}
+            </div>
+
+            {!teacherLicense ? (
+              /* Empty State */
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-teal-50/70 via-emerald-50/40 to-slate-50 border border-teal-200/80">
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 flex-shrink-0 mt-0.5">
+                    <FileBadge className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">
+                      ยังไม่มีข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                      ข้อมูลใบอนุญาตประกอบวิชาชีพครูเป็นหนึ่งในตัวชี้วัดสำคัญของรายงานประเมินตนเอง (SAR) กรุณากรอกเลขที่ใบอนุญาต วันหมดอายุ และแนบไฟล์เอกสารจาก KSP Self-Service
+                    </p>
+                  </div>
+                </div>
+
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={openTeacherLicenseModal}
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    กรอกข้อมูลคุรุสภา
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* Detailed Filled State */
+              <div className="space-y-4">
+                {/* Status Notice Banner if Expiring / Expired */}
+                {statusInfo && statusInfo.alertType !== "success" && (
+                  <div
+                    className={clsx(
+                      "flex items-start gap-3 p-3.5 sm:p-4 rounded-2xl border text-xs",
+                      statusInfo.alertType === "danger"
+                        ? "bg-rose-50 border-rose-200 text-rose-800"
+                        : statusInfo.alertType === "warning"
+                        ? "bg-amber-50 border-amber-200 text-amber-800"
+                        : "bg-blue-50 border-blue-200 text-blue-800"
+                    )}
+                  >
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold">{statusInfo.label}: </span>
+                      <span>{statusInfo.sublabel}</span>
+                    </div>
+                    <a
+                      href="https://ksp-selfservice.ksp.or.th"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold underline flex-shrink-0 hover:opacity-80"
+                    >
+                      KSP Self-Service
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Primary Card Information */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-50 via-teal-50/20 to-white border border-slate-200/80 shadow-2xs space-y-4">
+                  {/* Top Row: Type Title + Status Badge */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-teal-700 border border-slate-200 shadow-2xs flex-shrink-0">
+                        <TypeIcon className="h-5 w-5 text-teal-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-sm sm:text-base font-black text-slate-900 truncate">
+                          {typeInfo.title}
+                        </h4>
+                        <p className="text-xs text-slate-400 font-medium">
+                          {typeInfo.enTitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={clsx("px-2.5 py-1 text-xs font-bold rounded-xl border shadow-2xs", typeInfo.badgeColor)}>
+                        {teacherLicense.licenseType}
+                      </span>
+                      {statusInfo && (
+                        <span className={clsx("px-2.5 py-1 text-xs font-black rounded-xl border shadow-2xs", statusInfo.style)}>
+                          {statusInfo.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Identification Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                    {/* License Number */}
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-semibold text-slate-400 block">
+                        เลขที่ใบอนุญาต (License No.)
+                      </span>
+                      <p className="text-sm font-mono font-bold text-slate-900 truncate">
+                        {teacherLicense.licenseNumber || "-"}
+                      </p>
+                    </div>
+
+                    {/* Names on Card */}
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-semibold text-slate-400 block">
+                        ชื่อ-นามสกุลบนบัตร
+                      </span>
+                      <p className="text-xs font-bold text-slate-800 truncate">
+                        {teacherLicense.nameTh || user?.name}
+                      </p>
+                      {teacherLicense.nameEn && (
+                        <p className="text-[10px] text-slate-400 uppercase font-mono truncate">
+                          {teacherLicense.nameEn}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Issue Date */}
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-semibold text-slate-400 block">
+                        วันที่ออกใบอนุญาต (Issue Date)
+                      </span>
+                      <p className="text-xs font-bold text-slate-800">
+                        {teacherLicense.issuedDate
+                          ? new Date(teacherLicense.issuedDate).toLocaleDateString("th-TH", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "-"}
+                      </p>
+                    </div>
+
+                    {/* Expiry Date */}
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-semibold text-slate-400 block">
+                        วันหมดอายุ (Expiry Date)
+                      </span>
+                      <p className="text-xs font-bold text-slate-900">
+                        {teacherLicense.expiredDate
+                          ? new Date(teacherLicense.expiredDate).toLocaleDateString("th-TH", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "-"}
+                      </p>
+                      {statusInfo && statusInfo.daysLeft !== null && (
+                        <span className="text-[10px] font-medium text-slate-500 block">
+                          {statusInfo.daysLeft >= 0 ? `(เหลืออีก ${statusInfo.daysLeft} วัน)` : `(หมดอายุแล้ว ${Math.abs(statusInfo.daysLeft)} วัน)`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Request Number if Renewal */}
+                  {teacherLicense.requestNumber && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900">
+                      <span className="font-bold">เลขที่คำขอต่ออายุ (Request No.):</span>
+                      <span className="font-mono font-bold bg-white px-2 py-0.5 rounded border border-blue-200">{teacherLicense.requestNumber}</span>
+                      <span className="text-blue-600 text-[11px] ml-auto">อยู่ระหว่างคุรุสภาพิจารณาอนุมัติ</span>
+                    </div>
+                  )}
+
+                  {/* Attachment & KSP Portal Link Footer */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/80">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-600">หน่วยงานกำกับดูแล:</span>
+                      <span>สำนักงานเลขาธิการคุรุสภา (Teachers&apos; Council of Thailand)</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {teacherLicense.attachmentKey && (
+                        <a
+                          href={teacherLicense.attachmentKey}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-2xs"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>ดูเอกสารหลักฐาน / บัตรคุรุสภา</span>
+                        </a>
+                      )}
+
+                      <a
+                        href="https://ksp-selfservice.ksp.or.th"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition shadow-2xs"
+                      >
+                        <span>KSP Self-Service</span>
+                        <ExternalLink className="h-3 w-3 text-slate-400" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ================= 4. TWO-COLUMN DETAILS (EDUCATION & WORK HISTORY) ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         {/* Left Column: Educational Qualifications (วุฒิการศึกษา) */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
@@ -1656,6 +2074,351 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   บันทึกใบอนุญาตประกอบวิชาชีพ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: KHURUSAPHA TEACHER LICENSE (คุรุสภา) ================= */}
+      {activeModal === "teacherLicense" && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
+                  <Scroll className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                    ข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    มาตรฐานวิชาชีพและคุณวุฒิครูผู้สอน • เล่มรายงานประเมินตนเอง (SAR)
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveSection("teacherLicense", teacherLicenseForm);
+              }}
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-5">
+                {/* 1. ประเภทใบอนุญาต (License Type) */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-800">
+                    1. ประเภทใบอนุญาตประกอบวิชาชีพ (License Type) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      {
+                        value: "BASIC_TEACHER",
+                        title: "ใบอนุญาตประกอบวิชาชีพครู (ชั้นต้น)",
+                        desc: "Basic Teaching License",
+                        icon: GraduationCap,
+                      },
+                      {
+                        value: "ADVANCED_TEACHER",
+                        title: "ใบอนุญาตประกอบวิชาชีพครู (ชั้นสูง)",
+                        desc: "Advanced Teaching License",
+                        icon: Award,
+                      },
+                      {
+                        value: "PROVISIONAL_TEACHING",
+                        title: "หนังสืออนุญาตประกอบวิชาชีพชั่วคราว",
+                        desc: "Provisional Teaching Permission",
+                        icon: FileText,
+                      },
+                      {
+                        value: "ADMINISTRATOR",
+                        title: "ใบอนุญาตผู้บริหารสถานศึกษา",
+                        desc: "Educational Administrator",
+                        icon: Shield,
+                      },
+                      {
+                        value: "OTHER",
+                        title: "ใบอนุญาต/หนังสือรับรองอื่นๆ",
+                        desc: "Other Educational Certificate",
+                        icon: FileBadge,
+                      },
+                    ].map((opt) => {
+                      const isSelected = teacherLicenseForm.licenseType === opt.value;
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() =>
+                            setTeacherLicenseForm({
+                              ...teacherLicenseForm,
+                              licenseType: opt.value as LicenseTypeEnum,
+                            })
+                          }
+                          className={clsx(
+                            "flex items-start gap-3 p-3 rounded-2xl border text-left transition select-none",
+                            isSelected
+                              ? "bg-teal-50/80 border-teal-500 shadow-xs ring-1 ring-teal-500"
+                              : "bg-slate-50/60 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                          )}
+                        >
+                          <div
+                            className={clsx(
+                              "flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 mt-0.5",
+                              isSelected
+                                ? "bg-teal-600 text-white"
+                                : "bg-white text-slate-500 border border-slate-200"
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div
+                              className={clsx(
+                                "text-xs font-bold leading-tight",
+                                isSelected ? "text-teal-950" : "text-slate-800"
+                              )}
+                            >
+                              {opt.title}
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+                              {opt.desc}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. ข้อมูลระบุตัวตนและเลขที่เอกสาร (Identification & Numbers) */}
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      2. ข้อมูลระบุตัวตนและเลขที่เอกสาร (Identification & Numbers)
+                    </label>
+
+                    <label className="flex items-center gap-1.5 text-xs text-blue-700 font-bold cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isRenewalPending}
+                        onChange={(e) => {
+                          setIsRenewalPending(e.target.checked);
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            status: e.target.checked ? "IN_RENEWAL" : "ACTIVE",
+                            requestNumber: e.target.checked ? teacherLicenseForm.requestNumber : "",
+                          });
+                        }}
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>อยู่ระหว่างยื่นคำขอต่ออายุ</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        เลขที่ใบอนุญาตประกอบวิชาชีพ <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="เช่น 6610900001234"
+                        value={teacherLicenseForm.licenseNumber}
+                        onChange={(e) =>
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            licenseNumber: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {isRenewalPending ? (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-blue-700 mb-1">
+                          เลขที่คำขอต่ออายุ (Request No.)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="เช่น REQ-6701-00892"
+                          value={teacherLicenseForm.requestNumber || ""}
+                          onChange={(e) =>
+                            setTeacherLicenseForm({
+                              ...teacherLicenseForm,
+                              requestNumber: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-xl border border-blue-300 bg-blue-50/50 p-2.5 text-xs font-mono font-bold text-blue-900 focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                          ชื่อ-นามสกุลภาษาไทย (ตามหน้าบัตร)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="เช่น นายสมชาย ใจดี"
+                          value={teacherLicenseForm.nameTh || ""}
+                          onChange={(e) =>
+                            setTeacherLicenseForm({
+                              ...teacherLicenseForm,
+                              nameTh: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        ชื่อ-นามสกุลภาษาอังกฤษ (ตามหน้าบัตร)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="เช่น MR. SOMCHAI JAIDEE"
+                        value={teacherLicenseForm.nameEn || ""}
+                        onChange={(e) =>
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            nameEn: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs uppercase font-mono text-slate-900 focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {isRenewalPending && (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                          ชื่อ-นามสกุลภาษาไทย (ตามหน้าบัตร)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="เช่น นายสมชาย ใจดี"
+                          value={teacherLicenseForm.nameTh || ""}
+                          onChange={(e) =>
+                            setTeacherLicenseForm({
+                              ...teacherLicenseForm,
+                              nameTh: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. ช่วงเวลาความถูกต้องและการหมดอายุ (Validity & Expiration) */}
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-800">
+                    3. ช่วงเวลาความถูกต้องและการหมดอายุ (Validity & Expiration)
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        วันที่ออกใบอนุญาต (Issue Date) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={teacherLicenseForm.issuedDate}
+                        onChange={(e) =>
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            issuedDate: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        วันหมดอายุ (Expiry Date) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={teacherLicenseForm.expiredDate}
+                        onChange={(e) =>
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            expiredDate: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. เอกสารหลักฐานเชิงประจักษ์ (Evidence Attachments) */}
+                <div className="space-y-2 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      4. เอกสารหลักฐานเชิงประจักษ์ (Evidence Attachments)
+                    </label>
+                    <a
+                      href="https://ksp-selfservice.ksp.or.th"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-teal-700 hover:underline flex items-center gap-1 font-medium"
+                    >
+                      ดาวน์โหลด PDF จาก KSP Self-Service
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+
+                  <DocumentUpload
+                    value={teacherLicenseForm.attachmentKey}
+                    fileName={teacherLicenseForm.attachmentName}
+                    onChange={(url, origName) => {
+                      setTeacherLicenseForm({
+                        ...teacherLicenseForm,
+                        attachmentKey: url || "",
+                        attachmentName: origName || "",
+                      });
+                    }}
+                    folder="teacher-licenses"
+                    label="สแกนหน้า-หลัง บัตรใบอนุญาตประกอบวิชาชีพ หรือไฟล์ PDF จากระบบ KSP Self-Service / KSP School"
+                  />
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal("none")}
+                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-700 active:scale-95 disabled:opacity-70"
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  บันทึกข้อมูลคุรุสภา
                 </button>
               </div>
             </form>

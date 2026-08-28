@@ -16,7 +16,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // 1. Fetch user data with role definition
+    // 1. Fetch user data with role definition and teacher license
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -29,6 +29,7 @@ export async function GET() {
             permissions: true,
           },
         },
+        teacherLicense: true,
       },
     });
 
@@ -84,6 +85,95 @@ export async function PUT(req: Request) {
     const userId = session.user.id;
     const body = await req.json();
     const { section } = body;
+
+    // Handle TeacherLicense (คุรุสภา) Upsert
+    if (section === "teacherLicense") {
+      const {
+        licenseType,
+        licenseNumber,
+        requestNumber,
+        nameTh,
+        nameEn,
+        issuedDate,
+        expiredDate,
+        status,
+        attachmentKey,
+        attachmentName,
+      } = body;
+
+      if (!licenseNumber || !licenseNumber.trim()) {
+        return NextResponse.json({ error: "กรุณาระบุเลขที่ใบอนุญาต" }, { status: 400 });
+      }
+
+      if (!issuedDate || !expiredDate) {
+        return NextResponse.json({ error: "กรุณาระบุวันที่ออกบัตรและวันหมดอายุ" }, { status: 400 });
+      }
+
+      const issueDt = new Date(issuedDate);
+      const expireDt = new Date(expiredDate);
+
+      // Auto calculate status if not explicitly set to IN_RENEWAL
+      let computedStatus = status || "ACTIVE";
+      if (computedStatus !== "IN_RENEWAL") {
+        const today = new Date();
+        const diffTime = expireDt.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) {
+          computedStatus = "EXPIRED";
+        } else if (diffDays <= 180) {
+          computedStatus = "EXPIRING_SOON";
+        } else {
+          computedStatus = "ACTIVE";
+        }
+      }
+
+      const savedLicense = await prisma.teacherLicense.upsert({
+        where: { userId },
+        create: {
+          userId,
+          licenseType: licenseType || "BASIC_TEACHER",
+          licenseNumber: licenseNumber.trim(),
+          requestNumber: requestNumber ? requestNumber.trim() : null,
+          nameTh: nameTh ? nameTh.trim() : null,
+          nameEn: nameEn ? nameEn.trim() : null,
+          issuedDate: issueDt,
+          expiredDate: expireDt,
+          status: computedStatus,
+          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+          attachmentName: attachmentName ? attachmentName.trim() : null,
+        },
+        update: {
+          licenseType: licenseType || "BASIC_TEACHER",
+          licenseNumber: licenseNumber.trim(),
+          requestNumber: requestNumber ? requestNumber.trim() : null,
+          nameTh: nameTh ? nameTh.trim() : null,
+          nameEn: nameEn ? nameEn.trim() : null,
+          issuedDate: issueDt,
+          expiredDate: expireDt,
+          status: computedStatus,
+          attachmentKey: attachmentKey ? attachmentKey.trim() : null,
+          attachmentName: attachmentName ? attachmentName.trim() : null,
+        },
+      });
+
+      await logActivity(
+        userId,
+        "UPDATE_TEACHER_LICENSE",
+        "อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)",
+        { licenseType, licenseNumber }
+      );
+
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { roleDefinition: true, teacherLicense: true },
+      });
+
+      return NextResponse.json({
+        message: "บันทึกข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาสำเร็จ",
+        user: updatedUser,
+        teacherLicense: savedLicense,
+      });
+    }
 
     const updateData: any = {};
     let activityTitle = "อัปเดตข้อมูลโปรไฟล์";
@@ -150,6 +240,7 @@ export async function PUT(req: Request) {
       data: updateData,
       include: {
         roleDefinition: true,
+        teacherLicense: true,
       },
     });
 

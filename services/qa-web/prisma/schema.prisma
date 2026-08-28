@@ -10,6 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum LicenseType {
+  BASIC_TEACHER          // ใบอนุญาตประกอบวิชาชีพครู (ชั้นต้น)
+  ADVANCED_TEACHER       // ใบอนุญาตประกอบวิชาชีพครู (ชั้นสูง)
+  PROVISIONAL_TEACHING   // หนังสืออนุญาตให้ประกอบวิชาชีพทางการศึกษาโดยไม่มีใบอนุญาตประกอบวิชาชีพ
+  ADMINISTRATOR          // ใบอนุญาตประกอบวิชาชีพผู้บริหารสถานศึกษา
+  OTHER                  // อื่นๆ
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  IN_RENEWAL
+}
+
 model RoleDefinition {
   id          String   @id @default(cuid())
   code        String   @unique // e.g. "ROOT", "STAFF", "DEPT_HEAD", "TEACHER"
@@ -27,12 +42,37 @@ model ActivityLog {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action    String   // e.g. "USER_LOGIN", "UPDATE_PROFILE", "UPDATE_EDUCATION", "UPDATE_EXPERIENCE", "UPDATE_SKILLS", "UPLOAD_EVIDENCE", "CREATE_USER"
+  action    String   // e.g. "USER_LOGIN", "UPDATE_PROFILE", "UPDATE_EDUCATION", "UPDATE_EXPERIENCE", "UPDATE_SKILLS", "UPDATE_TEACHER_LICENSE", "UPLOAD_EVIDENCE", "CREATE_USER"
   title     String   // ข้อความกิจกรรม เช่น "อัปเดตข้อมูลส่วนตัว", "เพิ่มประวัติการศึกษา"
   metadata  Json?
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+model TeacherLicense {
+  id              String         @id @default(cuid())
+  userId          String         @unique // ครู 1 คนต่อ 1 ข้อมูลใบอนุญาตหลัก
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  licenseType     LicenseType    @default(BASIC_TEACHER)
+  licenseNumber   String         // เลขที่ใบอนุญาต
+  requestNumber   String?        // เลขที่คำขอ (กรณีอยู่ระหว่างต่ออายุหรือขอรับใบอนุญาต)
+  nameTh          String?        // ชื่อ-นามสกุลภาษาไทยตามหน้าบัตร
+  nameEn          String?        // ชื่อ-นามสกุลภาษาอังกฤษตามหน้าบัตร
+  issuedDate      DateTime       // วันที่ออกบัตร
+  expiredDate     DateTime       // วันที่หมดอายุ
+  status          LicenseStatus  @default(ACTIVE)
+
+  // ไฟล์แนบหลักฐาน (สแกนบัตร / PDF จากคุรุสภา KSP Self-Service)
+  attachmentKey   String?        // S3/MinIO Key หรือ Application URL ของไฟล์เอกสาร
+  attachmentName  String?        // ชื่อไฟล์เดิม
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([expiredDate])
 }
 
 model User {
@@ -51,7 +91,8 @@ model User {
   bio              String?         // คำแนะนำตัว / ปรัชญาการศึกษา
   education        Json?           // วุฒิการศึกษา [{ degree, major, institution, year }]
   workHistory      Json?           // ประวัติการทำงาน [{ role, organization, period }]
-  licenses         Json?           // ใบอนุญาตประกอบวิชาชีพ [{ name, licenseNumber, issuer, issueDate, expireDate, isLifetime, fileUrl }]
+  licenses         Json?           // ใบอนุญาตประกอบวิชาชีพทั่วไป / อื่นๆ
+  teacherLicense   TeacherLicense? // ข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษา (คุรุสภา)
   skills           String[]        // ทักษะ / ความเชี่ยวชาญ
   isActive         Boolean         @default(true)
   activities       ActivityLog[]
