@@ -49,7 +49,8 @@ export type LicenseTypeEnum =
   | "TPQI_CERTIFICATE"
   | "DSD_STANDARD"
   | "COE_ENGINEER"
-  | "OTHER_PROFESSIONAL";
+  | "OTHER_PROFESSIONAL"
+  | string;
 
 export type LicenseStatusEnum =
   | "ACTIVE"
@@ -166,7 +167,8 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
   const [workHistoryList, setWorkHistoryList] = useState<WorkHistoryItem[]>([]);
   const [licensesList, setLicensesList] = useState<LicenseItem[]>([]);
   const [editingLicenseId, setEditingLicenseId] = useState<string | null>(null);
-  const [teacherLicenseCategory, setTeacherLicenseCategory] = useState<"ksp" | "vocational">("ksp");
+  const [licenseConfigs, setLicenseConfigs] = useState<any[]>([]);
+  const [teacherLicenseCategory, setTeacherLicenseCategory] = useState<string>("ksp");
   const [teacherLicenseForm, setTeacherLicenseForm] = useState<TeacherLicenseData>({
     licenseType: "KSP_B_LICENSE",
     licenseNumber: "",
@@ -187,6 +189,18 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
     password: "",
     confirmPassword: "",
   });
+
+  const fetchLicenseConfigs = async () => {
+    try {
+      const res = await fetch("/api/license-configs");
+      if (res.ok) {
+        const data = await res.json();
+        setLicenseConfigs(data.configs || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch license configs:", err);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -218,6 +232,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
   useEffect(() => {
     fetchProfile();
+    fetchLicenseConfigs();
   }, [userId]);
 
   const handleCopyLink = () => {
@@ -379,7 +394,43 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
     }
   };
 
+  const getLicenseIcon = (name?: string) => {
+    switch (name) {
+      case "GraduationCap":
+        return GraduationCap;
+      case "Award":
+        return Award;
+      case "Shield":
+        return Shield;
+      case "Clock":
+        return Clock;
+      case "FileBadge":
+        return FileBadge;
+      case "Briefcase":
+        return Briefcase;
+      case "Sparkles":
+        return Sparkles;
+      case "Scroll":
+        return Scroll;
+      default:
+        return FileText;
+    }
+  };
+
   const getTeacherLicenseTypeInfo = (type?: LicenseTypeEnum) => {
+    const config = licenseConfigs.find((c) => c.code === type);
+    if (config) {
+      return {
+        title: config.title,
+        enTitle: config.description || config.title,
+        category: config.category as "ksp" | "vocational",
+        defaultYears: config.defaultYears || 5,
+        issuer: config.issuer || "หน่วยงานมาตรฐาน",
+        badgeColor: getBadgeStyle(config.color),
+        icon: getLicenseIcon(config.icon),
+      };
+    }
+
     switch (type) {
       case "KSP_A_LICENSE":
         return {
@@ -2307,103 +2358,82 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
               className="flex-1 flex flex-col overflow-hidden"
             >
               <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-5">
-                {/* Category Switcher Tabs */}
-                <div className="flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTeacherLicenseCategory("ksp");
-                      if (!["KSP_A_LICENSE", "KSP_B_LICENSE", "KSP_P_LICENSE", "KSP_PROVISIONAL"].includes(teacherLicenseForm.licenseType)) {
-                        setTeacherLicenseForm({ ...teacherLicenseForm, licenseType: "KSP_B_LICENSE" });
-                      }
-                    }}
-                    className={clsx(
-                      "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
-                      teacherLicenseCategory === "ksp"
-                        ? "bg-white text-teal-800 shadow-xs border border-slate-200/60"
-                        : "text-slate-500 hover:text-slate-800"
-                    )}
-                  >
-                    <GraduationCap className="h-4 w-4 text-teal-600" />
-                    <span>ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)</span>
-                  </button>
+                {/* Category Switcher Tabs (Dynamic from licenseConfigs) */}
+                <div className="flex p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 gap-1 overflow-x-auto">
+                  {(() => {
+                    const categories = Array.from(new Set(licenseConfigs.map((c) => c.category)));
+                    const displayCats = categories.length > 0 ? categories : ["ksp", "vocational"];
+                    return displayCats.map((catKey) => {
+                      const firstInCat = licenseConfigs.find((c) => c.category === catKey);
+                      const label =
+                        firstInCat?.categoryLabel ||
+                        (catKey === "ksp"
+                          ? "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)"
+                          : catKey === "vocational"
+                          ? "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)"
+                          : "หมวดหมู่อื่นๆ");
+                      const isSelected = teacherLicenseCategory === catKey;
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTeacherLicenseCategory("vocational");
-                      if (!["TPQI_CERTIFICATE", "DSD_STANDARD", "COE_ENGINEER", "OTHER_PROFESSIONAL"].includes(teacherLicenseForm.licenseType)) {
-                        setTeacherLicenseForm({ ...teacherLicenseForm, licenseType: "TPQI_CERTIFICATE" });
-                      }
-                    }}
-                    className={clsx(
-                      "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
-                      teacherLicenseCategory === "vocational"
-                        ? "bg-white text-emerald-800 shadow-xs border border-slate-200/60"
-                        : "text-slate-500 hover:text-slate-800"
-                    )}
-                  >
-                    <Award className="h-4 w-4 text-emerald-600" />
-                    <span>คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)</span>
-                  </button>
+                      return (
+                        <button
+                          key={catKey}
+                          type="button"
+                          onClick={() => {
+                            setTeacherLicenseCategory(catKey);
+                            const firstConfig = licenseConfigs.find((c) => c.category === catKey);
+                            if (firstConfig) {
+                              setTeacherLicenseForm((prev) => ({
+                                ...prev,
+                                licenseType: firstConfig.code,
+                              }));
+                            }
+                          }}
+                          className={clsx(
+                            "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap",
+                            isSelected
+                              ? "bg-white text-slate-900 shadow-xs border border-slate-200/60"
+                              : "text-slate-500 hover:text-slate-800"
+                          )}
+                        >
+                          {catKey === "ksp" ? (
+                            <GraduationCap className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          ) : (
+                            <Award className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                          )}
+                          <span>{label}</span>
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
 
-                {/* 1. ประเภทใบอนุญาต (License Type Selection) */}
+                {/* 1. ประเภทใบอนุญาต (Dynamic License Type Cards) */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-800">
                     1. เลือกประเภทเอกสาร / ใบอนุญาต <span className="text-rose-500">*</span>
                   </label>
 
-                  {teacherLicenseCategory === "ksp" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        {
-                          value: "KSP_B_LICENSE",
-                          title: "B-License (ชั้นต้น)",
-                          desc: "ใบอนุญาตประกอบวิชาชีพครูชั้นต้น (อายุ 5 ปี)",
-                          icon: GraduationCap,
-                          color: "teal",
-                        },
-                        {
-                          value: "KSP_A_LICENSE",
-                          title: "A-License (ชั้นสูง)",
-                          desc: "ใบอนุญาตประกอบวิชาชีพครูชั้นสูง (อายุ 7 ปี)",
-                          icon: Award,
-                          color: "purple",
-                        },
-                        {
-                          value: "KSP_P_LICENSE",
-                          title: "P-License (ปฏิบัติหน้าที่ครู)",
-                          desc: "ใบอนุญาตปฏิบัติหน้าที่ครู (อายุ 2 ปี)",
-                          icon: Shield,
-                          color: "blue",
-                        },
-                        {
-                          value: "KSP_PROVISIONAL",
-                          title: "หนังสือผ่อนผันคุรุสภา (สอศ.)",
-                          desc: "สำหรับครูพิเศษสอนสายช่าง/คอมพิวเตอร์ (คราวละ 2 ปี)",
-                          icon: Clock,
-                          color: "amber",
-                        },
-                      ].map((opt) => {
-                        const isSelected = teacherLicenseForm.licenseType === opt.value;
-                        const Icon = opt.icon;
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {licenseConfigs
+                      .filter((c) => c.category === teacherLicenseCategory)
+                      .map((opt) => {
+                        const isSelected = teacherLicenseForm.licenseType === opt.code;
+                        const Icon = getLicenseIcon(opt.icon);
                         return (
                           <button
-                            key={opt.value}
+                            key={opt.code}
                             type="button"
                             onClick={() => {
                               const issue = teacherLicenseForm.issuedDate ? new Date(teacherLicenseForm.issuedDate) : null;
                               let exp = teacherLicenseForm.expiredDate;
                               if (issue && !isNaN(issue.getTime())) {
-                                const years = opt.value === "KSP_A_LICENSE" ? 7 : opt.value === "KSP_B_LICENSE" ? 5 : 2;
                                 const nextExp = new Date(issue);
-                                nextExp.setFullYear(nextExp.getFullYear() + years);
+                                nextExp.setFullYear(nextExp.getFullYear() + (opt.defaultYears || 5));
                                 exp = nextExp.toISOString().split("T")[0];
                               }
                               setTeacherLicenseForm({
                                 ...teacherLicenseForm,
-                                licenseType: opt.value as LicenseTypeEnum,
+                                licenseType: opt.code,
                                 expiredDate: exp,
                               });
                             }}
@@ -2416,10 +2446,8 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                           >
                             <div
                               className={clsx(
-                                "flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 mt-0.5",
-                                isSelected
-                                  ? "bg-teal-600 text-white"
-                                  : "bg-white text-slate-500 border border-slate-200"
+                                "flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 mt-0.5 border",
+                                isSelected ? getBadgeStyle(opt.color) : "bg-white text-slate-500 border-slate-200"
                               )}
                             >
                               <Icon className="h-4 w-4" />
@@ -2429,196 +2457,141 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                                 {opt.title}
                               </div>
                               <div className="text-[10px] text-slate-400 mt-0.5">
-                                {opt.desc}
+                                {opt.description || `อายุใช้งานเริ่มต้น ${opt.defaultYears} ปี`}
                               </div>
                             </div>
                           </button>
                         );
                       })}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        {
-                          value: "TPQI_CERTIFICATE",
-                          title: "คุณวุฒิวิชาชีพ (TPQI)",
-                          desc: "สถาบันคุณวุฒิวิชาชีพ เช่น สาขา IT / ซอฟต์แวร์",
-                          icon: FileBadge,
-                        },
-                        {
-                          value: "DSD_STANDARD",
-                          title: "มาตรฐานฝีมือแรงงาน (DSD)",
-                          desc: "กรมพัฒนาฝีมือแรงงาน เช่น ช่างซ่อมคอมพิวเตอร์ / ช่างไฟฟ้า",
-                          icon: Award,
-                        },
-                        {
-                          value: "COE_ENGINEER",
-                          title: "ใบประกอบวิชาชีพวิศวกรรม (กว.)",
-                          desc: "สภาวิศวกร เช่น วิศวกรรมคอมพิวเตอร์ / ไฟฟ้า",
-                          icon: Briefcase,
-                        },
-                        {
-                          value: "OTHER_PROFESSIONAL",
-                          title: "ใบรับรองมาตรฐานสากล / อื่นๆ",
-                          desc: "เช่น Cisco CCNA, CompTIA, Microsoft Certified",
-                          icon: Sparkles,
-                        },
-                      ].map((opt) => {
-                        const isSelected = teacherLicenseForm.licenseType === opt.value;
-                        const Icon = opt.icon;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() =>
-                              setTeacherLicenseForm({
-                                ...teacherLicenseForm,
-                                licenseType: opt.value as LicenseTypeEnum,
-                              })
-                            }
-                            className={clsx(
-                              "flex items-start gap-3 p-3 rounded-2xl border text-left transition select-none",
-                              isSelected
-                                ? "bg-emerald-50/80 border-emerald-500 shadow-xs ring-1 ring-emerald-500"
-                                : "bg-slate-50/60 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                            )}
-                          >
-                            <div
-                              className={clsx(
-                                "flex h-8 w-8 items-center justify-center rounded-xl flex-shrink-0 mt-0.5",
-                                isSelected
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white text-slate-500 border border-slate-200"
-                              )}
-                            >
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className={clsx("text-xs font-bold leading-tight", isSelected ? "text-emerald-950" : "text-slate-800")}>
-                                {opt.title}
-                              </div>
-                              <div className="text-[10px] text-slate-400 mt-0.5">
-                                {opt.desc}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Sub-block for KSP Provisional (รอบที่ 1, 2, 3) */}
-                {teacherLicenseForm.licenseType === "KSP_PROVISIONAL" && (
-                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                        <Clock className="h-4 w-4 text-amber-700" />
-                        ครั้งที่ขอรับการผ่อนผันจากคุรุสภา (Provisional Round) <span className="text-rose-500">*</span>
-                      </label>
-                      <span className="text-[10px] text-amber-700 font-semibold bg-white px-2 py-0.5 rounded border border-amber-200">
-                        จำกัดไม่เกิน 3 ครั้ง (ครั้งละ 2 ปี)
-                      </span>
-                    </div>
+                {/* Dynamic Sub-block for Provisional Round */}
+                {(() => {
+                  const currentConf = licenseConfigs.find((c) => c.code === teacherLicenseForm.licenseType);
+                  const isProvisional = currentConf?.requiresProvisionalRound || teacherLicenseForm.licenseType === "KSP_PROVISIONAL";
+                  if (!isProvisional) return null;
 
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { round: 1, label: "ครั้งที่ 1 (ปีที่ 1-2)", sub: "เริ่มปฏิบัติหน้าที่สอน" },
-                        { round: 2, label: "ครั้งที่ 2 (ปีที่ 3-4)", sub: "อยู่ระหว่างพัฒนาวุฒิครู" },
-                        { round: 3, label: "ครั้งที่ 3 (ปีที่ 5-6)", sub: "ครั้งสุดท้ายตามระเบียบ" },
-                      ].map((r) => {
-                        const isSelected = (teacherLicenseForm.provisionalRound || 1) === r.round;
-                        return (
-                          <button
-                            key={r.round}
-                            type="button"
-                            onClick={() =>
-                              setTeacherLicenseForm({
-                                ...teacherLicenseForm,
-                                provisionalRound: r.round,
-                              })
-                            }
-                            className={clsx(
-                              "p-2.5 rounded-xl border text-center transition select-none",
-                              isSelected
-                                ? r.round === 3
-                                  ? "bg-rose-100 border-rose-500 text-rose-900 font-bold ring-1 ring-rose-500"
-                                  : "bg-amber-600 text-white font-bold shadow-xs border-amber-600"
-                                : "bg-white border-amber-200 text-slate-700 hover:bg-amber-50/60"
-                            )}
-                          >
-                            <div className="text-xs font-bold">{r.label}</div>
-                            <div className={clsx("text-[10px] mt-0.5", isSelected ? (r.round === 3 ? "text-rose-800" : "text-amber-100") : "text-slate-400")}>
-                              {r.sub}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {teacherLicenseForm.provisionalRound === 3 && (
-                      <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-[11px]">
-                        <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                        <span>
-                          <strong>แจ้งเตือนสำคัญ:</strong> การผ่อนผันครั้งที่ 3 เป็นครั้งสุดท้ายตามข้อบังคับคุรุสภา ครูผู้สอนต้องสำเร็จการศึกษา ป.บัณฑิต หรือผ่านการทดสอบรับรองความรู้เพื่อขอรับใบอนุญาต B-License ก่อนหนังสือผ่อนผันนี้หมดอายุ
+                  return (
+                    <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                          <Clock className="h-4 w-4 text-amber-700" />
+                          ครั้งที่ขอรับการผ่อนผันจากคุรุสภา (Provisional Round) <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-amber-700 font-semibold bg-white px-2 py-0.5 rounded border border-amber-200">
+                          จำกัดไม่เกิน 3 ครั้ง (ครั้งละ 2 ปี)
                         </span>
                       </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Sub-block for Vocational Fields (Title / สาขา / ระดับ) */}
-                {["TPQI_CERTIFICATE", "DSD_STANDARD", "COE_ENGINEER", "OTHER_PROFESSIONAL"].includes(teacherLicenseForm.licenseType) && (
-                  <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
-                    <label className="block text-xs font-bold text-emerald-950">
-                      ระบุสาขาวิชาชีพ / ระดับมาตรฐาน / สาขาวิศวกรรม <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4 หรือ ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 2"
-                      value={teacherLicenseForm.title || ""}
-                      onChange={(e) =>
-                        setTeacherLicenseForm({
-                          ...teacherLicenseForm,
-                          title: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-emerald-300 bg-white p-2.5 text-xs text-slate-900 font-semibold focus:border-emerald-600 focus:outline-none"
-                    />
-
-                    {/* Quick presets for Computer Technology & Vocational Engineering */}
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10px] font-bold text-slate-500 block">
-                        ตัวเลือกแนะนำสำหรับแผนกเทคโนโลยีคอมพิวเตอร์ / ช่าง:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="grid grid-cols-3 gap-2">
                         {[
-                          "สาขาวิชาชีพ IT และดิจิทัลคอนเทนต์ ระดับ 4",
-                          "นักพัฒนาระบบ (Software Developer) ระดับ 4",
-                          "ผู้ดูแลระบบเครือข่าย (Network Admin) ระดับ 4",
-                          "ความมั่นคงปลอดภัยไซเบอร์ (Cybersecurity) ระดับ 4",
-                          "ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 1",
-                          "ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 2",
-                          "วิศวกรรมคอมพิวเตอร์ (กว.)",
-                        ].map((preset) => (
-                          <button
-                            key={preset}
-                            type="button"
-                            onClick={() =>
-                              setTeacherLicenseForm({
-                                ...teacherLicenseForm,
-                                title: preset,
-                              })
-                            }
-                            className="px-2 py-1 rounded-lg bg-white border border-emerald-200 text-slate-700 text-[10px] font-medium hover:bg-emerald-100/70 hover:border-emerald-300 transition"
-                          >
-                            + {preset}
-                          </button>
-                        ))}
+                          { round: 1, label: "ครั้งที่ 1 (ปีที่ 1-2)", sub: "เริ่มปฏิบัติหน้าที่สอน" },
+                          { round: 2, label: "ครั้งที่ 2 (ปีที่ 3-4)", sub: "อยู่ระหว่างพัฒนาวุฒิครู" },
+                          { round: 3, label: "ครั้งที่ 3 (ปีที่ 5-6)", sub: "ครั้งสุดท้ายตามระเบียบ" },
+                        ].map((r) => {
+                          const isSelected = (teacherLicenseForm.provisionalRound || 1) === r.round;
+                          return (
+                            <button
+                              key={r.round}
+                              type="button"
+                              onClick={() =>
+                                setTeacherLicenseForm({
+                                  ...teacherLicenseForm,
+                                  provisionalRound: r.round,
+                                })
+                              }
+                              className={clsx(
+                                "p-2.5 rounded-xl border text-center transition select-none",
+                                isSelected
+                                  ? r.round === 3
+                                    ? "bg-rose-100 border-rose-500 text-rose-900 font-bold ring-1 ring-rose-500"
+                                    : "bg-amber-600 text-white font-bold shadow-xs border-amber-600"
+                                  : "bg-white border-amber-200 text-slate-700 hover:bg-amber-50/60"
+                              )}
+                            >
+                              <div className="text-xs font-bold">{r.label}</div>
+                              <div className={clsx("text-[10px] mt-0.5", isSelected ? (r.round === 3 ? "text-rose-800" : "text-amber-100") : "text-slate-400")}>
+                                {r.sub}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      {teacherLicenseForm.provisionalRound === 3 && (
+                        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-[11px]">
+                          <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                          <span>
+                            <strong>แจ้งเตือนสำคัญ:</strong> การผ่อนผันครั้งที่ 3 เป็นครั้งสุดท้ายตามข้อบังคับคุรุสภา ครูผู้สอนต้องสำเร็จการศึกษา ป.บัณฑิต หรือผ่านการทดสอบรับรองความรู้เพื่อขอรับใบอนุญาต B-License ก่อนหนังสือผ่อนผันนี้หมดอายุ
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
+
+                {/* Dynamic Sub-block for Title / Presets */}
+                {(() => {
+                  const currentConf = licenseConfigs.find((c) => c.code === teacherLicenseForm.licenseType);
+                  const showTitleInput =
+                    currentConf?.requiresTitle ||
+                    ["TPQI_CERTIFICATE", "DSD_STANDARD", "COE_ENGINEER", "OTHER_PROFESSIONAL"].includes(
+                      teacherLicenseForm.licenseType
+                    );
+                  if (!showTitleInput) return null;
+
+                  const titleLabel = currentConf?.titleLabel || "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน / สาขาวิศวกรรม";
+                  const titlePlaceholder =
+                    currentConf?.titlePlaceholder ||
+                    "เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4 หรือ ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 2";
+                  const presetChips = currentConf?.presetChips || [];
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2.5">
+                      <label className="block text-xs font-bold text-emerald-950">
+                        {titleLabel} <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={titlePlaceholder}
+                        value={teacherLicenseForm.title || ""}
+                        onChange={(e) =>
+                          setTeacherLicenseForm({
+                            ...teacherLicenseForm,
+                            title: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-emerald-300 bg-white p-2.5 text-xs text-slate-900 font-semibold focus:border-emerald-600 focus:outline-none"
+                      />
+
+                      {presetChips.length > 0 && (
+                        <div className="space-y-1 pt-1">
+                          <span className="text-[10px] font-bold text-slate-500 block">
+                            ตัวเลือกแนะนำสำหรับแผนกวิชา / ช่าง:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {presetChips.map((preset: string) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() =>
+                                  setTeacherLicenseForm({
+                                    ...teacherLicenseForm,
+                                    title: preset,
+                                  })
+                                }
+                                className="px-2.5 py-1 rounded-xl bg-white border border-emerald-200 text-slate-700 text-[11px] font-medium hover:bg-emerald-100/70 hover:border-emerald-300 transition"
+                              >
+                                + {preset}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* 2. ข้อมูลระบุตัวตนและเลขที่เอกสาร */}
                 <div className="space-y-3 pt-3 border-t border-slate-100">

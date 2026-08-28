@@ -10,22 +10,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum LicenseType {
-  KSP_A_LICENSE          // ใบอนุญาตประกอบวิชาชีพครูชั้นสูง (A-License - คุรุสภา)
-  KSP_B_LICENSE          // ใบอนุญาตประกอบวิชาชีพครูชั้นต้น (B-License - คุรุสภา)
-  KSP_P_LICENSE          // ใบอนุญาตปฏิบัติหน้าที่ครู (P-License - คุรุสภา)
-  KSP_PROVISIONAL        // หนังสืออนุญาตปฏิบัติการสอนโดยไม่มีใบประกอบฯ (หนังสือผ่อนผัน)
-  TPQI_CERTIFICATE       // หนังสือรับรองคุณวุฒิวิชาชีพ (สถาบันคุณวุฒิวิชาชีพ)
-  DSD_STANDARD           // หนังสือรับรองมาตรฐานฝีมือแรงงานแห่งชาติ (กรมพัฒนาฝีมือแรงงาน)
-  COE_ENGINEER           // ใบประกอบวิชาชีพวิศวกรรมควบคุม (กว.)
-  OTHER_PROFESSIONAL     // ใบประกอบวิชาชีพควบคุมอื่นๆ
-}
-
 enum LicenseStatus {
   ACTIVE
   EXPIRING_SOON
   EXPIRED
   IN_RENEWAL
+}
+
+model LicenseTypeConfig {
+  id                      String   @id @default(cuid())
+  code                    String   @unique // e.g. "KSP_B_LICENSE", "TPQI_CERTIFICATE", "CUSTOM_..."
+  title                   String   // e.g. "ใบอนุญาตประกอบวิชาชีพครูชั้นต้น (B-License)"
+  description             String?  // e.g. "ใบอนุญาตประกอบวิชาชีพครูชั้นต้น (อายุ 5 ปี)"
+  category                String   @default("ksp") // "ksp" | "vocational" | "other"
+  categoryLabel           String?  // e.g. "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)"
+  defaultYears            Int      @default(5)     // อายุการใช้งานเริ่มต้น (ปี)
+  issuer                  String?  // e.g. "สำนักงานเลขาธิการคุรุสภา", "สถาบันคุณวุฒิวิชาชีพ"
+  color                   String   @default("teal") // "teal" | "purple" | "blue" | "amber" | "emerald" | "indigo" | "rose" | "slate"
+  icon                    String   @default("GraduationCap") // "GraduationCap" | "Award" | "Shield" | "Clock" | "FileBadge" | "Briefcase" | "Sparkles"
+  requiresProvisionalRound Boolean  @default(false) // true กรณีเป็นหนังสือผ่อนผัน (รอบ 1, 2, 3)
+  requiresTitle           Boolean  @default(false) // true กรณีต้องระบุสาขา/ระดับ
+  titleLabel              String?  // e.g. "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน / สาขาวิศวกรรม"
+  titlePlaceholder        String?  // e.g. "เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4"
+  presetChips             String[] @default([])    // รายการตัวเลือกแนะนำที่คลิกเพื่อใส่ข้อความ
+  sortOrder               Int      @default(0)
+  isActive                Boolean  @default(true)
+  isSystem                Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([category])
+  @@index([sortOrder])
 }
 
 model RoleDefinition {
@@ -58,10 +73,10 @@ model TeacherLicense {
   userId            String
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  licenseType       LicenseType   @default(KSP_B_LICENSE)
+  licenseType       String        @default("KSP_B_LICENSE") // code from LicenseTypeConfig or enum string
   licenseNumber     String        // เลขที่ใบอนุญาต หรือ เลขที่หนังสือรับรอง
   title             String?       // ระบุสาขา/ระดับ (เช่น "สาขาวิศวกรรมคอมพิวเตอร์", "ระดับ 2", "สาขาเทคโนโลยีสารสนเทศ ระดับ 4")
-  provisionalRound  Int?          // ครั้งที่ได้รับการผ่อนผัน (เฉพาะกรณี KSP_PROVISIONAL: 1, 2, 3)
+  provisionalRound  Int?          // ครั้งที่ได้รับการผ่อนผัน (เฉพาะกรณีหนังสือผ่อนผัน: 1, 2, 3)
   
   nameTh            String?       // ชื่อ-นามสกุลภาษาไทยตามหน้าบัตร
   nameEn            String?       // ชื่อ-นามสกุลภาษาอังกฤษตามหน้าบัตร
