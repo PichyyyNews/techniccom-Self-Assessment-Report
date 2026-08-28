@@ -42,7 +42,8 @@ export function Navbar() {
     if (pathname === "/dashboard") return "ภาพรวมและข้อมูลส่วนตัว";
     if (pathname === "/profile") return "โปรไฟล์และประวัติการทำงาน";
     if (pathname.startsWith("/admin/system")) return "ตั้งค่าระบบและมอนิเตอร์เซิร์ฟเวอร์";
-    if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งาน";
+    if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งานและสิทธิ์";
+    if (pathname.startsWith("/admin/licenses")) return "ตั้งค่าประเภทใบอนุญาต & มาตรฐานวิชาชีพ";
     return "ระบบงานประกันคุณภาพ";
   };
 

@@ -7,13 +7,29 @@ import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
-  Shield,
+  FileBadge,
+  User,
   PanelLeftClose,
   PanelLeftOpen,
   Server,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSidebar } from "./SidebarContext";
+
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  show: boolean;
+  badge?: string;
+}
+
+interface NavGroup {
+  groupTitle: string;
+  items: NavItem[];
+}
 
 export function AppSidebar({
   isMobile = false,
@@ -29,31 +45,62 @@ export function AppSidebar({
   const isRoot = session?.user?.role === "ROOT";
   const userPermissions = session?.user?.permissions || ["/dashboard"];
   const canManageUsers = isRoot || userPermissions.includes("/admin/users");
+  const canManageLicenses =
+    isRoot || userPermissions.includes("/admin/licenses") || userPermissions.includes("/admin/users");
   const canAccessDashboard = isRoot || userPermissions.includes("/dashboard");
 
   const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
   const effectiveCollapsed = isMobile ? false : isCollapsed;
 
-  const navItems = [
+  // Grouped Navigation Structure
+  const navGroups: NavGroup[] = [
     {
-      title: "หน้าหลัก (Dashboard)",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      show: canAccessDashboard,
+      groupTitle: "ภาพรวมระบบ (OVERVIEW)",
+      items: [
+        {
+          title: "หน้าหลัก (Dashboard)",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          show: canAccessDashboard,
+        },
+        {
+          title: "โปรไฟล์และผลงาน",
+          href: "/profile",
+          icon: User,
+          show: true,
+        },
+      ],
     },
     {
-      title: "จัดการผู้ใช้และสิทธิ์",
-      href: "/admin/users",
-      icon: Users,
-      show: canManageUsers,
-      badge: isRoot ? "ROOT" : undefined,
+      groupTitle: "การบริหารข้อมูลบุคลากร (MANAGEMENT)",
+      items: [
+        {
+          title: "จัดการผู้ใช้และสิทธิ์",
+          href: "/admin/users",
+          icon: Users,
+          show: canManageUsers,
+          badge: isRoot ? "ROOT" : undefined,
+        },
+        {
+          title: "ประเภทใบอนุญาต & มาตรฐาน",
+          href: "/admin/licenses",
+          icon: FileBadge,
+          show: canManageLicenses,
+          badge: isRoot ? "ROOT" : undefined,
+        },
+      ],
     },
     {
-      title: "ตั้งค่าระบบ & มอนิเตอร์",
-      href: "/admin/system",
-      icon: Server,
-      show: isRoot,
-      badge: "ROOT",
+      groupTitle: "โครงสร้างพื้นฐาน & ระบบ (INFRASTRUCTURE)",
+      items: [
+        {
+          title: "ตั้งค่าระบบ & มอนิเตอร์",
+          href: "/admin/system",
+          icon: Server,
+          show: isRoot,
+          badge: "ROOT",
+        },
+      ],
     },
   ];
 
@@ -67,6 +114,7 @@ export function AppSidebar({
     if (isRootUser || color === "rose") return "bg-rose-50 text-rose-700 border border-rose-200";
     if (color === "purple") return "bg-purple-50 text-purple-700 border border-purple-200";
     if (color === "emerald") return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+    if (color === "teal") return "bg-teal-50 text-teal-700 border border-teal-200";
     if (color === "amber") return "bg-amber-50 text-amber-700 border border-amber-200";
     return "bg-blue-50 text-blue-700 border border-blue-200";
   };
@@ -84,7 +132,7 @@ export function AppSidebar({
       )}
     >
       <div className="space-y-6">
-        {/* Top Header: Logo & Collapse Button (Aligned with 64px Topbar) */}
+        {/* Top Header: Logo & Collapse Button */}
         <div className="flex h-12 items-center justify-between pb-3 border-b border-slate-100">
           <Link
             href="/dashboard"
@@ -145,81 +193,98 @@ export function AppSidebar({
           </div>
         )}
 
-        {/* Navigation Menu */}
-        <div>
-          {!effectiveCollapsed && (
-            <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
-              เมนูหลัก (Navigation)
-            </div>
-          )}
+        {/* Grouped Navigation Menu */}
+        <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-220px)] pr-0.5 no-scrollbar">
+          {navGroups.map((group, groupIdx) => {
+            const visibleItems = group.items.filter((item) => item.show);
+            if (visibleItems.length === 0) return null;
 
-          <nav className="space-y-1.5">
-            {navItems
-              .filter((item) => item.show)
-              .map((item) => {
-                const Icon = item.icon;
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            return (
+              <div key={groupIdx} className="space-y-1.5">
+                {/* Group Title (Hidden when collapsed) */}
+                {!effectiveCollapsed && (
+                  <div className="px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                    {group.groupTitle}
+                  </div>
+                )}
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={handleLinkClick}
-                    title={effectiveCollapsed ? item.title : undefined}
-                    className={clsx(
-                      "flex items-center rounded-2xl transition-all duration-150 group",
-                      effectiveCollapsed
-                        ? "justify-center p-3"
-                        : "justify-between px-3.5 py-3 text-sm font-bold",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
+                {/* Group Divider when collapsed */}
+                {effectiveCollapsed && groupIdx > 0 && (
+                  <div className="w-8 h-px bg-slate-200 mx-auto my-2" />
+                )}
+
+                <nav className="space-y-1">
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={handleLinkClick}
+                        title={effectiveCollapsed ? item.title : undefined}
                         className={clsx(
-                          "h-5 w-5 flex-shrink-0",
+                          "flex items-center rounded-2xl transition-all duration-150 group select-none",
+                          effectiveCollapsed
+                            ? "justify-center p-3"
+                            : "justify-between px-3.5 py-2.5 text-xs font-bold",
                           isActive
-                            ? "text-white"
-                            : "text-slate-400 group-hover:text-slate-600"
-                        )}
-                      />
-                      {!effectiveCollapsed && <span>{item.title}</span>}
-                    </div>
-
-                    {!effectiveCollapsed && item.badge && (
-                      <span
-                        className={clsx(
-                          "px-2 py-0.5 text-[10px] font-black rounded-md",
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : "bg-rose-50 text-rose-700 border border-rose-200"
+                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                         )}
                       >
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-          </nav>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Icon
+                            className={clsx(
+                              "h-4 w-4 sm:h-4.5 sm:w-4.5 flex-shrink-0",
+                              isActive
+                                ? "text-white"
+                                : "text-slate-400 group-hover:text-slate-600"
+                            )}
+                          />
+                          {!effectiveCollapsed && (
+                            <span className="truncate">{item.title}</span>
+                          )}
+                        </div>
+
+                        {!effectiveCollapsed && item.badge && (
+                          <span
+                            className={clsx(
+                              "px-1.5 py-0.5 text-[9px] font-black rounded-md flex-shrink-0 ml-1",
+                              isActive
+                                ? "bg-white/20 text-white"
+                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                            )}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Bottom User Card */}
       {session?.user && (
-        <div className="pt-4 border-t border-slate-100">
-          <div
+        <div className="pt-3 border-t border-slate-100">
+          <Link
+            href="/profile"
+            onClick={handleLinkClick}
             className={clsx(
-              "rounded-2xl border border-slate-200/80 bg-slate-50/70 transition hover:bg-slate-100/70",
-              effectiveCollapsed ? "p-2 flex justify-center" : "p-3.5"
+              "block rounded-2xl border border-slate-200/80 bg-slate-50/70 transition hover:bg-slate-100/80 group",
+              effectiveCollapsed ? "p-2 flex justify-center" : "p-3"
             )}
             title={effectiveCollapsed ? `${session.user.name} (${session.user.roleTitle || session.user.role})` : undefined}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {session.user.avatarUrl ? (
                 <img
                   src={session.user.avatarUrl}
@@ -231,12 +296,12 @@ export function AppSidebar({
                       (target.nextElementSibling as HTMLElement).style.display = "flex";
                     }
                   }}
-                  className="h-10 w-10 rounded-xl object-cover border border-slate-200 flex-shrink-0 bg-white"
+                  className="h-9 w-9 rounded-xl object-cover border border-slate-200 flex-shrink-0 bg-white"
                 />
               ) : null}
               <div
                 style={{ display: session.user.avatarUrl ? "none" : "flex" }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-xs flex-shrink-0"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs shadow-xs flex-shrink-0"
               >
                 {userInitial}
               </div>
@@ -244,7 +309,7 @@ export function AppSidebar({
               {!effectiveCollapsed && (
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-900 truncate">
+                    <span className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-600 transition">
                       {session.user.name}
                     </span>
                     <span
@@ -260,13 +325,10 @@ export function AppSidebar({
                   <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
                     {session.user.position || "บุคลากรวิทยาลัย"}
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">
-                    {session.user.email}
-                  </div>
                 </div>
               )}
             </div>
-          </div>
+          </Link>
         </div>
       )}
     </aside>

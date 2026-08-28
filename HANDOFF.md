@@ -124,9 +124,9 @@
 
 ---
 
-## 5. ระบบจัดการประเภทใบอนุญาตและตัวเลือกแนะนำสำหรับ Admin (License Config & Preset Chips)
+## 5. ระบบจัดการประเภทใบอนุญาตและตัวเลือกแนะนำสำหรับ Admin (Dedicated Page: `/admin/licenses`)
 
-ในหน้า **`/admin/users`** ได้เพิ่มแท็บ **"ประเภทใบอนุญาต (License Types)"** เพื่อให้ Admin สามารถบริหารจัดการประเภทใบอนุญาตและชิปตัวเลือกแนะนำได้อย่างอิสระ:
+ระบบได้แยกหน้าสำหรับบริหารจัดการประเภทใบอนุญาตและมาตรฐานวิชาชีพออกมาเป็นหน้าเฉพาะ (**`/admin/licenses`**) พร้อมเพิ่มเข้าแถบเมนู Sidebar ในหมวดการบริหารข้อมูลบุคลากร:
 
 - **การตั้งค่าประเภทใบอนุญาต (License Configurations CRUD)**:
   - เพิ่ม/แก้ไข/ลบ ประเภทใบอนุญาตได้เองโดยไม่ต้องแก้ไขโค้ด
@@ -183,12 +183,14 @@ services/qa-web/
 ├── src/
 │   ├── app/
 │   │   ├── (admin)/
+│   │   │   ├── admin/licenses/        # ตั้งค่าประเภทใบอนุญาต & มาตรฐานวิชาชีพ (แยกหน้าเดี่ยว)
 │   │   │   ├── admin/system/          # ศูนย์มอนิเตอร์และตั้งค่าโครงสร้างระบบ (ROOT Only)
-│   │   │   └── admin/users/           # จัดการผู้ใช้งาน, ยศ/สิทธิ์, และประเภทใบอนุญาต (3 Tabs)
+│   │   │   └── admin/users/           # จัดการผู้ใช้งานและยศ/สิทธิ์การใช้งาน (2 Tabs: Users & Roles)
 │   │   ├── (dashboard)/
 │   │   │   ├── dashboard/             # หน้าหลักแดชบอร์ดข้อมูลบุคลากร
 │   │   │   └── profile/               # หน้าโปรไฟล์ส่วนตัว และ Social Profile View (/profile/[id])
 │   │   ├── api/
+│   │   │   ├── admin/license-categories/ # CRUD APIs สำหรับหมวดหมู่ใบอนุญาต
 │   │   │   ├── admin/license-configs/ # CRUD APIs + Reset Defaults + Preset Chips Manager
 │   │   │   ├── admin/roles/           # CRUD APIs สำหรับจัดการยศ/สิทธิ์
 │   │   │   ├── admin/system/backup/   # GET/POST Snapshot สำรองข้อมูล S3
@@ -198,13 +200,14 @@ services/qa-web/
 │   │   │   ├── admin/users/           # CRUD APIs สำหรับจัดการบัญชีผู้ใช้
 │   │   │   ├── auth/[...nextauth]/    # NextAuth.js Authentication Handlers
 │   │   │   ├── files/[...key]/        # S3 File Stream & Download Proxy
+│   │   │   ├── license-categories/    # GET ดึงหมวดหมู่ใบอนุญาตที่ Active
 │   │   │   ├── license-configs/       # GET ดึงประเภทใบอนุญาตที่ Active สำหรับหน้าโปรไฟล์
 │   │   │   ├── profile/               # GET/PUT อัปเดตโปรไฟล์ตนเองและประวัติใบอนุญาต
 │   │   │   ├── profile/[id]/          # GET/PUT ดูและแก้ไขโปรไฟล์ผู้อื่น (ตามสิทธิ์ RBAC)
 │   │   │   └── upload/                # อัปโหลดรูปภาพและไฟล์หลักฐานไปยัง MinIO S3
 │   │   └── login/                     # หน้าเข้าสู่ระบบ
 │   ├── components/
-│   │   ├── layout/                    # AppShell, AppSidebar, Navbar, SidebarContext
+│   │   ├── layout/                    # AppShell, AppSidebar (Grouped Nav), Navbar, SidebarContext
 │   │   ├── profile/                   # ContributionGraph (Responsive 52-Week Heatmap)
 │   │   └── ui/                        # ImageUpload, DocumentUpload
 │   ├── lib/

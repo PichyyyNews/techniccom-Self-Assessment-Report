@@ -8,7 +8,6 @@ import {
   UserPlus,
   Shield,
   Search,
-  Filter,
   CheckCircle2,
   XCircle,
   Edit2,
@@ -24,37 +23,11 @@ import {
   LayoutDashboard,
   Eye,
   Edit3,
-  GraduationCap,
-  Award,
-  Clock,
   FileBadge,
-  Sparkles,
-  FileText,
-  Settings,
-  RefreshCw,
-  Tag,
   Check,
-  AlertTriangle,
-  Layers,
-  FolderPlus,
-  Folder,
-  Settings2,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { clsx } from "clsx";
-
-export interface LicenseCategoryItem {
-  id: string;
-  code: string;
-  title: string;
-  description?: string | null;
-  icon: string;
-  color: string;
-  sortOrder: number;
-  isActive: boolean;
-  isSystem: boolean;
-  licenseCount?: number;
-}
 
 interface RoleDef {
   id: string;
@@ -90,28 +63,6 @@ interface UserData {
   createdAt: string;
 }
 
-export interface LicenseConfigItem {
-  id: string;
-  code: string;
-  title: string;
-  description?: string | null;
-  category: string;
-  categoryLabel?: string | null;
-  defaultYears: number;
-  issuer?: string | null;
-  color: string;
-  icon: string;
-  requiresProvisionalRound: boolean;
-  requiresTitle: boolean;
-  titleLabel?: string | null;
-  titlePlaceholder?: string | null;
-  presetChips: string[];
-  sortOrder: number;
-  isActive: boolean;
-  isSystem: boolean;
-  usageCount?: number;
-}
-
 interface PermissionGroup {
   category: string;
   items: {
@@ -137,6 +88,12 @@ const AVAILABLE_PERMISSION_GROUPS: PermissionGroup[] = [
         title: "จัดการผู้ใช้และสิทธิ์ (User & Role Management)",
         description: "จัดการบัญชีบุคลากร กำหนดยศ และสิทธิ์การเข้าถึง",
         icon: Users,
+      },
+      {
+        key: "/admin/licenses",
+        title: "จัดการประเภทใบอนุญาต (License Types & Standards)",
+        description: "จัดการประเภทใบอนุญาต คุรุสภา TPQI DSD กว. และตัวเลือกแนะนำ",
+        icon: FileBadge,
       },
     ],
   },
@@ -172,44 +129,11 @@ const COLOR_OPTIONS = [
   { value: "slate", label: "สีเทา (Slate)", badge: "bg-slate-50 text-slate-700 border-slate-200" },
 ];
 
-const ICON_OPTIONS = [
-  { value: "GraduationCap", label: "หมวกบัณฑิต (GraduationCap)", icon: GraduationCap },
-  { value: "Award", label: "เหรียญรางวัล (Award)", icon: Award },
-  { value: "Shield", label: "โล่ป้องกัน (Shield)", icon: Shield },
-  { value: "Clock", label: "นาฬิกาผ่อนผัน (Clock)", icon: Clock },
-  { value: "FileBadge", label: "บัตรรับรอง (FileBadge)", icon: FileBadge },
-  { value: "Briefcase", label: "กระเป๋าช่าง/งาน (Briefcase)", icon: Briefcase },
-  { value: "Sparkles", label: "ประกายดาว/สากล (Sparkles)", icon: Sparkles },
-  { value: "FileText", label: "เอกสารทั่วไป (FileText)", icon: FileText },
-];
-
-function getLicenseIcon(iconName: string) {
-  switch (iconName) {
-    case "GraduationCap":
-      return GraduationCap;
-    case "Award":
-      return Award;
-    case "Shield":
-      return Shield;
-    case "Clock":
-      return Clock;
-    case "FileBadge":
-      return FileBadge;
-    case "Briefcase":
-      return Briefcase;
-    case "Sparkles":
-      return Sparkles;
-    case "FileText":
-    default:
-      return FileText;
-  }
-}
-
 export default function AdminUsersPage() {
   const { data: session } = useSession();
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<"users" | "roles" | "licenses">("users");
+  // Active Tab: Users or Roles
+  const [activeTab, setActiveTab] = useState<"users" | "roles">("users");
 
   // Users State
   const [users, setUsers] = useState<UserData[]>([]);
@@ -220,37 +144,6 @@ export default function AdminUsersPage() {
   // Roles State
   const [roles, setRoles] = useState<RoleDef[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
-
-  // Licenses Config State
-  const [licenseConfigs, setLicenseConfigs] = useState<LicenseConfigItem[]>([]);
-  const [loadingConfigs, setLoadingConfigs] = useState(true);
-  const [licenseCategoryFilter, setLicenseCategoryFilter] = useState("ALL");
-  const [inlineNewChip, setInlineNewChip] = useState<Record<string, string>>({});
-
-  // License Modal State
-  const [showLicenseModal, setShowLicenseModal] = useState(false);
-  const [licenseModalMode, setLicenseModalMode] = useState<"create" | "edit">("create");
-  const [selectedLicense, setSelectedLicense] = useState<LicenseConfigItem | null>(null);
-  const [licenseFormSubmitting, setLicenseFormSubmitting] = useState(false);
-  const [licenseModalChipInput, setLicenseModalChipInput] = useState("");
-  const [licenseFormData, setLicenseFormData] = useState({
-    code: "",
-    title: "",
-    description: "",
-    category: "vocational",
-    categoryLabel: "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)",
-    defaultYears: 5,
-    issuer: "",
-    color: "emerald",
-    icon: "FileBadge",
-    requiresProvisionalRound: false,
-    requiresTitle: true,
-    titleLabel: "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน",
-    titlePlaceholder: "เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4",
-    presetChips: [] as string[],
-    sortOrder: 0,
-    isActive: true,
-  });
 
   // User Modal State
   const [showUserModal, setShowUserModal] = useState(false);
@@ -313,184 +206,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Category State
-  const [categories, setCategories] = useState<LicenseCategoryItem[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [showCategoryManagerModal, setShowCategoryManagerModal] = useState(false);
-  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
-  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">("create");
-  const [selectedCategory, setSelectedCategory] = useState<LicenseCategoryItem | null>(null);
-  const [categoryFormSubmitting, setCategoryFormSubmitting] = useState(false);
-  const [categoryFormData, setCategoryFormData] = useState({
-    code: "",
-    title: "",
-    description: "",
-    icon: "GraduationCap",
-    color: "teal",
-    sortOrder: 0,
-    isActive: true,
-  });
-
-  // Fetch License Configs
-  const fetchLicenseConfigs = async () => {
-    try {
-      setLoadingConfigs(true);
-      const res = await fetch("/api/admin/license-configs");
-      if (res.ok) {
-        const data = await res.json();
-        setLicenseConfigs(data.configs || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch license configs", err);
-    } finally {
-      setLoadingConfigs(false);
-    }
-  };
-
-  // Fetch Categories
-  const fetchCategories = async () => {
-    try {
-      setLoadingCategories(true);
-      const res = await fetch("/api/admin/license-categories");
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data.categories || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories", err);
-    } finally {
-      setLoadingCategories(false);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
     fetchRoles();
-    fetchLicenseConfigs();
-    fetchCategories();
   }, []);
-
-  // Category Actions
-  const openCreateCategoryModal = () => {
-    setCategoryModalMode("create");
-    setSelectedCategory(null);
-    setCategoryFormData({
-      code: "",
-      title: "",
-      description: "",
-      icon: "GraduationCap",
-      color: "teal",
-      sortOrder: categories.length + 1,
-      isActive: true,
-    });
-    setShowCategoryEditModal(true);
-  };
-
-  const openEditCategoryModal = (cat: LicenseCategoryItem) => {
-    setCategoryModalMode("edit");
-    setSelectedCategory(cat);
-    setCategoryFormData({
-      code: cat.code,
-      title: cat.title,
-      description: cat.description || "",
-      icon: cat.icon || "GraduationCap",
-      color: cat.color || "teal",
-      sortOrder: cat.sortOrder || 0,
-      isActive: cat.isActive,
-    });
-    setShowCategoryEditModal(true);
-  };
-
-  const handleCategoryFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoryFormData.title || !categoryFormData.code) {
-      alert("กรุณากรอกรหัสและชื่อหมวดหมู่");
-      return;
-    }
-
-    try {
-      setCategoryFormSubmitting(true);
-      const url = "/api/admin/license-categories";
-      const method = categoryModalMode === "create" ? "POST" : "PUT";
-      const payload =
-        categoryModalMode === "create"
-          ? categoryFormData
-          : { id: selectedCategory?.id, ...categoryFormData };
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหมู่");
-        return;
-      }
-
-      setShowCategoryEditModal(false);
-      fetchCategories();
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
-    } finally {
-      setCategoryFormSubmitting(false);
-    }
-  };
-
-  const handleToggleCategoryActive = async (cat: LicenseCategoryItem) => {
-    try {
-      const res = await fetch("/api/admin/license-categories", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggle-active", id: cat.id }),
-      });
-      if (res.ok) {
-        fetchCategories();
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDeleteCategory = async (cat: LicenseCategoryItem) => {
-    if (!confirm(`คุณต้องการลบหมวดหมู่ "${cat.title}" ใช่หรือไม่?`)) return;
-
-    try {
-      const res = await fetch(`/api/admin/license-categories?id=${cat.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        fetchCategories();
-        fetchLicenseConfigs();
-      } else {
-        alert(data.error || "ไม่สามารถลบหมวดหมู่นี้ได้");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleResetCategories = async () => {
-    if (!confirm("คุณต้องการคืนค่าหมวดหมู่ใบอนุญาตเป็นค่าเริ่มต้นมาตรฐานใช่หรือไม่?")) return;
-    try {
-      const res = await fetch("/api/admin/license-categories", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset-defaults" }),
-      });
-      if (res.ok) {
-        fetchCategories();
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   // Calculate age helper
   const calculateAge = (birthDateString?: string | null) => {
@@ -512,6 +231,7 @@ export default function AdminUsersPage() {
     if (color === "purple") return "bg-purple-50 text-purple-700 border-purple-200";
     if (color === "emerald") return "bg-emerald-50 text-emerald-700 border-emerald-200";
     if (color === "amber") return "bg-amber-50 text-amber-700 border-amber-200";
+    if (color === "teal") return "bg-teal-50 text-teal-700 border-teal-200";
     return "bg-blue-50 text-blue-700 border-blue-200";
   };
 
@@ -599,7 +319,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async (user: UserData) => {
-    if (!confirm(`คุณต้องการลบผู้ใช้งาน "${user.name}" ใช่หรือไม่?`)) return;
+    if (!confirm(`คุณต้องการลบผู้ใช้ "${user.name}" (${user.email}) ใช่หรือไม่?`)) return;
 
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
@@ -608,10 +328,9 @@ export default function AdminUsersPage() {
 
       if (res.ok) {
         fetchUsers();
-        fetchRoles();
       } else {
         const data = await res.json();
-        alert(data.error || "ไม่สามารถลบผู้ใช้งานได้");
+        alert(data.error || "ไม่สามารถลบผู้ใช้ได้");
       }
     } catch (err) {
       console.error(err);
@@ -643,21 +362,6 @@ export default function AdminUsersPage() {
       permissions: role.permissions || ["/dashboard"],
     });
     setShowRoleModal(true);
-  };
-
-  const togglePermission = (permKey: string) => {
-    const current = roleFormData.permissions || [];
-    if (current.includes(permKey)) {
-      setRoleFormData({
-        ...roleFormData,
-        permissions: current.filter((p) => p !== permKey),
-      });
-    } else {
-      setRoleFormData({
-        ...roleFormData,
-        permissions: [...current, permKey],
-      });
-    }
   };
 
   const handleRoleFormSubmit = async (e: React.FormEvent) => {
@@ -711,219 +415,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  // ================= LICENSE CONFIG ACTIONS =================
-  const openCreateLicenseModal = () => {
-    setLicenseModalMode("create");
-    setSelectedLicense(null);
-    setLicenseModalChipInput("");
-    setLicenseFormData({
-      code: "",
-      title: "",
-      description: "",
-      category: "vocational",
-      categoryLabel: "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ (TPQI/DSD/กว.)",
-      defaultYears: 5,
-      issuer: "",
-      color: "emerald",
-      icon: "FileBadge",
-      requiresProvisionalRound: false,
-      requiresTitle: true,
-      titleLabel: "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน",
-      titlePlaceholder: "เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4",
-      presetChips: [],
-      sortOrder: licenseConfigs.length + 1,
-      isActive: true,
-    });
-    setShowLicenseModal(true);
-  };
-
-  const openEditLicenseModal = (config: LicenseConfigItem) => {
-    setLicenseModalMode("edit");
-    setSelectedLicense(config);
-    setLicenseModalChipInput("");
-    setLicenseFormData({
-      code: config.code,
-      title: config.title,
-      description: config.description || "",
-      category: config.category,
-      categoryLabel: config.categoryLabel || "",
-      defaultYears: config.defaultYears || 5,
-      issuer: config.issuer || "",
-      color: config.color || "teal",
-      icon: config.icon || "GraduationCap",
-      requiresProvisionalRound: config.requiresProvisionalRound || false,
-      requiresTitle: config.requiresTitle || false,
-      titleLabel: config.titleLabel || "",
-      titlePlaceholder: config.titlePlaceholder || "",
-      presetChips: config.presetChips || [],
-      sortOrder: config.sortOrder || 0,
-      isActive: config.isActive,
-    });
-    setShowLicenseModal(true);
-  };
-
-  const handleLicenseFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!licenseFormData.title || !licenseFormData.code) {
-      alert("กรุณาระบุชื่อประเภทใบอนุญาตและรหัสประเภท");
-      return;
-    }
-
-    try {
-      setLicenseFormSubmitting(true);
-      const url = "/api/admin/license-configs";
-      const method = licenseModalMode === "create" ? "POST" : "PUT";
-      const payload =
-        licenseModalMode === "create"
-          ? licenseFormData
-          : { id: selectedLicense?.id, ...licenseFormData };
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกประเภทใบอนุญาต");
-        return;
-      }
-
-      setShowLicenseModal(false);
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
-    } finally {
-      setLicenseFormSubmitting(false);
-    }
-  };
-
-  const handleToggleLicenseActive = async (config: LicenseConfigItem) => {
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "toggle-active",
-          id: config.id,
-          isActive: !config.isActive,
-        }),
-      });
-      if (res.ok) {
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleResetLicenseDefaults = async () => {
-    if (!confirm("คุณต้องการคืนค่าตั้งต้นประเภทใบอนุญาตมาตรฐาน (คุรุสภา / TPQI / DSD / กว.) หรือไม่?")) return;
-    try {
-      setLoadingConfigs(true);
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset-defaults" }),
-      });
-      if (res.ok) {
-        fetchLicenseConfigs();
-        alert("คืนค่ามาตรฐานเรียบร้อยแล้ว");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingConfigs(false);
-    }
-  };
-
-  const handleDeleteLicenseConfig = async (config: LicenseConfigItem) => {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบประเภทใบอนุญาต "${config.title}"?`)) return;
-    try {
-      const res = await fetch(`/api/admin/license-configs?id=${config.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        fetchLicenseConfigs();
+  const togglePermission = (permKey: string) => {
+    setRoleFormData((prev) => {
+      const exists = prev.permissions.includes(permKey);
+      if (exists) {
+        return { ...prev, permissions: prev.permissions.filter((p) => p !== permKey) };
       } else {
-        alert(data.error || "ไม่สามารถลบประเภทใบอนุญาตได้");
+        return { ...prev, permissions: [...prev.permissions, permKey] };
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Inline Quick Chip Add
-  const handleInlineAddChip = async (config: LicenseConfigItem) => {
-    const text = inlineNewChip[config.id]?.trim();
-    if (!text) return;
-    if (config.presetChips.includes(text)) {
-      alert("มีตัวเลือกนี้อยู่แล้ว");
-      return;
-    }
-
-    const updatedChips = [...config.presetChips, text];
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update-chips",
-          id: config.id,
-          presetChips: updatedChips,
-        }),
-      });
-      if (res.ok) {
-        setInlineNewChip((prev) => ({ ...prev, [config.id]: "" }));
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Inline Chip Remove
-  const handleInlineRemoveChip = async (config: LicenseConfigItem, chipIndex: number) => {
-    const updatedChips = config.presetChips.filter((_, idx) => idx !== chipIndex);
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update-chips",
-          id: config.id,
-          presetChips: updatedChips,
-        }),
-      });
-      if (res.ok) {
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Add chip in Modal
-  const handleAddModalChip = () => {
-    const text = licenseModalChipInput.trim();
-    if (!text) return;
-    if (licenseFormData.presetChips.includes(text)) {
-      alert("มีตัวเลือกนี้อยู่แล้ว");
-      return;
-    }
-    setLicenseFormData((prev) => ({
-      ...prev,
-      presetChips: [...prev.presetChips, text],
-    }));
-    setLicenseModalChipInput("");
-  };
-
-  const handleRemoveModalChip = (index: number) => {
-    setLicenseFormData((prev) => ({
-      ...prev,
-      presetChips: prev.presetChips.filter((_, i) => i !== index),
-    }));
+    });
   };
 
   // Filtered Users
@@ -936,12 +436,6 @@ export default function AdminUsersPage() {
 
     const matchesRole = roleFilter === "ALL" || u.roleCode === roleFilter;
     return matchesSearch && matchesRole;
-  });
-
-  // Filtered Licenses
-  const filteredLicenses = licenseConfigs.filter((c) => {
-    if (licenseCategoryFilter === "ALL") return true;
-    return c.category === licenseCategoryFilter;
   });
 
   return (
@@ -959,14 +453,10 @@ export default function AdminUsersPage() {
             </Link>
           </div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-            {activeTab === "licenses"
-              ? "จัดการประเภทและตัวเลือกใบประกอบวิชาชีพ"
-              : "จัดการบัญชีผู้ใช้และสิทธิ์การใช้งาน"}
+            จัดการบัญชีผู้ใช้และสิทธิ์การใช้งาน
           </h1>
           <p className="text-xs sm:text-sm text-slate-500">
-            {activeTab === "licenses"
-              ? "กำหนดประเภทใบอนุญาตคุรุสภา คุณวุฒิวิชาชีพ TPQI/DSD คำอธิบาย และตัวเลือกแนะนำ (Preset Chips) ในฟอร์ม"
-              : "กำหนดข้อมูลบุคลากร รูปประจำตัว และควบคุมสิทธิ์การเข้าถึงแต่ละหน้าเว็บ"}
+            กำหนดข้อมูลบุคลากร รูปประจำตัว ควบคุมยศ และสิทธิ์การเข้าถึงแต่ละหน้าเว็บ
           </p>
         </div>
 
@@ -991,32 +481,11 @@ export default function AdminUsersPage() {
               สร้างยศ/สิทธิ์ใหม่
             </button>
           )}
-
-          {activeTab === "licenses" && (
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <button
-                type="button"
-                onClick={() => setShowCategoryManagerModal(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:border-slate-400 active:scale-95 flex-shrink-0"
-              >
-                <FolderPlus className="h-4 w-4 text-teal-600" />
-                <span>จัดการหมวดหมู่ ({categories.length})</span>
-              </button>
-
-              <button
-                onClick={openCreateLicenseModal}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-700 active:scale-95 flex-shrink-0"
-              >
-                <Plus className="h-4 w-4" />
-                <span>เพิ่มประเภทใบอนุญาตใหม่</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* 2. Segmented Pill Tabs (3 Tabs) */}
-      <div className="flex p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs overflow-x-auto gap-1.5 max-w-2xl">
+      {/* 2. Segmented Pill Tabs (2 Tabs: Users & Roles) */}
+      <div className="flex p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs overflow-x-auto gap-1.5 max-w-md">
         <button
           onClick={() => setActiveTab("users")}
           className={clsx(
@@ -1048,7 +517,7 @@ export default function AdminUsersPage() {
           )}
         >
           <Shield className="h-4 w-4 flex-shrink-0" />
-          <span>ยศและสิทธิ์</span>
+          <span>ยศและสิทธิ์การใช้งาน</span>
           <span
             className={clsx(
               "px-2 py-0.5 text-xs font-black rounded-md",
@@ -1058,56 +527,38 @@ export default function AdminUsersPage() {
             {roles.length}
           </span>
         </button>
-
-        <button
-          onClick={() => setActiveTab("licenses")}
-          className={clsx(
-            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
-            activeTab === "licenses"
-              ? "bg-white text-teal-700 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
-          )}
-        >
-          <FileBadge className="h-4 w-4 flex-shrink-0" />
-          <span>ประเภทใบประกอบ</span>
-          <span
-            className={clsx(
-              "px-2 py-0.5 text-xs font-black rounded-md",
-              activeTab === "licenses" ? "bg-teal-50 text-teal-700" : "bg-slate-300/70 text-slate-700"
-            )}
-          >
-            {licenseConfigs.length}
-          </span>
-        </button>
       </div>
 
       {/* ================= TAB 1: USERS LIST ================= */}
       {activeTab === "users" && (
-        <div className="space-y-4">
-          {/* Filters Bar */}
+        <div className="space-y-6">
+          {/* Filter and Search Bar */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+              {/* Search */}
+              <div className="relative w-full sm:w-96">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="ค้นหาตามชื่อ, อีเมล, ตำแหน่ง, หรือเบอร์โทร..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                  placeholder="ค้นหาชื่อ, อีเมล, เบอร์โทร..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              {/* Role Filter */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-xs font-bold text-slate-400 whitespace-nowrap">ยศ:</label>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
+                  className="w-full sm:w-auto px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none"
                 >
-                  <option value="ALL">ทุกสิทธิ์การใช้งาน (All Roles)</option>
+                  <option value="ALL">ทุกลำดับยศ (ทั้งหมด)</option>
+                  <option value="ROOT">ROOT (Super Admin)</option>
                   {roles.map((r) => (
-                    <option key={r.code} value={r.code}>
+                    <option key={r.id} value={r.code}>
                       {r.title}
                     </option>
                   ))}
@@ -1116,387 +567,231 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
-          {/* Users Content */}
-          {loading ? (
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-              <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งานจาก PostgreSQL...</span>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
-              <Users className="h-10 w-10 text-slate-300 mb-2" />
-              <p className="font-bold text-slate-700">ไม่พบข้อมูลผู้ใช้งาน</p>
-              <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มผู้ใช้งานใหม่" เพื่อสร้างผู้ใช้คนแรก</p>
-            </div>
-          ) : (
-            <>
-              {/* 1. Mobile Cards View (Hidden on Desktop) */}
-              <div className="block lg:hidden space-y-3.5">
-                {filteredUsers.map((user) => {
-                  const age = calculateAge(user.birthDate);
-                  const roleDef = user.roleDefinition;
-                  const roleTitle = roleDef?.title || user.roleCode;
-                  const roleColor = roleDef?.color || (user.roleCode === "ROOT" ? "rose" : "blue");
-
-                  return (
-                    <div
-                      key={user.id}
-                      className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-3.5"
-                    >
-                      {/* Row 1: Avatar + Name + Email */}
-                      <div className="flex items-center gap-3">
-                        {user.avatarUrl ? (
-                          <img
-                            src={user.avatarUrl}
-                            alt={user.name}
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              target.style.display = "none";
-                              if (target.nextElementSibling) {
-                                (target.nextElementSibling as HTMLElement).style.display = "flex";
-                              }
-                            }}
-                            className="h-12 w-12 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
-                          />
-                        ) : null}
-                        <div
-                          style={{ display: user.avatarUrl ? "none" : "flex" }}
-                          className="h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-base flex-shrink-0 border border-blue-200 shadow-2xs"
-                        >
-                          {user.name ? user.name.charAt(0) : "U"}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-slate-900 text-sm leading-tight break-words">
-                            {user.name}
-                          </h3>
-                          <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
-                        </div>
-                      </div>
-
-                      {/* Row 2: Role Badge + Status Pill */}
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100/80">
-                        <span
-                          className={clsx(
-                            "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border flex-shrink-0",
-                            getBadgeStyle(roleColor)
-                          )}
-                        >
-                          {user.roleCode === "ROOT" && <Shield className="h-3 w-3" />}
-                          {roleTitle}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(user)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 ${
-                            user.isActive
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-slate-100 text-slate-500 border border-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              user.isActive ? "bg-emerald-500" : "bg-slate-400"
-                            }`}
-                          />
-                          {user.isActive ? "ใช้งานปกติ" : "ระงับการใช้"}
-                        </button>
-                      </div>
-
-                      {/* Row 3: Position, Phone, Birth Date */}
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 text-xs">
-                        <div>
-                          <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
-                            <Briefcase className="h-3 w-3 text-slate-400" />
-                            ตำแหน่ง
-                          </span>
-                          <p className="font-bold text-slate-800 truncate">{user.position || "-"}</p>
-                        </div>
-
-                        <div>
-                          <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1 mb-0.5">
-                            <Phone className="h-3 w-3 text-slate-400" />
-                            เบอร์โทร
-                          </span>
-                          {user.phone ? (
-                            <a href={`tel:${user.phone}`} className="font-bold text-blue-600 underline truncate block">
-                              {user.phone}
-                            </a>
-                          ) : (
-                            <p className="font-bold text-slate-800">-</p>
-                          )}
-                        </div>
-
-                        <div className="col-span-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-slate-600">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                            <span>
-                              {user.birthDate
-                                ? new Date(user.birthDate).toLocaleDateString("th-TH")
-                                : "ไม่ระบุวันเกิด"}
-                            </span>
-                          </div>
-                          {age !== null && (
-                            <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200 text-[11px]">
-                              อายุ {age} ปี
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Row 4: Action Buttons */}
-                      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-                        <Link
-                          href={`/profile/${user.id}`}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition active:scale-95 border border-blue-200/80 shadow-2xs"
-                          title="เปิดดูโปรไฟล์แบบโซเชียล"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          ดูโปรไฟล์
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => openEditUserModal(user)}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
-                        >
-                          <Edit2 className="h-3.5 w-3.5 text-blue-600" />
-                          แก้ไขข้อมูล
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
-                          title="ลบผู้ใช้งาน"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+          {/* Users Table */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-sm">
+            {loading ? (
+              <div className="p-16 flex flex-col items-center justify-center text-slate-400">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+                <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งาน...</span>
               </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-16 flex flex-col items-center justify-center text-slate-400 text-center">
+                <Users className="h-10 w-10 text-slate-300 mb-2" />
+                <p className="font-bold text-slate-700">ไม่พบผู้ใช้งาน</p>
+                <p className="text-xs text-slate-400 mt-1">ลองเปลี่ยนคำค้นหาหรือตัวกรองยศ</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                    <tr>
+                      <th className="p-4 sm:p-5">ผู้ใช้งาน</th>
+                      <th className="p-4 sm:p-5">ยศ / สิทธิ์</th>
+                      <th className="p-4 sm:p-5">ตำแหน่ง / ข้อมูล</th>
+                      <th className="p-4 sm:p-5 text-center">สถานะ</th>
+                      <th className="p-4 sm:p-5 text-right">การจัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {filteredUsers.map((user) => {
+                      const userInitial = user.name ? user.name.charAt(0) : "U";
+                      const isRootUser = user.roleCode === "ROOT";
+                      const userAge = calculateAge(user.birthDate);
 
-              {/* 2. Desktop Table View (Hidden on Mobile/Tablet) */}
-              <div className="hidden lg:block rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-slate-600">
-                    <thead className="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      <tr>
-                        <th className="px-6 py-4">รูปประจำตัว / ชื่อ - สกุล</th>
-                        <th className="px-6 py-4">ยศ / สิทธิ์การใช้งาน</th>
-                        <th className="px-6 py-4">ตำแหน่ง / เบอร์โทร</th>
-                        <th className="px-6 py-4">วดป. เกิด / อายุ</th>
-                        <th className="px-6 py-4 text-center">สถานะ</th>
-                        <th className="px-6 py-4 text-right">การจัดการ</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredUsers.map((user) => {
-                        const age = calculateAge(user.birthDate);
-                        const roleDef = user.roleDefinition;
-                        const roleTitle = roleDef?.title || user.roleCode;
-                        const roleColor = roleDef?.color || (user.roleCode === "ROOT" ? "rose" : "blue");
+                      return (
+                        <tr key={user.id} className="hover:bg-slate-50/70 transition">
+                          {/* User Avatar & Name */}
+                          <td className="p-4 sm:p-5">
+                            <div className="flex items-center gap-3">
+                              {user.avatarUrl ? (
+                                <img
+                                  src={user.avatarUrl}
+                                  alt={user.name}
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = "none";
+                                    if (target.nextElementSibling) {
+                                      (target.nextElementSibling as HTMLElement).style.display = "flex";
+                                    }
+                                  }}
+                                  className="h-10 w-10 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0"
+                                />
+                              ) : null}
+                              <div
+                                style={{ display: user.avatarUrl ? "none" : "flex" }}
+                                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-2xs flex-shrink-0"
+                              >
+                                {userInitial}
+                              </div>
 
-                        return (
-                          <tr key={user.id} className="hover:bg-slate-50/60 transition">
-                            <td className="px-6 py-4">
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 truncate">{user.name}</div>
+                                <div className="text-xs text-slate-400 truncate">{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Role Badge */}
+                          <td className="p-4 sm:p-5">
+                            <span
+                              className={clsx(
+                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs",
+                                getBadgeStyle(user.roleDefinition?.color || (isRootUser ? "rose" : "blue"))
+                              )}
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              {user.roleDefinition?.title || (isRootUser ? "ROOT" : user.roleCode)}
+                            </span>
+                          </td>
+
+                          {/* Position & Info */}
+                          <td className="p-4 sm:p-5 text-slate-600 text-xs space-y-1">
+                            <div className="font-bold text-slate-800 flex items-center gap-1">
+                              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                              {user.position || "บุคลากร"}
+                            </div>
+                            <div className="text-slate-400 flex items-center gap-2 text-[11px]">
+                              {user.phone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" /> {user.phone}
+                                </span>
+                              )}
+                              {userAge !== null && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" /> อายุ {userAge} ปี
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="p-4 sm:p-5 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(user)}
+                              disabled={isRootUser}
+                              className={clsx(
+                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition",
+                                user.isActive
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-rose-50 text-rose-700 border border-rose-200",
+                                isRootUser ? "cursor-default" : "hover:opacity-80 active:scale-95"
+                              )}
+                            >
+                              {user.isActive ? (
+                                <>
+                                  <CheckCircle2 className="h-3.5 w-3.5" /> ใช้งาน
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3.5 w-3.5" /> ระงับ
+                                </>
+                              )}
+                            </button>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="p-4 sm:p-5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Social Profile View Link */}
                               <Link
                                 href={`/profile/${user.id}`}
-                                className="flex items-center gap-3 group transition"
-                                title="คลิกเพื่อดูโปรไฟล์โซเชียล"
+                                className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition shadow-2xs"
+                                title="ดูโปรไฟล์"
                               >
-                                {user.avatarUrl ? (
-                                  <img
-                                    src={user.avatarUrl}
-                                    alt={user.name}
-                                    onError={(e) => {
-                                      const target = e.currentTarget;
-                                      target.style.display = "none";
-                                      if (target.nextElementSibling) {
-                                        (target.nextElementSibling as HTMLElement).style.display = "flex";
-                                      }
-                                    }}
-                                    className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white group-hover:scale-105 transition"
-                                  />
-                                ) : null}
-                                <div
-                                  style={{ display: user.avatarUrl ? "none" : "flex" }}
-                                  className="h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs group-hover:bg-blue-100 transition"
-                                >
-                                  {user.name ? user.name.charAt(0) : "U"}
-                                </div>
-                                <div>
-                                  <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">
-                                    {user.name}
-                                  </div>
-                                  <div className="text-xs text-slate-400">{user.email}</div>
-                                </div>
+                                <Eye className="h-4 w-4" />
                               </Link>
-                            </td>
 
-                            <td className="px-6 py-4">
-                              <span
-                                className={clsx(
-                                  "inline-flex items-center gap-1 px-2.5 py-1 text-xs font-black rounded-lg border",
-                                  getBadgeStyle(roleColor)
-                                )}
-                              >
-                                {user.roleCode === "ROOT" && <Shield className="h-3.5 w-3.5" />}
-                                {roleTitle}
-                              </span>
-                            </td>
-
-                            <td className="px-6 py-4">
-                              <div className="space-y-0.5">
-                                <div className="text-slate-800 font-semibold text-xs flex items-center gap-1">
-                                  <Briefcase className="h-3 w-3 text-slate-400" />
-                                  {user.position || "-"}
-                                </div>
-                                <div className="text-slate-400 text-xs flex items-center gap-1">
-                                  <Phone className="h-3 w-3 text-slate-400" />
-                                  {user.phone || "-"}
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="px-6 py-4">
-                              <div className="space-y-0.5">
-                                <div className="text-slate-700 text-xs flex items-center gap-1">
-                                  <Calendar className="h-3 w-3 text-slate-400" />
-                                  {user.birthDate
-                                    ? new Date(user.birthDate).toLocaleDateString("th-TH")
-                                    : "-"}
-                                </div>
-                                <div className="text-slate-500 text-xs font-medium">
-                                  {age !== null ? `อายุ ${age} ปี` : "-"}
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="px-6 py-4 text-center">
                               <button
                                 type="button"
-                                onClick={() => handleToggleStatus(user)}
-                                title="คลิกเพื่อสลับสถานะ"
-                                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition ${
-                                  user.isActive
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                                    : "bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200"
-                                }`}
+                                onClick={() => openEditUserModal(user)}
+                                className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                                title="แก้ไขผู้ใช้งาน"
                               >
-                                {user.isActive ? (
-                                  <>
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                    ปกติ
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                                    ระงับ
-                                  </>
-                                )}
+                                <Edit2 className="h-4 w-4 text-blue-600" />
                               </button>
-                            </td>
 
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <Link
-                                  href={`/profile/${user.id}`}
-                                  className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
-                                  title="เปิดดูโปรไฟล์แบบโซเชียล (Social Profile View)"
-                                >
-                                  <Eye className="h-4 w-4 text-blue-600" />
-                                </Link>
-                                <button
-                                  type="button"
-                                  onClick={() => openEditUserModal(user)}
-                                  className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
-                                  title="แก้ไขข้อมูล / เปลี่ยนรหัสผ่าน"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </button>
+                              {!isRootUser && (
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteUser(user)}
-                                  className="p-2 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
+                                  className="p-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs"
                                   title="ลบผู้ใช้งาน"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
       )}
 
       {/* ================= TAB 2: ROLES & PERMISSIONS ================= */}
       {activeTab === "roles" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {roles.map((role) => (
               <div
                 key={role.id}
                 className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between"
               >
-                <div>
-                  {/* Role Top Info */}
+                <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span
-                        className={clsx(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black border",
-                          getBadgeStyle(role.color)
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-slate-900 text-base">{role.title}</h3>
+                        {role.isSystem && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">
+                            ระบบ
+                          </span>
                         )}
-                      >
-                        {role.code === "ROOT" && <Shield className="h-3.5 w-3.5" />}
-                        {role.title}
-                      </span>
-                      <div className="text-[11px] font-mono text-slate-400 mt-1">
-                        รหัสยศ: {role.code}
                       </div>
+                      <span className="font-mono text-xs text-slate-400 block mt-0.5">
+                        Code: {role.code}
+                      </span>
                     </div>
 
-                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
-                      {role._count?.users || 0} ผู้ใช้
+                    <span
+                      className={clsx(
+                        "px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs",
+                        getBadgeStyle(role.color)
+                      )}
+                    >
+                      {role.code}
                     </span>
                   </div>
 
-                  {/* Role Description */}
-                  <p className="text-xs text-slate-500 mt-3">
-                    {role.description || "ไม่มีคำอธิบายเพิ่มเติม"}
-                  </p>
+                  {role.description && (
+                    <p className="text-xs text-slate-500 leading-relaxed">{role.description}</p>
+                  )}
 
-                  {/* Allowed Pages & Profile Permissions */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                      สิทธิ์การใช้งาน (Role Permissions):
+                  <div className="pt-2 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-700 block mb-2">
+                      สิทธิ์การเข้าถึง ({role.permissions?.length || 0} รายการ):
                     </span>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                       {ALL_PERMISSIONS.map((perm) => {
-                        const hasAccess = role.permissions?.includes(perm.key);
-                        const Icon = perm.icon;
+                        const hasAccess =
+                          role.code === "ROOT" || role.permissions?.includes(perm.key);
+
                         return (
                           <div
                             key={perm.key}
                             className={clsx(
-                              "flex items-center gap-2 p-2 rounded-xl text-xs font-medium border",
+                              "flex items-center justify-between text-[11px] p-2 rounded-xl border",
                               hasAccess
-                                ? "bg-emerald-50/60 border-emerald-200 text-emerald-800"
-                                : "bg-slate-50 border-slate-200/70 text-slate-400 opacity-60"
+                                ? "bg-emerald-50/60 text-emerald-900 border-emerald-200 font-bold"
+                                : "bg-slate-50 text-slate-400 border-slate-200"
                             )}
                           >
-                            <Icon className="h-3.5 w-3.5 flex-shrink-0" />
                             <span className="truncate flex-1">{perm.title}</span>
                             {hasAccess ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
@@ -1538,455 +833,135 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* ================= TAB 3: LICENSE CONFIGURATIONS & PRESETS ================= */}
-      {activeTab === "licenses" && (
-        <div className="space-y-6">
-          {/* Summary Stat Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-              <span className="text-xs font-bold text-slate-400 block">ประเภททั้งหมด</span>
-              <span className="text-2xl font-black text-slate-900 mt-1 block">
-                {licenseConfigs.length}
-              </span>
-            </div>
-            <div className="rounded-3xl border border-teal-200/80 bg-teal-50/40 p-4 shadow-sm">
-              <span className="text-xs font-bold text-teal-700 block">คุรุสภา / ผ่อนผัน</span>
-              <span className="text-2xl font-black text-teal-900 mt-1 block">
-                {licenseConfigs.filter((c) => c.category === "ksp").length}
-              </span>
-            </div>
-            <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/40 p-4 shadow-sm">
-              <span className="text-xs font-bold text-emerald-700 block">คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)</span>
-              <span className="text-2xl font-black text-emerald-900 mt-1 block">
-                {licenseConfigs.filter((c) => c.category === "vocational").length}
-              </span>
-            </div>
-            <div className="rounded-3xl border border-blue-200/80 bg-blue-50/40 p-4 shadow-sm">
-              <span className="text-xs font-bold text-blue-700 block">ตัวเลือกแนะนำ (Presets)</span>
-              <span className="text-2xl font-black text-blue-900 mt-1 block">
-                {licenseConfigs.reduce((acc, c) => acc + (c.presetChips?.length || 0), 0)}
-              </span>
-            </div>
-          </div>
-
-          {/* Category Filter & Reset Defaults Bar */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-              <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1 flex-shrink-0">
-                <Filter className="h-3.5 w-3.5" /> หมวดหมู่:
-              </span>
-              {[
-                { key: "ALL", label: "ทั้งหมด" },
-                ...categories.map((c) => ({ key: c.code, label: c.title })),
-              ].map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setLicenseCategoryFilter(item.key)}
-                  className={clsx(
-                    "px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex-shrink-0",
-                    licenseCategoryFilter === item.key
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleResetLicenseDefaults}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-2xs"
-            >
-              <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
-              คืนค่าเริ่มต้นมาตรฐาน (Reset Defaults)
-            </button>
-          </div>
-
-          {/* License Configuration Cards Grid */}
-          {loadingConfigs ? (
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-teal-600 mb-2" />
-              <span className="text-sm font-medium">กำลังโหลดข้อมูลการตั้งค่าใบอนุญาต...</span>
-            </div>
-          ) : filteredLicenses.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
-              <FileBadge className="h-10 w-10 text-slate-300 mb-2" />
-              <p className="font-bold text-slate-700">ไม่พบรายการประเภทใบอนุญาต</p>
-              <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มประเภทใบอนุญาตใหม่" เพื่อสร้างรายการแรก</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredLicenses.map((config) => {
-                const IconComponent = getLicenseIcon(config.icon);
-
-                return (
-                  <div
-                    key={config.id}
-                    className={clsx(
-                      "rounded-3xl border bg-white p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between transition",
-                      config.isActive ? "border-slate-200/80" : "border-slate-200/50 opacity-60 bg-slate-50/50"
-                    )}
-                  >
-                    <div className="space-y-3.5">
-                      {/* Card Header: Icon + Title + Code + Active Switch */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div
-                            className={clsx(
-                              "flex h-11 w-11 items-center justify-center rounded-2xl border flex-shrink-0",
-                              getBadgeStyle(config.color)
-                            )}
-                          >
-                            <IconComponent className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-black text-slate-900 text-sm sm:text-base leading-snug">
-                                {config.title}
-                              </h3>
-                              <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200">
-                                {config.code}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                              {config.description || "ไม่มีคำอธิบาย"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Status Switch */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleLicenseActive(config)}
-                          className={clsx(
-                            "px-2.5 py-1 rounded-xl text-xs font-bold border transition flex-shrink-0",
-                            config.isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                              : "bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200"
-                          )}
-                        >
-                          {config.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                        </button>
-                      </div>
-
-                      {/* Card Meta Badges */}
-                      <div className="flex flex-wrap gap-2 text-[11px]">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
-                          <Layers className="h-3 w-3 text-slate-400" />
-                          {config.category === "ksp"
-                            ? "คุรุสภา (KSP)"
-                            : config.category === "vocational"
-                            ? "คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)"
-                            : "หมวดหมู่อื่นๆ"}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-semibold border border-blue-100">
-                          <Clock className="h-3 w-3 text-blue-500" />
-                          อายุเริ่มต้น {config.defaultYears} ปี
-                        </span>
-                        {config.requiresProvisionalRound && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-semibold border border-amber-200">
-                            <AlertTriangle className="h-3 w-3 text-amber-600" />
-                            ผ่อนผัน 1-3 รอบ
-                          </span>
-                        )}
-                        {config.requiresTitle && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-semibold border border-purple-100">
-                            <Tag className="h-3 w-3 text-purple-500" />
-                            ต้องระบุสาขา/ระดับ
-                          </span>
-                        )}
-                        {config.issuer && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 font-medium border border-slate-200/60 truncate max-w-[200px]">
-                            {config.issuer}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Preset Chips Section (Editable Inline) */}
-                      {config.requiresTitle && (
-                        <div className="pt-2 border-t border-slate-100 space-y-2">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-bold text-slate-600 flex items-center gap-1">
-                              <Tag className="h-3 w-3 text-teal-600" />
-                              ตัวเลือกแนะนำสำหรับผู้กรอก ({config.presetChips.length} รายการ):
-                            </span>
-                          </div>
-
-                          {/* Chips List */}
-                          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
-                            {config.presetChips.length === 0 ? (
-                              <span className="text-[11px] text-slate-400 italic">
-                                ยังไม่มีตัวเลือกแนะนำ (ผู้ใช้พิมพ์เองอิสระ)
-                              </span>
-                            ) : (
-                              config.presetChips.map((chip, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-teal-50 text-teal-800 text-[11px] font-medium border border-teal-200 group/chip"
-                                >
-                                  <span>+ {chip}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleInlineRemoveChip(config, idx)}
-                                    className="text-teal-400 hover:text-rose-600 transition ml-0.5"
-                                    title="ลบตัวเลือกนี้"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </span>
-                              ))
-                            )}
-                          </div>
-
-                          {/* Inline Add Chip Bar */}
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="text"
-                              value={inlineNewChip[config.id] || ""}
-                              onChange={(e) =>
-                                setInlineNewChip((prev) => ({ ...prev, [config.id]: e.target.value }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleInlineAddChip(config);
-                                }
-                              }}
-                              placeholder="พิมพ์ตัวเลือกแนะนำ เช่น + สาขาปัญญาประดิษฐ์ (AI)..."
-                              className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleInlineAddChip(config)}
-                              className="rounded-xl bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 transition active:scale-95 flex-shrink-0"
-                            >
-                              + เพิ่ม
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card Bottom Actions */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-slate-400 text-[11px] font-medium">
-                        ใช้งานอยู่ในระบบ: {config.usageCount || 0} รายการ
-                      </span>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditLicenseModal(config)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
-                        >
-                          <Edit2 className="h-3 w-3 text-slate-500" />
-                          แก้ไข
-                        </button>
-                        {!config.isSystem && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteLicenseConfig(config)}
-                            disabled={(config.usageCount || 0) > 0}
-                            className={clsx(
-                              "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border font-bold transition",
-                              (config.usageCount || 0) > 0
-                                ? "border-slate-200 text-slate-300 cursor-not-allowed"
-                                : "border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-95"
-                            )}
-                            title={(config.usageCount || 0) > 0 ? "ไม่สามารถลบได้เนื่องจากมีข้อมูลใช้งานอยู่" : "ลบรายการ"}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            ลบ
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= MODAL: USER CREATE / EDIT ================= */}
+      {/* ================= MODAL: CREATE / EDIT USER ================= */}
       {showUserModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Sticky Header */}
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                {userModalMode === "create" ? (
-                  <>
-                    <UserPlus className="h-5 w-5 text-blue-600" />
-                    เพิ่มผู้ใช้งานใหม่
-                  </>
-                ) : (
-                  <>
-                    <Edit2 className="h-5 w-5 text-blue-600" />
-                    แก้ไขข้อมูลผู้ใช้
-                  </>
-                )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-slate-900">
+                {userModalMode === "create" ? "เพิ่มผู้ใช้งานใหม่" : "แก้ไขข้อมูลผู้ใช้งาน"}
               </h3>
               <button
                 type="button"
                 onClick={() => setShowUserModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <form onSubmit={handleUserFormSubmit} className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
-                {/* Image Upload Component for รูปประจำตัว */}
+            <form onSubmit={handleUserFormSubmit} className="space-y-3.5 text-xs">
+              <div className="flex justify-center pb-2">
                 <ImageUpload
                   value={userFormData.avatarUrl}
-                  onChange={(url) => setUserFormData({ ...userFormData, avatarUrl: url || "" })}
+                  onChange={(url) => setUserFormData((prev) => ({ ...prev, avatarUrl: url || "" }))}
                 />
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ชื่อ - นามสกุล <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={userFormData.name}
-                      onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-                      placeholder="เช่น นายรักเรียน เพียรศึกษา"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">ชื่อ-นามสกุล *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น สมชาย ใจดี"
+                  value={userFormData.name}
+                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      อีเมล (Email) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      disabled={userModalMode === "edit"}
-                      value={userFormData.email}
-                      onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
-                      placeholder="name@technic.ac.th"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 disabled:opacity-60 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">อีเมล (ใช้เข้าสู่ระบบ) *</label>
+                <input
+                  type="email"
+                  required
+                  disabled={userModalMode === "edit"}
+                  placeholder="user@techniccom.ac.th"
+                  value={userFormData.email}
+                  onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none disabled:opacity-60"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">
+                  {userModalMode === "create" ? "รหัสผ่าน *" : "รหัสผ่านใหม่ (เว้นว่างไว้ถ้าไม่เปลี่ยน)"}
+                </label>
+                <input
+                  type="password"
+                  required={userModalMode === "create"}
+                  placeholder="••••••••"
+                  value={userFormData.password}
+                  onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ยศ / สิทธิ์การใช้งาน *</label>
+                  <select
+                    value={userFormData.roleCode}
+                    onChange={(e) => setUserFormData({ ...userFormData, roleCode: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.code}>
+                        {r.title} ({r.code})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      {userModalMode === "create" ? (
-                        <>รหัสผ่าน <span className="text-rose-500">*</span></>
-                      ) : (
-                        <>เปลี่ยนรหัสผ่าน (เว้นว่างไว้หากไม่เปลี่ยน)</>
-                      )}
-                    </label>
-                    <input
-                      type="password"
-                      required={userModalMode === "create"}
-                      value={userFormData.password}
-                      onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
-                      placeholder={userModalMode === "create" ? "กำหนดรหัสผ่าน" : "••••••••"}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ยศ / สิทธิ์การใช้งาน <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={userFormData.roleCode}
-                      onChange={(e) => setUserFormData({ ...userFormData, roleCode: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
-                    >
-                      {roles.map((r) => (
-                        <option key={r.code} value={r.code}>
-                          {r.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ตำแหน่งงาน
-                    </label>
-                    <input
-                      type="text"
-                      value={userFormData.position}
-                      onChange={(e) => setUserFormData({ ...userFormData, position: e.target.value })}
-                      placeholder="เช่น ครู คศ.2, ครูผู้ช่วย, ธุรการ"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      เบอร์โทรศัพท์
-                    </label>
-                    <input
-                      type="tel"
-                      value={userFormData.phone}
-                      onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
-                      placeholder="081-234-5678"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      วันเดือนปีเกิด (วดป. เกิด)
-                    </label>
-                    <input
-                      type="date"
-                      value={userFormData.birthDate}
-                      onChange={(e) => setUserFormData({ ...userFormData, birthDate: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      อายุ (คำนวณอัตโนมัติ)
-                    </label>
-                    <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-2.5 text-sm text-slate-700 font-bold">
-                      {calculateAge(userFormData.birthDate) !== null
-                        ? `${calculateAge(userFormData.birthDate)} ปี`
-                        : "-"}
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ตำแหน่งงาน</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น ครูผู้เชี่ยวชาญ"
+                    value={userFormData.position}
+                    onChange={(e) => setUserFormData({ ...userFormData, position: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                  />
                 </div>
               </div>
 
-              {/* Sticky Bottom Actions */}
-              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">เบอร์โทรศัพท์</label>
+                  <input
+                    type="tel"
+                    placeholder="081-234-5678"
+                    value={userFormData.phone}
+                    onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">วัน/เดือน/ปีเกิด</label>
+                  <input
+                    type="date"
+                    value={userFormData.birthDate}
+                    onChange={(e) => setUserFormData({ ...userFormData, birthDate: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowUserModal(false)}
-                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={userFormSubmitting}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-70"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 disabled:opacity-50"
                 >
-                  {userFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {userModalMode === "create" ? "สร้างผู้ใช้งาน" : "บันทึกการเปลี่ยนแปลง"}
+                  {userFormSubmitting ? "กำลังบันทึก..." : "บันทึกผู้ใช้"}
                 </button>
               </div>
             </form>
@@ -1994,796 +969,133 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* ================= MODAL: ROLE CREATE / EDIT ================= */}
+      {/* ================= MODAL: CREATE / EDIT ROLE ================= */}
       {showRoleModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Sticky Header */}
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-blue-600" />
-                {roleModalMode === "create" ? "สร้างยศ/สิทธิ์ใหม่" : "แก้ไขยศและสิทธิ์การเข้าถึง"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-xl rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-slate-900">
+                {roleModalMode === "create" ? "สร้างยศ/สิทธิ์ใหม่" : "แก้ไขยศและสิทธิ์"}
               </h3>
               <button
                 type="button"
                 onClick={() => setShowRoleModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <form onSubmit={handleRoleFormSubmit} className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    ชื่อยศ / สิทธิ์ <span className="text-rose-500">*</span>
-                  </label>
+            <form onSubmit={handleRoleFormSubmit} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">ชื่อยศ (Title) *</label>
                   <input
                     type="text"
                     required
+                    placeholder="เช่น อาจารย์ผู้ประเมิน"
                     value={roleFormData.title}
                     onChange={(e) => setRoleFormData({ ...roleFormData, title: e.target.value })}
-                    placeholder="เช่น หัวหน้างานประกันคุณภาพ, ครูผู้สอน"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      รหัสยศ (Key Code)
-                    </label>
-                    <input
-                      type="text"
-                      disabled={roleModalMode === "edit"}
-                      value={roleFormData.code}
-                      onChange={(e) => setRoleFormData({ ...roleFormData, code: e.target.value })}
-                      placeholder="เช่น QA_HEAD, TEACHER"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 uppercase font-mono disabled:opacity-60 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      โทนสี Badge
-                    </label>
-                    <select
-                      value={roleFormData.color}
-                      onChange={(e) => setRoleFormData({ ...roleFormData, color: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition font-medium"
-                    >
-                      {COLOR_OPTIONS.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    คำอธิบายหน้าที่
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={roleFormData.description}
-                    onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
-                    placeholder="ระบุหน้าที่ความรับผิดชอบของยศนี้..."
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">รหัสยศ (Code) *</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={roleModalMode === "edit"}
+                    placeholder="เช่น EVALUATOR"
+                    value={roleFormData.code}
+                    onChange={(e) =>
+                      setRoleFormData({
+                        ...roleFormData,
+                        code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-xs focus:bg-white focus:outline-none disabled:opacity-60"
                   />
-                </div>
-
-                {/* Page & Profile Access Checkboxes Grouped */}
-                <div className="pt-2 space-y-4">
-                  <label className="block text-xs font-bold text-slate-900">
-                    กำหนดสิทธิ์การใช้งาน (Permissions) <span className="text-rose-500">*</span>
-                  </label>
-
-                  {AVAILABLE_PERMISSION_GROUPS.map((group) => (
-                    <div key={group.category} className="space-y-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                        {group.category}
-                      </span>
-
-                      <div className="space-y-2">
-                        {group.items.map((item) => {
-                          const isChecked = roleFormData.permissions.includes(item.key);
-                          const Icon = item.icon;
-
-                          return (
-                            <label
-                              key={item.key}
-                              className={clsx(
-                                "flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition select-none",
-                                isChecked
-                                  ? "border-blue-500 bg-blue-50/40"
-                                  : "border-slate-200 hover:bg-slate-50"
-                              )}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => togglePermission(item.key)}
-                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                                  <Icon className="h-3.5 w-3.5 text-blue-600" />
-                                  {item.title}
-                                </div>
-                                <div className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                  {item.description}
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
 
-              {/* Sticky Bottom Actions */}
-              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">คำอธิบาย</label>
+                <input
+                  type="text"
+                  placeholder="คำอธิบายหน้าที่และความรับผิดชอบของยศนี้..."
+                  value={roleFormData.description}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">โทนสี Badge</label>
+                <select
+                  value={roleFormData.color}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, color: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+                >
+                  {COLOR_OPTIONS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Permissions Checklist */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <label className="font-bold text-slate-900 block">กำหนดสิทธิ์การเข้าถึง (Permissions):</label>
+                {AVAILABLE_PERMISSION_GROUPS.map((group) => (
+                  <div key={group.category} className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">{group.category}</span>
+                    <div className="space-y-1">
+                      {group.items.map((item) => {
+                        const checked = roleFormData.permissions.includes(item.key);
+                        return (
+                          <label
+                            key={item.key}
+                            className={clsx(
+                              "flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition",
+                              checked
+                                ? "bg-blue-50/60 border-blue-200 text-blue-950 font-bold"
+                                : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100/70"
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => togglePermission(item.key)}
+                              className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <div className="min-w-0">
+                              <div className="text-xs">{item.title}</div>
+                              <div className="text-[11px] font-normal text-slate-400">{item.description}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowRoleModal(false)}
-                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={roleFormSubmitting}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-70"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 disabled:opacity-50"
                 >
-                  {roleFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {roleModalMode === "create" ? "สร้างยศใหม่" : "บันทึกการเปลี่ยนแปลง"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 3: LICENSE CONFIGURATION & PRESETS FORM ================= */}
-      {showLicenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-100 max-h-[92vh] flex flex-col">
-            <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-600">
-                  <FileBadge className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
-                    {licenseModalMode === "create"
-                      ? "เพิ่มประเภทใบอนุญาต / คุณวุฒิใหม่"
-                      : "แก้ไขการตั้งค่าประเภทใบอนุญาต"}
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    กำหนดชื่อ รหัส อายุใช้งาน และตัวเลือกแนะนำ (Preset Chips) ในฟอร์ม
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowLicenseModal(false)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleLicenseFormSubmit} className="flex-1 overflow-y-auto">
-              <div className="p-5 sm:p-7 space-y-4">
-                {/* 1. Basic Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      ชื่อประเภทใบอนุญาต (Display Title) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={licenseFormData.title}
-                      onChange={(e) => setLicenseFormData({ ...licenseFormData, title: e.target.value })}
-                      placeholder="เช่น คุณวุฒิวิชาชีพ AI & Data (TPQI)"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      รหัสประเภท (Code) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      disabled={licenseModalMode === "edit" && selectedLicense?.isSystem}
-                      value={licenseFormData.code}
-                      onChange={(e) => setLicenseFormData({ ...licenseFormData, code: e.target.value })}
-                      placeholder="เช่น TPQI_AI_DATA, KSP_C_LICENSE"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 uppercase font-mono disabled:opacity-60 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    คำอธิบายย่อย (แสดงใต้ชื่อการ์ด)
-                  </label>
-                  <input
-                    type="text"
-                    value={licenseFormData.description}
-                    onChange={(e) => setLicenseFormData({ ...licenseFormData, description: e.target.value })}
-                    placeholder="เช่น สถาบันคุณวุฒิวิชาชีพ เช่น สาขา AI และวิเคราะห์ข้อมูล"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
-                  />
-                </div>
-
-                {/* 2. Category & Issuer */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-slate-700">
-                        หมวดหมู่ <span className="text-rose-500">*</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={openCreateCategoryModal}
-                        className="text-[11px] font-bold text-teal-600 hover:underline"
-                      >
-                        + เพิ่มหมวดหมู่ใหม่
-                      </button>
-                    </div>
-                    <select
-                      value={licenseFormData.category}
-                      onChange={(e) => {
-                        const selectedCat = categories.find((c) => c.code === e.target.value);
-                        setLicenseFormData({
-                          ...licenseFormData,
-                          category: e.target.value,
-                          categoryLabel: selectedCat?.title || e.target.value,
-                        });
-                      }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition font-medium"
-                    >
-                      {categories.length === 0 ? (
-                        <>
-                          <option value="ksp">คุรุสภา (KSP)</option>
-                          <option value="vocational">คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)</option>
-                          <option value="other">หมวดหมู่อื่นๆ</option>
-                        </>
-                      ) : (
-                        categories.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.title}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      อายุใช้งานเริ่มต้น (ปี) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={licenseFormData.defaultYears}
-                      onChange={(e) =>
-                        setLicenseFormData({ ...licenseFormData, defaultYears: Number(e.target.value) })
-                      }
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">หน่วยงานผู้ออก</label>
-                    <input
-                      type="text"
-                      value={licenseFormData.issuer}
-                      onChange={(e) => setLicenseFormData({ ...licenseFormData, issuer: e.target.value })}
-                      placeholder="เช่น สำนักงานเลขาธิการคุรุสภา"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Style: Color & Icon */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">โทนสี Badge</label>
-                    <select
-                      value={licenseFormData.color}
-                      onChange={(e) => setLicenseFormData({ ...licenseFormData, color: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition font-medium"
-                    >
-                      {COLOR_OPTIONS.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">ไอคอน</label>
-                    <select
-                      value={licenseFormData.icon}
-                      onChange={(e) => setLicenseFormData({ ...licenseFormData, icon: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition font-medium"
-                    >
-                      {ICON_OPTIONS.map((i) => (
-                        <option key={i.value} value={i.value}>
-                          {i.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* 4. Form Behavior Switches */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                  <span className="text-xs font-bold text-slate-800 block">พฤติกรรมของฟอร์ม (Form Options):</span>
-
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={licenseFormData.requiresProvisionalRound}
-                      onChange={(e) =>
-                        setLicenseFormData({
-                          ...licenseFormData,
-                          requiresProvisionalRound: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                    />
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 block">
-                        แสดงตัวเลือกรอบผ่อนผัน (ครั้งที่ 1, 2, 3)
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        สำหรับหนังสือผ่อนผันคุรุสภาของครูพิเศษสอนสายช่าง
-                      </span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={licenseFormData.requiresTitle}
-                      onChange={(e) =>
-                        setLicenseFormData({
-                          ...licenseFormData,
-                          requiresTitle: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                    />
-                    <div>
-                      <span className="text-xs font-bold text-slate-800 block">
-                        ให้ผู้ใช้ระบุสาขาวิชาชีพ / ระดับมาตรฐาน (Requires Title & Presets)
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        เปิดให้ใส่ข้อความสาขาและแสดงรายการตัวเลือกแนะนำ (Preset Chips)
-                      </span>
-                    </div>
-                  </label>
-                </div>
-
-                {/* 5. Title Label & Placeholder (If requiresTitle) */}
-                {licenseFormData.requiresTitle && (
-                  <div className="space-y-3 p-4 rounded-2xl bg-teal-50/40 border border-teal-200/60">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-teal-900 mb-1">
-                          ข้อความหัวข้อช่องกรอกสาขา
-                        </label>
-                        <input
-                          type="text"
-                          value={licenseFormData.titleLabel || ""}
-                          onChange={(e) =>
-                            setLicenseFormData({ ...licenseFormData, titleLabel: e.target.value })
-                          }
-                          placeholder="เช่น ระบุสาขาวิชาชีพ / ระดับมาตรฐาน / สาขาวิศวกรรม"
-                          className="w-full rounded-xl border border-teal-200 bg-white p-2 text-xs text-slate-900 focus:border-teal-500 focus:outline-none transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-teal-900 mb-1">
-                          ตัวอย่างข้อความ (Placeholder)
-                        </label>
-                        <input
-                          type="text"
-                          value={licenseFormData.titlePlaceholder || ""}
-                          onChange={(e) =>
-                            setLicenseFormData({ ...licenseFormData, titlePlaceholder: e.target.value })
-                          }
-                          placeholder="เช่น สาขาเทคโนโลยีสารสนเทศ ระดับ 4"
-                          className="w-full rounded-xl border border-teal-200 bg-white p-2 text-xs text-slate-900 focus:border-teal-500 focus:outline-none transition"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Preset Chips Manager inside Modal */}
-                    <div className="pt-2 border-t border-teal-200/60 space-y-2">
-                      <label className="block text-xs font-bold text-teal-950">
-                        ตัวเลือกแนะนำที่ให้ผู้ใช้คลิกเลือก (Preset Chips):
-                      </label>
-
-                      {/* Existing Modal Chips */}
-                      <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
-                        {licenseFormData.presetChips.length === 0 ? (
-                          <span className="text-xs text-slate-400 italic">
-                            ยังไม่มีตัวเลือกแนะนำ (พิมพ์ข้อความด้านล่างแล้วกดเพิ่ม)
-                          </span>
-                        ) : (
-                          licenseFormData.presetChips.map((chip, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white text-teal-800 text-xs font-medium border border-teal-300 shadow-2xs"
-                            >
-                              <span>+ {chip}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveModalChip(idx)}
-                                className="text-teal-400 hover:text-rose-600 transition ml-1"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </span>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Add new chip input */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <input
-                          type="text"
-                          value={licenseModalChipInput}
-                          onChange={(e) => setLicenseModalChipInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddModalChip();
-                            }
-                          }}
-                          placeholder="พิมพ์ตัวเลือกแนะนำ เช่น สาขาวิชาชีพ AI ระดับ 4..."
-                          className="flex-1 rounded-xl border border-teal-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-teal-500 focus:outline-none transition"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddModalChip}
-                          className="rounded-xl bg-teal-700 px-4 py-2 text-xs font-bold text-white hover:bg-teal-800 transition active:scale-95 flex-shrink-0"
-                        >
-                          + เพิ่มตัวเลือก
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowLicenseModal(false)}
-                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={licenseFormSubmitting}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-700 active:scale-95 disabled:opacity-70"
-                >
-                  {licenseFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {licenseModalMode === "create" ? "สร้างประเภทใหม่" : "บันทึกการเปลี่ยนแปลง"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 4: CATEGORY MANAGER MODAL ================= */}
-      {showCategoryManagerModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-3xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Sticky Header */}
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 border border-teal-200">
-                  <FolderPlus className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                    จัดการหมวดหมู่ใบอนุญาตและคุณวุฒิ
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    เพิ่ม ลบ แก้ไขหมวดหมู่หลัก และควบคุมการแสดงผลแท็บในหน้าโปรไฟล์
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCategoryManagerModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
-              {/* Action Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs text-slate-600">
-                  มีหมวดหมู่ทั้งหมด <span className="font-bold text-slate-900">{categories.length}</span> หมวดหมู่
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleResetCategories}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-2xs"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
-                    <span>คืนค่ามาตรฐาน</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={openCreateCategoryModal}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition active:scale-95"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>+ เพิ่มหมวดหมู่ใหม่</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Categories List */}
-              <div className="space-y-3">
-                {categories.map((cat) => {
-                  const Icon = getLicenseIcon(cat.icon);
-                  const colorBadge = getBadgeStyle(cat.color);
-
-                  return (
-                    <div
-                      key={cat.id}
-                      className={clsx(
-                        "rounded-2xl p-4 sm:p-5 border transition flex flex-col sm:flex-row sm:items-center justify-between gap-4",
-                        cat.isActive
-                          ? "bg-white border-slate-200/80 shadow-2xs hover:border-slate-300"
-                          : "bg-slate-50/70 border-dashed border-slate-200 opacity-60"
-                      )}
-                    >
-                      <div className="flex items-start gap-3.5 min-w-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
-                          <Icon className="h-5 w-5 text-slate-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-black text-slate-900">
-                              {cat.title}
-                            </h4>
-                            <span className={clsx("px-2 py-0.5 text-[10px] font-black rounded-md border", colorBadge)}>
-                              {cat.code}
-                            </span>
-                            {cat.isSystem && (
-                              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                ระบบ
-                              </span>
-                            )}
-                          </div>
-                          {cat.description && (
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                              {cat.description}
-                            </p>
-                          )}
-                          <div className="text-[11px] text-teal-700 font-semibold mt-1.5 flex items-center gap-2">
-                            <span>มีประเภทใบอนุญาต: {cat.licenseCount || 0} รายการ</span>
-                            <span>•</span>
-                            <span>ลำดับที่: {cat.sortOrder}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 w-full sm:w-auto justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleCategoryActive(cat)}
-                          className={clsx(
-                            "px-2.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs border",
-                            cat.isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                              : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-                          )}
-                        >
-                          {cat.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => openEditCategoryModal(cat)}
-                          className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-                          title="แก้ไขหมวดหมู่"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
-
-                        {!cat.isSystem && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCategory(cat)}
-                            disabled={(cat.licenseCount || 0) > 0}
-                            className="p-2 rounded-xl border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 transition shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={
-                              (cat.licenseCount || 0) > 0
-                                ? "ไม่สามารถลบได้เนื่องจากมีประเภทใบอนุญาตอยู่ภายใน"
-                                : "ลบหมวดหมู่"
-                            }
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCategoryManagerModal(false)}
-                className="w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs active:scale-95"
-              >
-                ปิดหน้าต่าง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 5: CATEGORY CREATE / EDIT ================= */}
-      {showCategoryEditModal && (
-        <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                <FolderPlus className="h-5 w-5 text-teal-600" />
-                {categoryModalMode === "create" ? "เพิ่มหมวดหมู่ใหม่" : "แก้ไขข้อมูลหมวดหมู่"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowCategoryEditModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Form Body */}
-            <form onSubmit={handleCategoryFormSubmit} className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    ชื่อหมวดหมู่ (Display Title) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={categoryFormData.title}
-                    onChange={(e) => setCategoryFormData({ ...categoryFormData, title: e.target.value })}
-                    placeholder="เช่น ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP), คุณวุฒิความปลอดภัยในการทำงาน"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    รหัสหมวดหมู่ (Code) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={categoryModalMode === "edit"}
-                    value={categoryFormData.code}
-                    onChange={(e) => setCategoryFormData({ ...categoryFormData, code: e.target.value })}
-                    placeholder="เช่น ksp, vocational, safety, health"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 font-mono lowercase disabled:opacity-60 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition"
-                  />
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    ตัวอักษรภาษาอังกฤษตัวพิมพ์เล็กและตัวเลข ไม่มีเว้นวรรค
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    คำอธิบายหมวดหมู่ (Description)
-                  </label>
-                  <input
-                    type="text"
-                    value={categoryFormData.description}
-                    onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                    placeholder="เช่น มาตรฐานวิชาชีพครูสำหรับสถานศึกษา"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">โทนสี</label>
-                    <select
-                      value={categoryFormData.color}
-                      onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                    >
-                      {COLOR_OPTIONS.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">ไอคอน</label>
-                    <select
-                      value={categoryFormData.icon}
-                      onChange={(e) => setCategoryFormData({ ...categoryFormData, icon: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                    >
-                      {ICON_OPTIONS.map((i) => (
-                        <option key={i.value} value={i.value}>
-                          {i.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">ลำดับแสดงผล</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={categoryFormData.sortOrder}
-                      onChange={(e) => setCategoryFormData({ ...categoryFormData, sortOrder: Number(e.target.value) })}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2 text-xs text-slate-900 focus:border-teal-500 focus:bg-white focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryEditModal(false)}
-                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={categoryFormSubmitting}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-700 active:scale-95 disabled:opacity-70"
-                >
-                  {categoryFormSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {categoryModalMode === "create" ? "สร้างหมวดหมู่ใหม่" : "บันทึกการเปลี่ยนแปลง"}
+                  {roleFormSubmitting ? "กำลังบันทึก..." : "บันทึกยศ"}
                 </button>
               </div>
             </form>
