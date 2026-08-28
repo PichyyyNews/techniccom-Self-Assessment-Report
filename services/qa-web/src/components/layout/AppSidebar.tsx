@@ -224,13 +224,22 @@ export function AppSidebar({
                 <img
                   src={session.user.avatarUrl}
                   alt={session.user.name || "Avatar"}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    if (target.nextElementSibling) {
+                      (target.nextElementSibling as HTMLElement).style.display = "flex";
+                    }
+                  }}
                   className="h-10 w-10 rounded-xl object-cover border border-slate-200 flex-shrink-0 bg-white"
                 />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-xs flex-shrink-0">
-                  {userInitial}
-                </div>
-              )}
+              ) : null}
+              <div
+                style={{ display: session.user.avatarUrl ? "none" : "flex" }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-xs flex-shrink-0"
+              >
+                {userInitial}
+              </div>
 
               {!effectiveCollapsed && (
                 <div className="flex-1 min-w-0">

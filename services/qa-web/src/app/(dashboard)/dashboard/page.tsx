@@ -74,11 +74,13 @@ export default async function DashboardPage() {
                 alt={user.name}
                 className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover border border-slate-200 shadow-md shadow-blue-500/10 flex-shrink-0 bg-white"
               />
-            ) : (
-              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl shadow-lg shadow-blue-500/20 flex-shrink-0">
-                {user?.name ? user.name.charAt(0) : "U"}
-              </div>
-            )}
+            ) : null}
+            <div
+              style={{ display: user?.avatarUrl ? "none" : "flex" }}
+              className="h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl shadow-lg shadow-blue-500/20 flex-shrink-0"
+            >
+              {user?.name ? user.name.charAt(0) : "U"}
+            </div>
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">

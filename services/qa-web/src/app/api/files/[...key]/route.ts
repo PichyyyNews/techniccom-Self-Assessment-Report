@@ -9,7 +9,11 @@ export async function GET(
 ) {
   try {
     const { key: keyParts } = await params;
-    const key = keyParts.join("/");
+    if (!keyParts || keyParts.length === 0) {
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    }
+
+    const key = keyParts.map((p) => decodeURIComponent(p)).join("/");
 
     const command = new GetObjectCommand({
       Bucket: S3_BUCKET,
@@ -23,9 +27,9 @@ export async function GET(
     }
 
     const byteArray = await response.Body.transformToByteArray();
-    const contentType = response.ContentType || "application/octet-stream";
+    const contentType = response.ContentType || "image/jpeg";
 
-    return new Response(byteArray.buffer as ArrayBuffer, {
+    return new NextResponse(Buffer.from(byteArray), {
       status: 200,
       headers: {
         "Content-Type": contentType,

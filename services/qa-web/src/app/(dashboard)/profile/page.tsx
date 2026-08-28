@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   User,
   Mail,
@@ -22,6 +24,11 @@ import {
   Quote,
   Clock,
   Camera,
+  Share2,
+  Check,
+  ArrowLeft,
+  Eye,
+  Lock,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
@@ -74,14 +81,21 @@ interface ProfileUser {
 
 type ModalType = "none" | "basic" | "education" | "workHistory" | "skills" | "password";
 
-export default function ProfilePage() {
+export default function ProfilePage({ targetId }: { targetId?: string }) {
+  const params = useParams();
+  const userId = targetId || (params?.id as string) || undefined;
   const { data: session, update: updateSession } = useSession();
 
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [contributionMap, setContributionMap] = useState<Record<string, number>>({});
   const [totalContributions, setTotalContributions] = useState(0);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [canEdit, setCanEdit] = useState(true);
+  const [isSelf, setIsSelf] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   // Active Modal Type
   const [activeModal, setActiveModal] = useState<ModalType>("none");
@@ -109,16 +123,26 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        setContributionMap(data.contributionMap || {});
-        setTotalContributions(data.totalContributions || 0);
-        setRecentActivities(data.recentActivities || []);
+      setError(null);
+      setAvatarError(false);
+      const url = userId ? `/api/profile/${userId}` : "/api/profile";
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
+        return;
       }
+
+      setUser(data.user);
+      setContributionMap(data.contributionMap || {});
+      setTotalContributions(data.totalContributions || 0);
+      setRecentActivities(data.recentActivities || []);
+      setCanEdit(Boolean(data.canEdit ?? true));
+      setIsSelf(Boolean(data.isSelf ?? (!userId || session?.user?.id === userId)));
     } catch (err) {
       console.error("Failed to fetch profile", err);
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     } finally {
       setLoading(false);
     }
@@ -126,7 +150,16 @@ export default function ProfilePage() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [userId]);
+
+  const handleCopyLink = () => {
+    if (typeof window !== "undefined") {
+      const shareUrl = user ? `${window.location.origin}/profile/${user.id}` : window.location.href;
+      navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
 
   const calculateAge = (birthDateString?: string | null) => {
     if (!birthDateString) return null;
@@ -201,9 +234,11 @@ export default function ProfilePage() {
 
   // Submit Handler for Modular Modals
   const handleSaveSection = async (section: ModalType, payload: any) => {
+    if (!canEdit) return;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/profile", {
+      const url = userId ? `/api/profile/${userId}` : "/api/profile";
+      const res = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section, ...payload }),
@@ -217,7 +252,7 @@ export default function ProfilePage() {
 
       setActiveModal("none");
       fetchProfile();
-      if (updateSession) updateSession();
+      if (isSelf && updateSession) updateSession();
     } catch (err) {
       console.error(err);
       alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
@@ -231,6 +266,31 @@ export default function ProfilePage() {
       <div className="w-full max-w-7xl mx-auto p-14 flex flex-col items-center justify-center text-slate-400">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
         <span className="text-sm font-medium">กำลังโหลดข้อมูลโปรไฟล์...</span>
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="w-full max-w-7xl mx-auto p-6 sm:p-10">
+        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center space-y-4 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mx-auto border border-rose-200">
+            <Lock className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">ไม่สามารถเข้าถึงโปรไฟล์ได้</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto">
+            {error || "ไม่พบข้อมูลโปรไฟล์ของบุคลากรท่านนี้ หรือคุณไม่ได้รับสิทธิ์ในการดูข้อมูล"}
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-95"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              กลับหน้ารายชื่อผู้ใช้งาน
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -251,6 +311,50 @@ export default function ProfilePage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+      {/* Top Breadcrumb navigation (If viewing someone else or from admin) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {!isSelf ? (
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              กลับหน้ารายชื่อผู้ใช้งาน
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              กลับหน้าหลัก
+            </Link>
+          )}
+
+          {!isSelf && (
+            <span className="text-xs font-semibold text-slate-400">
+              / ดูโปรไฟล์ของ <span className="text-slate-700 font-bold">{user.name}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Permission Status Pill */}
+        <div>
+          {canEdit ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-2xs">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              {isSelf ? "โปรไฟล์ของคุณ (แก้ไขได้)" : "สิทธิ์แก้ไขโปรไฟล์ (Can Edit)"}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 shadow-2xs">
+              <Eye className="h-3.5 w-3.5 text-slate-500" />
+              โหมดดูข้อมูลอย่างเดียว (Read-Only)
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
       <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
         {/* Cover Graphic Banner */}
@@ -264,10 +368,11 @@ export default function ProfilePage() {
           <div className="flex items-end justify-between -mt-14 sm:-mt-20 mb-4 sm:mb-5">
             {/* Avatar with Camera Trigger */}
             <div className="relative group">
-              {user?.avatarUrl ? (
+              {user?.avatarUrl && !avatarError ? (
                 <img
                   src={user.avatarUrl}
                   alt={user.name}
+                  onError={() => setAvatarError(true)}
                   className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
                 />
               ) : (
@@ -275,33 +380,67 @@ export default function ProfilePage() {
                   {user?.name ? user.name.charAt(0) : "U"}
                 </div>
               )}
-              <button
-                type="button"
-                onClick={openBasicModal}
-                className="absolute bottom-1 right-1 p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
-                title="เปลี่ยนรูปประจำตัว"
-              >
-                <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </button>
+
+              {/* Camera Trigger only if canEdit */}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={openBasicModal}
+                  className="absolute bottom-1 right-1 p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
+                  title="เปลี่ยนรูปประจำตัว"
+                >
+                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </button>
+              )}
             </div>
 
-            {/* Quick Action Buttons */}
+            {/* Quick Action Buttons (Share Profile + Edit if canEdit) */}
             <div className="flex items-center gap-2">
+              {/* Share / Copy Profile Link Button */}
               <button
-                onClick={openBasicModal}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
+                type="button"
+                onClick={handleCopyLink}
+                className={clsx(
+                  "inline-flex items-center justify-center gap-1.5 rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition active:scale-95 shadow-2xs border",
+                  copied
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/25"
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                )}
+                title="คัดลอกลิงก์โปรไฟล์เพื่อแชร์"
               >
-                <Edit3 className="h-4 w-4" />
-                แก้ไขข้อมูลส่วนตัว
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-white" />
+                    <span>คัดลอกลิงก์แล้ว!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4 text-slate-500" />
+                    <span>แชร์โปรไฟล์</span>
+                  </>
+                )}
               </button>
 
-              <button
-                onClick={openPasswordModal}
-                className="p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
-                title="เปลี่ยนรหัสผ่าน"
-              >
-                <Key className="h-4 w-4 text-slate-500" />
-              </button>
+              {/* Edit Buttons if authorized */}
+              {canEdit ? (
+                <>
+                  <button
+                    onClick={openBasicModal}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    แก้ไขข้อมูลส่วนตัว
+                  </button>
+
+                  <button
+                    onClick={openPasswordModal}
+                    className="p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    title="เปลี่ยนรหัสผ่าน"
+                  >
+                    <Key className="h-4 w-4 text-slate-500" />
+                  </button>
+                </>
+              ) : null}
             </div>
           </div>
 
@@ -343,14 +482,16 @@ export default function ProfilePage() {
             ) : (
               <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
                 <span className="text-slate-400 text-xs italic">
-                  ยังไม่มีคำแนะนำตัว... คลิกเพื่อเพิ่มคติประจำใจหรือประวัติโดยย่อ
+                  ยังไม่มีคำแนะนำตัวหรือคติประจำใจ
                 </span>
-                <button
-                  onClick={openBasicModal}
-                  className="text-xs font-bold text-blue-600 hover:underline"
-                >
-                  + เพิ่มคำแนะนำตัว
-                </button>
+                {canEdit && (
+                  <button
+                    onClick={openBasicModal}
+                    className="text-xs font-bold text-blue-600 hover:underline"
+                  >
+                    + เพิ่มคำแนะนำตัว
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -382,7 +523,7 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-1.5 bg-emerald-50/70 px-3 py-1.5 rounded-xl border border-emerald-200/70 text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="font-semibold">สถานะบัญชีปกติ</span>
+              <span className="font-semibold">{user?.isActive ? "สถานะบัญชีปกติ" : "ระงับการใช้งาน"}</span>
             </div>
           </div>
         </div>
@@ -412,13 +553,15 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <button
-              onClick={openEducationModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition active:scale-95"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              แก้ไขวุฒิ
-            </button>
+            {canEdit && (
+              <button
+                onClick={openEducationModal}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition active:scale-95"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                แก้ไขวุฒิ
+              </button>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -469,13 +612,15 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <button
-              onClick={openWorkHistoryModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition active:scale-95"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              แก้ไขประวัติ
-            </button>
+            {canEdit && (
+              <button
+                onClick={openWorkHistoryModal}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition active:scale-95"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                แก้ไขประวัติ
+              </button>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -527,45 +672,54 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <button
-            onClick={openSkillsModal}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition active:scale-95"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-            แก้ไขทักษะ
-          </button>
+          {canEdit && (
+            <button
+              onClick={openSkillsModal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition active:scale-95"
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+              แก้ไขทักษะ
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
-          {currentSkills.map((skill, idx) => (
-            <span
-              key={idx}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200/80 shadow-2xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition"
-            >
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              {skill}
-            </span>
-          ))}
+          {currentSkills.length === 0 ? (
+            <p className="text-xs text-slate-400 italic py-1">ยังไม่มีข้อมูลทักษะความเชี่ยวชาญ</p>
+          ) : (
+            currentSkills.map((skill, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200/80 shadow-2xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition"
+              >
+                <Sparkles className="h-3 w-3 text-amber-500" />
+                {skill}
+              </span>
+            ))
+          )}
         </div>
       </div>
 
-      {/* ================= MODAL 1: BASIC PROFILE & BIO ================= */}
-      {activeModal === "basic" && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Edit3 className="h-5 w-5 text-blue-600" />
-                แก้ไขข้อมูลส่วนตัวและรูปประจำตัว
-              </h3>
-              <button
-                type="button"
-                onClick={() => setActiveModal("none")}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {/* ================= MODALS (Rendered only if canEdit) ================= */}
+      {canEdit && (
+        <>
+          {/* ================= MODAL 1: BASIC PROFILE & BIO ================= */}
+          {activeModal === "basic" && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+              <div className="w-full max-w-xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Edit3 className="h-5 w-5 text-blue-600" />
+                    แก้ไขข้อมูลส่วนตัวและรูปประจำตัว
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal("none")}
+                    className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
 
             <form
               onSubmit={(e) => {
@@ -1086,7 +1240,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
               <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Key className="h-5 w-5 text-blue-600" />
-                เปลี่ยนรหัสผ่านเข้าสู่ระบบ
+                {isSelf ? "เปลี่ยนรหัสผ่านเข้าสู่ระบบ" : `ตั้งรหัสผ่านใหม่ให้ ${user.name}`}
               </h3>
               <button
                 type="button"
@@ -1161,6 +1315,8 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 }

@@ -22,6 +22,8 @@ import {
   ShieldCheck,
   Plus,
   LayoutDashboard,
+  Eye,
+  Edit3,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { clsx } from "clsx";
@@ -60,20 +62,54 @@ interface UserData {
   createdAt: string;
 }
 
-const AVAILABLE_PAGES = [
+interface PermissionGroup {
+  category: string;
+  items: {
+    key: string;
+    title: string;
+    description: string;
+    icon: any;
+  }[];
+}
+
+const AVAILABLE_PERMISSION_GROUPS: PermissionGroup[] = [
   {
-    path: "/dashboard",
-    title: "หน้าหลักบุคลากร (Dashboard)",
-    description: "เข้าถึงภาพรวมระบบและข้อมูลส่วนตัว",
-    icon: LayoutDashboard,
+    category: "1. การเข้าถึงหน้าระบบ (Page Access)",
+    items: [
+      {
+        key: "/dashboard",
+        title: "หน้าหลักบุคลากร (Dashboard)",
+        description: "เข้าถึงภาพรวมระบบและข้อมูลส่วนตัว",
+        icon: LayoutDashboard,
+      },
+      {
+        key: "/admin/users",
+        title: "จัดการผู้ใช้และสิทธิ์ (User & Role Management)",
+        description: "จัดการบัญชีบุคลากร กำหนดยศ และสิทธิ์การเข้าถึง",
+        icon: Users,
+      },
+    ],
   },
   {
-    path: "/admin/users",
-    title: "จัดการผู้ใช้และสิทธิ์ (User & Role Management)",
-    description: "จัดการบัญชีบุคลากร กำหนดยศ และสิทธิ์การเข้าถึง",
-    icon: Users,
+    category: "2. สิทธิ์โปรไฟล์บุคลากร (Staff Profile Permissions)",
+    items: [
+      {
+        key: "profile.view_all",
+        title: "ดูโปรไฟล์ของบุคลากรทุกคนได้ (Read-Only Social View)",
+        description: "สามารถเปิดดูโปรไฟล์ วุฒิ ประวัติ ทักษะ และกิจกรรมของบุคลากรท่านอื่นได้",
+        icon: Eye,
+      },
+      {
+        key: "profile.edit_all",
+        title: "แก้ไขโปรไฟล์ของบุคลากรท่านอื่นได้ (Edit Others' Profile)",
+        description: "สามารถแก้ไขข้อมูลส่วนตัว วุฒิ ประวัติ ทักษะ และรูปของบุคลากรท่านอื่นได้",
+        icon: Edit3,
+      },
+    ],
   },
 ];
+
+const ALL_PERMISSIONS = AVAILABLE_PERMISSION_GROUPS.flatMap((g) => g.items);
 
 const COLOR_OPTIONS = [
   { value: "blue", label: "สีน้ำเงิน", badge: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -548,13 +584,22 @@ export default function AdminUsersPage() {
                           <img
                             src={user.avatarUrl}
                             alt={user.name}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = "none";
+                              if (target.nextElementSibling) {
+                                (target.nextElementSibling as HTMLElement).style.display = "flex";
+                              }
+                            }}
                             className="h-12 w-12 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
                           />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-base flex-shrink-0 border border-blue-200 shadow-2xs">
-                            {user.name ? user.name.charAt(0) : "U"}
-                          </div>
-                        )}
+                        ) : null}
+                        <div
+                          style={{ display: user.avatarUrl ? "none" : "flex" }}
+                          className="h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-base flex-shrink-0 border border-blue-200 shadow-2xs"
+                        >
+                          {user.name ? user.name.charAt(0) : "U"}
+                        </div>
 
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-slate-900 text-sm leading-tight break-words">
@@ -637,10 +682,19 @@ export default function AdminUsersPage() {
 
                       {/* Row 4: Action Buttons */}
                       <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                        <Link
+                          href={`/profile/${user.id}`}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition active:scale-95 border border-blue-200/80 shadow-2xs"
+                          title="เปิดดูโปรไฟล์แบบโซเชียล"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          ดูโปรไฟล์
+                        </Link>
+
                         <button
                           type="button"
                           onClick={() => openEditUserModal(user)}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
                         >
                           <Edit2 className="h-3.5 w-3.5 text-blue-600" />
                           แก้ไขข้อมูล
@@ -684,23 +738,38 @@ export default function AdminUsersPage() {
                         return (
                           <tr key={user.id} className="hover:bg-slate-50/60 transition">
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
+                              <Link
+                                href={`/profile/${user.id}`}
+                                className="flex items-center gap-3 group transition"
+                                title="คลิกเพื่อดูโปรไฟล์โซเชียล"
+                              >
                                 {user.avatarUrl ? (
                                   <img
                                     src={user.avatarUrl}
                                     alt={user.name}
-                                    className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      target.style.display = "none";
+                                      if (target.nextElementSibling) {
+                                        (target.nextElementSibling as HTMLElement).style.display = "flex";
+                                      }
+                                    }}
+                                    className="h-11 w-11 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white group-hover:scale-105 transition"
                                   />
-                                ) : (
-                                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs">
-                                    {user.name ? user.name.charAt(0) : "U"}
-                                  </div>
-                                )}
+                                ) : null}
+                                <div
+                                  style={{ display: user.avatarUrl ? "none" : "flex" }}
+                                  className="h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 font-bold text-sm flex-shrink-0 border border-blue-200 shadow-2xs group-hover:bg-blue-100 transition"
+                                >
+                                  {user.name ? user.name.charAt(0) : "U"}
+                                </div>
                                 <div>
-                                  <div className="font-bold text-slate-900">{user.name}</div>
+                                  <div className="font-bold text-slate-900 group-hover:text-blue-600 transition">
+                                    {user.name}
+                                  </div>
                                   <div className="text-xs text-slate-400">{user.email}</div>
                                 </div>
-                              </div>
+                              </Link>
                             </td>
 
                             <td className="px-6 py-4">
@@ -769,6 +838,13 @@ export default function AdminUsersPage() {
 
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
+                                <Link
+                                  href={`/profile/${user.id}`}
+                                  className="p-2 rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition"
+                                  title="เปิดดูโปรไฟล์แบบโซเชียล (Social Profile View)"
+                                >
+                                  <Eye className="h-4 w-4 text-blue-600" />
+                                </Link>
                                 <button
                                   type="button"
                                   onClick={() => openEditUserModal(user)}
@@ -836,18 +912,18 @@ export default function AdminUsersPage() {
                     {role.description || "ไม่มีคำอธิบายเพิ่มเติม"}
                   </p>
 
-                  {/* Allowed Pages Permissions */}
+                  {/* Allowed Pages & Profile Permissions */}
                   <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                      สิทธิ์การเข้าถึงหน้าเว็บ (Allowed Pages):
+                      สิทธิ์การใช้งาน (Role Permissions):
                     </span>
                     <div className="space-y-1.5">
-                      {AVAILABLE_PAGES.map((page) => {
-                        const hasAccess = role.permissions?.includes(page.path);
-                        const Icon = page.icon;
+                      {ALL_PERMISSIONS.map((perm) => {
+                        const hasAccess = role.permissions?.includes(perm.key);
+                        const Icon = perm.icon;
                         return (
                           <div
-                            key={page.path}
+                            key={perm.key}
                             className={clsx(
                               "flex items-center gap-2 p-2 rounded-xl text-xs font-medium border",
                               hasAccess
@@ -856,7 +932,7 @@ export default function AdminUsersPage() {
                             )}
                           >
                             <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="truncate flex-1">{page.title}</span>
+                            <span className="truncate flex-1">{perm.title}</span>
                             {hasAccess ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                             ) : (
@@ -1161,46 +1237,54 @@ export default function AdminUsersPage() {
                   />
                 </div>
 
-                {/* Page Access Checkboxes */}
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-slate-900 mb-2">
-                    กำหนดสิทธิ์การเข้าถึงหน้าเว็บ (Allowed Pages) <span className="text-rose-500">*</span>
+                {/* Page & Profile Access Checkboxes Grouped */}
+                <div className="pt-2 space-y-4">
+                  <label className="block text-xs font-bold text-slate-900">
+                    กำหนดสิทธิ์การใช้งาน (Permissions) <span className="text-rose-500">*</span>
                   </label>
 
-                  <div className="space-y-2">
-                    {AVAILABLE_PAGES.map((page) => {
-                      const isChecked = roleFormData.permissions.includes(page.path);
-                      const Icon = page.icon;
+                  {AVAILABLE_PERMISSION_GROUPS.map((group) => (
+                    <div key={group.category} className="space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                        {group.category}
+                      </span>
 
-                      return (
-                        <label
-                          key={page.path}
-                          className={clsx(
-                            "flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition select-none",
-                            isChecked
-                              ? "border-blue-500 bg-blue-50/40"
-                              : "border-slate-200 hover:bg-slate-50"
-                          )}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => togglePermission(page.path)}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                              <Icon className="h-3.5 w-3.5 text-blue-600" />
-                              {page.title}
-                            </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5">
-                              {page.description}
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
+                      <div className="space-y-2">
+                        {group.items.map((item) => {
+                          const isChecked = roleFormData.permissions.includes(item.key);
+                          const Icon = item.icon;
+
+                          return (
+                            <label
+                              key={item.key}
+                              className={clsx(
+                                "flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition select-none",
+                                isChecked
+                                  ? "border-blue-500 bg-blue-50/40"
+                                  : "border-slate-200 hover:bg-slate-50"
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => togglePermission(item.key)}
+                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                                  <Icon className="h-3.5 w-3.5 text-blue-600" />
+                                  {item.title}
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                  {item.description}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

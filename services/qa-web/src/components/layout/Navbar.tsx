@@ -80,13 +80,22 @@ export function Navbar() {
                 <img
                   src={session.user.avatarUrl}
                   alt={session.user.name || "Avatar"}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    if (target.nextElementSibling) {
+                      (target.nextElementSibling as HTMLElement).style.display = "flex";
+                    }
+                  }}
                   className="h-9 w-9 rounded-xl object-cover border border-slate-200"
                 />
-              ) : (
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs">
-                  {userInitial}
-                </div>
-              )}
+              ) : null}
+              <div
+                style={{ display: session.user.avatarUrl ? "none" : "flex" }}
+                className="h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs"
+              >
+                {userInitial}
+              </div>
 
               <div className="hidden md:block text-left pr-1">
                 <div className="text-xs font-bold text-slate-800 leading-tight">
