@@ -338,26 +338,29 @@ export default function SystemAdminPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-8">
+      {/* Top Breadcrumb navigation */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href="/dashboard"
+            className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
+            <span>กลับหน้าหลัก (Dashboard)</span>
+          </Link>
+          <span className="text-slate-300">/</span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+            <Shield className="h-3 w-3" />
+            ROOT COMMAND CENTER
+          </span>
+        </div>
+      </div>
+
       {/* ================= 1. CLEAN LIGHT THEME HERO HEADER (FULLY RESPONSIVE) ================= */}
       <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5">
-          {/* Title & Navigation */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                href="/dashboard"
-                className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
-                <span>กลับหน้าหลัก (Dashboard)</span>
-              </Link>
-              <span className="text-slate-300">/</span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
-                <Shield className="h-3 w-3" />
-                ROOT COMMAND CENTER
-              </span>
-            </div>
-
+          {/* Title & Description */}
+          <div className="space-y-1 sm:space-y-1.5">
             <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
               ศูนย์มอนิเตอร์ & ตั้งค่าโครงสร้างระบบ
             </h1>
