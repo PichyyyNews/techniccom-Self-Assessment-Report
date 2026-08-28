@@ -179,6 +179,13 @@ export async function PUT(
         ? "อัปเดตทักษะและความเชี่ยวชาญ"
         : `อัปเดตทักษะและความเชี่ยวชาญ (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
       activityAction = "UPDATE_SKILLS";
+    } else if (section === "licenses") {
+      const { licenses } = body;
+      updateData.licenses = Array.isArray(licenses) ? licenses : [];
+      activityTitle = isSelf
+        ? "อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพ"
+        : `อัปเดตข้อมูลใบอนุญาตประกอบวิชาชีพ (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
+      activityAction = "UPDATE_LICENSES";
     } else if (section === "password") {
       const { password } = body;
       if (!password || password.trim().length < 6) {
@@ -193,7 +200,7 @@ export async function PUT(
         : `รีเซ็ตรหัสผ่านใหม่ (โดย ${session.user.name || "ผู้ดูแลระบบ"})`;
       activityAction = "CHANGE_PASSWORD";
     } else {
-      const { name, position, phone, birthDate, avatarUrl, bio, education, workHistory, skills, password } = body;
+      const { name, position, phone, birthDate, avatarUrl, bio, education, workHistory, skills, licenses, password } = body;
       if (name !== undefined) updateData.name = name.trim();
       if (position !== undefined) updateData.position = position ? position.trim() : null;
       if (phone !== undefined) updateData.phone = phone ? phone.trim() : null;
@@ -203,6 +210,7 @@ export async function PUT(
       if (education !== undefined) updateData.education = education;
       if (workHistory !== undefined) updateData.workHistory = workHistory;
       if (skills !== undefined) updateData.skills = Array.isArray(skills) ? skills : [];
+      if (licenses !== undefined) updateData.licenses = Array.isArray(licenses) ? licenses : [];
       if (password && password.trim().length >= 6) {
         updateData.passwordHash = await bcrypt.hash(password.trim(), 10);
       }

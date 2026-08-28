@@ -29,10 +29,24 @@ import {
   ArrowLeft,
   Eye,
   Lock,
+  FileBadge,
+  Building2,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
 import { clsx } from "clsx";
+
+export interface LicenseItem {
+  name: string;
+  licenseNumber: string;
+  issuer: string;
+  issueDate?: string;
+  expireDate?: string;
+  isLifetime?: boolean;
+  fileUrl?: string;
+}
 
 interface EducationItem {
   degree: string;
@@ -74,12 +88,13 @@ interface ProfileUser {
   bio?: string | null;
   education?: EducationItem[] | null;
   workHistory?: WorkHistoryItem[] | null;
+  licenses?: LicenseItem[] | null;
   skills?: string[];
   isActive: boolean;
   createdAt: string;
 }
 
-type ModalType = "none" | "basic" | "education" | "workHistory" | "skills" | "password";
+type ModalType = "none" | "basic" | "education" | "workHistory" | "skills" | "licenses" | "password";
 
 export default function ProfilePage({ targetId }: { targetId?: string }) {
   const params = useParams();
@@ -113,6 +128,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
   const [educationList, setEducationList] = useState<EducationItem[]>([]);
   const [workHistoryList, setWorkHistoryList] = useState<WorkHistoryItem[]>([]);
+  const [licensesList, setLicensesList] = useState<LicenseItem[]>([]);
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [passwordForm, setPasswordForm] = useState({
@@ -227,6 +243,46 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
     setActiveModal("skills");
   };
 
+  const openLicensesModal = () => {
+    if (!user) return;
+    setLicensesList((user.licenses as LicenseItem[]) || [
+      {
+        name: "ใบอนุญาตประกอบวิชาชีพครู",
+        licenseNumber: "",
+        issuer: "สำนักงานเลขาธิการคุรุสภา",
+        issueDate: "",
+        expireDate: "",
+        isLifetime: false,
+        fileUrl: "",
+      },
+    ]);
+    setActiveModal("licenses");
+  };
+
+  const getLicenseStatus = (item: LicenseItem) => {
+    if (item.isLifetime) {
+      return { status: "lifetime", label: "ตลอดชีพ (Lifetime)", style: "bg-purple-50 text-purple-700 border-purple-200" };
+    }
+    if (!item.expireDate) {
+      return { status: "active", label: "ใช้งานได้ปกติ", style: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    }
+    const expire = new Date(item.expireDate);
+    if (isNaN(expire.getTime())) {
+      return { status: "active", label: "ใช้งานได้ปกติ", style: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    }
+    const today = new Date();
+    const diffTime = expire.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { status: "expired", label: "หมดอายุแล้ว", style: "bg-rose-50 text-rose-700 border-rose-200" };
+    }
+    if (diffDays <= 90) {
+      return { status: "expiring", label: `ใกล้หมดอายุ (เหลือ ${diffDays} วัน)`, style: "bg-amber-50 text-amber-700 border-amber-200" };
+    }
+    return { status: "active", label: "ใช้งานได้ปกติ", style: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  };
+
   const openPasswordModal = () => {
     setPasswordForm({ password: "", confirmPassword: "" });
     setActiveModal("password");
@@ -302,6 +358,8 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
   const currentWorkHistory: WorkHistoryItem[] = (user?.workHistory as WorkHistoryItem[]) || [
     { role: user?.position || "บุคลากรประจำสถานศึกษา", organization: "วิทยาลัยเทคนิค", period: "2564 - ปัจจุบัน" },
   ];
+
+  const currentLicenses: LicenseItem[] = (user?.licenses as LicenseItem[]) || [];
 
   const currentSkills: string[] = user?.skills && user.skills.length > 0 ? user.skills : [
     "การประกันคุณภาพการศึกษา (SAR)",
@@ -657,7 +715,128 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
         </div>
       </div>
 
-      {/* ================= 4. SKILLS & EXPERTISE ================= */}
+      {/* ================= 4. DETAILED PROFESSIONAL LICENSES (ข้อมูลใบอนุญาตประกอบวิชาชีพ) ================= */}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-200/60">
+              <FileBadge className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                ข้อมูลใบอนุญาตประกอบวิชาชีพ (Professional Licenses)
+              </h3>
+              <p className="text-xs text-slate-400">
+                ใบอนุญาตประกอบวิชาชีพครู, ผู้บริหารสถานศึกษา, ใบ กว. และใบรับรองวิชาชีพเฉพาะทาง
+              </p>
+            </div>
+          </div>
+
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openLicensesModal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-teal-50 text-teal-700 text-xs font-bold hover:bg-teal-100 transition active:scale-95"
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+              จัดการใบประกอบวิชาชีพ
+            </button>
+          )}
+        </div>
+
+        {currentLicenses.length === 0 ? (
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
+            <span className="text-slate-400 text-xs italic">
+              ยังไม่มีข้อมูลใบอนุญาตประกอบวิชาชีพ
+            </span>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={openLicensesModal}
+                className="text-xs font-bold text-teal-600 hover:underline"
+              >
+                + เพิ่มใบอนุญาตประกอบวิชาชีพ
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {currentLicenses.map((lic, idx) => {
+              const statusInfo = getLicenseStatus(lic);
+              return (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3 transition hover:bg-slate-50 hover:border-slate-300"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-teal-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
+                        <FileBadge className="h-4 w-4 text-teal-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          {lic.name}
+                        </h4>
+                        <div className="text-[11px] font-mono font-bold text-slate-600 mt-0.5">
+                          เลขที่: <span className="bg-white px-1.5 py-0.5 rounded border border-slate-200">{lic.licenseNumber || "-"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      className={clsx(
+                        "inline-flex items-center px-2 py-0.5 text-[10px] font-black rounded-lg border flex-shrink-0",
+                        statusInfo.style
+                      )}
+                    >
+                      {statusInfo.label}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-500 pt-2 border-t border-slate-200/60">
+                    <div className="flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                      <span className="truncate">ผู้ออก: {lic.issuer || "ไม่ระบุหน่วยงาน"}</span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                      {lic.issueDate && (
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Calendar className="h-3 w-3 text-slate-400" />
+                          <span>ออกเมื่อ: {new Date(lic.issueDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1 text-slate-600">
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <span>
+                          หมดอายุ: {lic.isLifetime ? "ตลอดชีพ" : lic.expireDate ? new Date(lic.expireDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) : "ไม่ระบุ"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {lic.fileUrl && (
+                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-end">
+                      <a
+                        href={lic.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition shadow-2xs"
+                      >
+                        <ExternalLink className="h-3 w-3 text-teal-600" />
+                        ดูไฟล์เอกสารหลักฐาน
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ================= 5. SKILLS & EXPERTISE ================= */}
       <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
@@ -1226,6 +1405,257 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   บันทึกทักษะ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: LICENSES & CERTIFICATIONS ================= */}
+      {activeModal === "licenses" && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-0 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300 ease-out max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-slate-100 flex-shrink-0 bg-white">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <FileBadge className="h-5 w-5 text-teal-600" />
+                จัดการข้อมูลใบอนุญาตประกอบวิชาชีพ
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveSection("licenses", { licenses: licensesList });
+              }}
+              className="flex-1 flex flex-col overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 font-medium">
+                    ระบุข้อมูลใบประกอบวิชาชีพครู, ผู้บริหาร หรือใบรับรองเฉพาะทาง
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLicensesList([
+                        ...licensesList,
+                        {
+                          name: "ใบอนุญาตประกอบวิชาชีพครู",
+                          licenseNumber: "",
+                          issuer: "สำนักงานเลขาธิการคุรุสภา",
+                          issueDate: "",
+                          expireDate: "",
+                          isLifetime: false,
+                          fileUrl: "",
+                        },
+                      ])
+                    }
+                    className="inline-flex items-center gap-1 text-xs font-bold text-teal-700 hover:text-teal-800 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200 transition active:scale-95"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    เพิ่มใบอนุญาตใหม่
+                  </button>
+                </div>
+
+                {licensesList.length === 0 ? (
+                  <div className="p-8 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-200">
+                    <p className="text-xs text-slate-400">ยังไม่มีรายการใบอนุญาตประกอบวิชาชีพ คลิกปุ่มด้านบนเพื่อเพิ่ม</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {licensesList.map((lic, idx) => (
+                      <div key={idx} className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <FileBadge className="h-4 w-4 text-teal-600" />
+                            ใบอนุญาตประกอบวิชาชีพที่ {idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setLicensesList(licensesList.filter((_, i) => i !== idx))}
+                            className="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition"
+                            title="ลบรายการนี้"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                          <span className="text-slate-400 text-[10px]">ตัวเลือกด่วน:</span>
+                          {[
+                            "ใบอนุญาตประกอบวิชาชีพครู",
+                            "ใบอนุญาตประกอบวิชาชีพผู้บริหารสถานศึกษา",
+                            "ใบอนุญาตประกอบวิชาชีพช่างไฟฟ้า",
+                            "ใบอนุญาตประกอบวิชาชีพวิศวกรรมควบคุม (กว.)",
+                          ].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                const updated = [...licensesList];
+                                updated[idx].name = preset;
+                                if (preset.includes("คุรุสภา") || preset.includes("ครู") || preset.includes("ผู้บริหาร")) {
+                                  updated[idx].issuer = "สำนักงานเลขาธิการคุรุสภา";
+                                } else if (preset.includes("วิศวกรรม") || preset.includes("กว.")) {
+                                  updated[idx].issuer = "สภาวิศวกร";
+                                }
+                                setLicensesList(updated);
+                              }}
+                              className="bg-white px-2 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:border-teal-500 hover:text-teal-700 transition text-[10px]"
+                            >
+                              {preset}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                              ชื่อใบอนุญาต / ใบรับรอง <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="เช่น ใบอนุญาตประกอบวิชาชีพครู"
+                              value={lic.name}
+                              onChange={(e) => {
+                                const updated = [...licensesList];
+                                updated[idx].name = e.target.value;
+                                setLicensesList(updated);
+                              }}
+                              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                              เลขที่ใบอนุญาต <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="เช่น 6410900012345"
+                              value={lic.licenseNumber}
+                              onChange={(e) => {
+                                const updated = [...licensesList];
+                                updated[idx].licenseNumber = e.target.value;
+                                setLicensesList(updated);
+                              }}
+                              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 font-mono focus:border-teal-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                              หน่วยงาน / องค์กรผู้ออกใบอนุญาต
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="เช่น สำนักงานเลขาธิการคุรุสภา, สภาวิศวกร"
+                              value={lic.issuer}
+                              onChange={(e) => {
+                                const updated = [...licensesList];
+                                updated[idx].issuer = e.target.value;
+                                setLicensesList(updated);
+                              }}
+                              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                              วันที่ออกใบอนุญาต (วดป.)
+                            </label>
+                            <input
+                              type="date"
+                              value={lic.issueDate ? lic.issueDate.split("T")[0] : ""}
+                              onChange={(e) => {
+                                const updated = [...licensesList];
+                                updated[idx].issueDate = e.target.value;
+                                setLicensesList(updated);
+                              }}
+                              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold text-slate-600">
+                                วันหมดอายุ (วดป.)
+                              </label>
+                              <label className="flex items-center gap-1.5 text-[11px] text-indigo-700 font-bold cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(lic.isLifetime)}
+                                  onChange={(e) => {
+                                    const updated = [...licensesList];
+                                    updated[idx].isLifetime = e.target.checked;
+                                    if (e.target.checked) updated[idx].expireDate = "";
+                                    setLicensesList(updated);
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                ตลอดชีพ
+                              </label>
+                            </div>
+                            <input
+                              type="date"
+                              disabled={Boolean(lic.isLifetime)}
+                              value={lic.expireDate ? lic.expireDate.split("T")[0] : ""}
+                              onChange={(e) => {
+                                const updated = [...licensesList];
+                                updated[idx].expireDate = e.target.value;
+                                setLicensesList(updated);
+                              }}
+                              className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-teal-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 pt-2 border-t border-slate-200/60">
+                            <span className="block text-[11px] font-semibold text-slate-600 mb-1.5">
+                              แนบไฟล์ภาพถ่ายหรือเอกสารใบประกอบวิชาชีพ
+                            </span>
+                            <ImageUpload
+                              value={lic.fileUrl}
+                              onChange={(url) => {
+                                const updated = [...licensesList];
+                                updated[idx].fileUrl = url || "";
+                                setLicensesList(updated);
+                              }}
+                              folder="license-documents"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="sticky bottom-0 z-10 bg-white/95 backdrop-blur px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal("none")}
+                  className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-700 active:scale-95 disabled:opacity-70"
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  บันทึกใบอนุญาตประกอบวิชาชีพ
                 </button>
               </div>
             </form>

@@ -51,6 +51,7 @@ model User {
   bio              String?         // คำแนะนำตัว / ปรัชญาการศึกษา
   education        Json?           // วุฒิการศึกษา [{ degree, major, institution, year }]
   workHistory      Json?           // ประวัติการทำงาน [{ role, organization, period }]
+  licenses         Json?           // ใบอนุญาตประกอบวิชาชีพ [{ name, licenseNumber, issuer, issueDate, expireDate, isLifetime, fileUrl }]
   skills           String[]        // ทักษะ / ความเชี่ยวชาญ
   isActive         Boolean         @default(true)
   activities       ActivityLog[]
