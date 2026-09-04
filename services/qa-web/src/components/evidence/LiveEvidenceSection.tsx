@@ -295,6 +295,10 @@ export function LiveEvidenceSection({
                         title={file.title}
                         variant="table"
                         gallery={file.gallery}
+                        onClickThumbnail={(slideIdx) => {
+                          setInitialSlideIndex(slideIdx);
+                          setDetailsFile(file);
+                        }}
                       />
                     </TableCell>
 

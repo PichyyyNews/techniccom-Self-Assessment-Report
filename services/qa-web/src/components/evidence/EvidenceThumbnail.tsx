@@ -27,6 +27,7 @@ interface EvidenceThumbnailProps {
   height?: number | string;
   gallery?: GalleryItem[];
   onOpenFullscreen?: (slideIndex: number) => void;
+  onClickThumbnail?: (slideIndex: number) => void;
 }
 
 export function EvidenceThumbnail({
@@ -38,6 +39,7 @@ export function EvidenceThumbnail({
   height = 150,
   gallery,
   onOpenFullscreen,
+  onClickThumbnail,
 }: EvidenceThumbnailProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [imgErrorMap, setImgErrorMap] = useState<Record<string, boolean>>({});
@@ -82,7 +84,15 @@ export function EvidenceThumbnail({
   if (variant === "table") {
     if (isImage && !isImgFailed) {
       return (
-        <Box sx={{ position: "relative", width: 42, height: 42, flexShrink: 0 }}>
+        <Box
+          onClick={(e) => {
+            if (onClickThumbnail) {
+              e.stopPropagation();
+              onClickThumbnail(currentSlideIndex);
+            }
+          }}
+          sx={{ position: "relative", width: 42, height: 42, flexShrink: 0, cursor: "pointer" }}
+        >
           <Box
             component="img"
             src={activeSlide.fileUrl}
@@ -123,6 +133,12 @@ export function EvidenceThumbnail({
 
     return (
       <Box
+        onClick={(e) => {
+          if (onClickThumbnail) {
+            e.stopPropagation();
+            onClickThumbnail(currentSlideIndex);
+          }
+        }}
         sx={{
           position: "relative",
           width: 42,
@@ -134,6 +150,7 @@ export function EvidenceThumbnail({
           border: "1px solid",
           borderColor: "divider",
           flexShrink: 0,
+          cursor: "pointer",
           bgcolor: isPdf
             ? "error.50"
             : isVideo
@@ -197,6 +214,12 @@ export function EvidenceThumbnail({
   // Variant: "card" (Interactive carousel card cover)
   return (
     <Box
+      onClick={(e) => {
+        if (onClickThumbnail) {
+          e.stopPropagation();
+          onClickThumbnail(currentSlideIndex);
+        }
+      }}
       sx={{
         position: "relative",
         width: "100%",
@@ -210,6 +233,7 @@ export function EvidenceThumbnail({
         alignItems: "center",
         justifyContent: "center",
         userSelect: "none",
+        cursor: "pointer",
         "&:hover .card-carousel-btn": {
           opacity: 1,
         },
@@ -392,12 +416,13 @@ export function EvidenceThumbnail({
             bgcolor: "rgba(15, 23, 42, 0.75)",
             color: "white",
             p: 0.5,
-            opacity: 0,
+            opacity: { xs: 0.9, md: 0.5 },
             transition: "all 0.15s ease",
             backdropFilter: "blur(4px)",
             "&:hover": {
               bgcolor: "rgba(15, 23, 42, 0.95)",
               transform: "scale(1.1)",
+              opacity: 1,
             },
             zIndex: 2,
           }}
@@ -422,13 +447,17 @@ export function EvidenceThumbnail({
               bgcolor: "rgba(15, 23, 42, 0.75)",
               color: "white",
               p: 0.4,
-              opacity: 0,
+              opacity: { xs: 0.9, md: 0.5 },
               transition: "all 0.15s ease",
+              backdropFilter: "blur(4px)",
               "&:hover": {
                 bgcolor: "rgba(15, 23, 42, 0.95)",
+                transform: "translateY(-50%) scale(1.1)",
+                opacity: 1,
               },
               zIndex: 3,
             }}
+            title="ภาพก่อนหน้า"
           >
             <ChevronLeftIcon sx={{ fontSize: 18 }} />
           </IconButton>
@@ -445,13 +474,17 @@ export function EvidenceThumbnail({
               bgcolor: "rgba(15, 23, 42, 0.75)",
               color: "white",
               p: 0.4,
-              opacity: 0,
+              opacity: { xs: 0.9, md: 0.5 },
               transition: "all 0.15s ease",
+              backdropFilter: "blur(4px)",
               "&:hover": {
                 bgcolor: "rgba(15, 23, 42, 0.95)",
+                transform: "translateY(-50%) scale(1.1)",
+                opacity: 1,
               },
               zIndex: 3,
             }}
+            title="ภาพถัดไป"
           >
             <ChevronRightIcon sx={{ fontSize: 18 }} />
           </IconButton>

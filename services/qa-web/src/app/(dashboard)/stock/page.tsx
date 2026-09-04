@@ -527,6 +527,10 @@ export default function StockPage() {
                   variant="card"
                   height={150}
                   gallery={file.gallery}
+                  onClickThumbnail={(slideIdx) => {
+                    setInitialSlideIndex(slideIdx);
+                    setDetailsFile(file);
+                  }}
                   onOpenFullscreen={(slideIdx) => {
                     setInitialSlideIndex(slideIdx);
                     setDetailsFile(file);
