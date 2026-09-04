@@ -5,21 +5,23 @@
 > **Repository:** [https://github.com/PichyyyNews/techniccom-Self-Assessment-Report](https://github.com/PichyyyNews/techniccom-Self-Assessment-Report)  
 > **Infrastructure Docs:** [https://github.com/PichyyyNews/LBtech-Techniccom-server-proxmox](https://github.com/PichyyyNews/LBtech-Techniccom-server-proxmox)  
 > **วันที่จัดทำเอกสาร (Date):** 4 กันยายน 2026  
-> **เวอร์ชัน (Version):** 1.4.0 (Dedicated Licenses Route, Category Manager, Mobile Mode & Grouped Navigation)
+> **เวอร์ชัน (Version):** 1.5.0 (Dual-Overview Dashboards, Academic Term Selector & Teacher-Student SAR Framework)
 
 ---
 
 ## 📑 สารบัญ (Table of Contents)
 1. [ภาพรวมสถาปัตยกรรมระบบ (System Architecture & Topology)](#1-ภาพรวมสถาปัตยกรรมระบบ-system-architecture--topology)
 2. [สิทธิ์การใช้งานและความปลอดภัย (Roles & Security Permissions)](#2-สิทธิ์การใช้งานและความปลอดภัย-roles--security-permissions)
-3. [ระบบโปรไฟล์บุคลากรและโหมดมือถือ (Social Profile & Mobile Responsive Mode)](#3-ระบบโปรไฟล์บุคลากรและโหมดมือถือ-social-profile--mobile-responsive-mode)
-4. [ระบบใบอนุญาตประกอบวิชาชีพและคุณวุฒิสายอาชีพ (Teacher & Vocational Licenses)](#4-ระบบใบอนุญาตประกอบวิชาชีพและคุณวุฒิสายอาชีพ-teacher--vocational-licenses)
-5. [ระบบจัดการหมวดหมู่และประเภทใบอนุญาต (Dedicated Route: `/admin/licenses`)](#5-ระบบจัดการหมวดหมู่และประเภทใบอนุญาต-dedicated-route-adminlicenses)
-6. [ศูนย์ควบคุมและมอนิเตอร์ระบบ (System Monitor & Telemetry Command Center)](#6-ศูนย์ควบคุมและมอนิเตอร์ระบบ-system-monitor--telemetry-command-center)
-7. [ระบบสำรองข้อมูลและ Snapshot (Database Backup & Restore System)](#7-ระบบสำรองข้อมูลและ-snapshot-database-backup--restore-system)
-8. [โครงสร้างโค้ดและ API Endpoints (Codebase & API Reference)](#8-โครงสร้างโค้ดและ-api-endpoints-codebase--api-reference)
-9. [ตัวแปรสภาพแวดล้อม (Environment Variables)](#9-ตัวแปรสภาพแวดล้อม-environment-variables)
-10. [คู่มือการติดตั้งและรันระบบ (Setup & Deployment Guide)](#10-คู่มือการติดตั้งและรันระบบ-setup--deployment-guide)
+3. [ระบบเลือกปีการศึกษาและภาคเรียน (Global Academic Year & Semester System)](#3-ระบบเลือกปีการศึกษาและภาคเรียน-global-academic-year--semester-system)
+4. [ระบบภาพรวม 2 ส่วนแยกกัน (Dual Overview: Teacher vs Student Dashboards)](#4-ระบบภาพรวม-2-ส่วนแยกกัน-dual-overview-teacher-vs-student-dashboards)
+5. [ระบบงานครูและบุคลากรตามเกณฑ์ SAR (Teacher System Architecture)](#5-ระบบงานครูและบุคลากรตามเกณฑ์-sar-teacher-system-architecture)
+6. [ระบบงานนักเรียน/นักศึกษาเชื่อมโยงครู (Student System Architecture)](#6-ระบบงานนักเรียนนักศึกษาเชื่อมโยงครู-student-system-architecture)
+7. [ระบบจัดการหมวดหมู่และประเภทใบอนุญาต (Dedicated Route: `/admin/licenses`)](#7-ระบบจัดการหมวดหมู่และประเภทใบอนุญาต-dedicated-route-adminlicenses)
+8. [ศูนย์ควบคุมและมอนิเตอร์ระบบ (System Monitor & Telemetry Command Center)](#8-ศูนย์ควบคุมและมอนิเตอร์ระบบ-system-monitor--telemetry-command-center)
+9. [ระบบสำรองข้อมูลและ Snapshot (Database Backup & Restore System)](#9-ระบบสำรองข้อมูลและ-snapshot-database-backup--restore-system)
+10. [โครงสร้างโค้ดและ API Endpoints (Codebase & API Reference)](#10-โครงสร้างโค้ดและ-api-endpoints-codebase--api-reference)
+11. [ตัวแปรสภาพแวดล้อม (Environment Variables)](#11-ตัวแปรสภาพแวดล้อม-environment-variables)
+12. [คู่มือการติดตั้งและรันระบบ (Setup & Deployment Guide)](#12-คู่มือการติดตั้งและรันระบบ-setup--deployment-guide)
 
 ---
 
@@ -73,72 +75,81 @@
    - กำหนดสิทธิ์การดูหรือแก้ไขโปรไฟล์ผู้อื่น (`/profile:view_others`, `/profile:edit_others`)
 3. **การรักษาความปลอดภัย (Security Enforcement)**:
    - `NextAuth.js` ซิงก์ข้อมูลสิทธิ์ผู้ใช้งานสดจากฐานข้อมูล PostgreSQL เสมอ (Live DB Session Sync)
-   - `middleware.ts` ตรวจจับและป้องกัน Route อัตโนมัติ (Unauthorized Redirect ไปหน้า `/dashboard` ทันที)
+   - `middleware.ts` ตรวจจับและป้องกัน Route อัตโนมัติ (`/admin/*`, `/dashboard/*`, `/profile/*`, `/teachers/*`, `/students/*` - Unauthorized Redirect ไปหน้า `/login` ทันที)
 
 ---
 
-## 3. ระบบโปรไฟล์บุคลากรและโหมดมือถือ (Social Profile & Mobile Responsive Mode)
+## 3. ระบบเลือกปีการศึกษาและภาคเรียน (Global Academic Year & Semester System)
 
-หน้าโปรไฟล์ (`/profile` และ `/profile/[id]`) ได้รับการออกแบบตามมาตรฐาน Social Profile สากล พร้อมระบบ **Mobile-First Responsive Design**:
+ระบบออกแบบให้จัดเก็บและคัดกรองข้อมูลเป็น **รอบปีการศึกษา (Academic Year)** และ **ภาคเรียน (Semester)** ตามบริบทจริงของงานประกันคุณภาพอาชีวศึกษา:
 
-- **Header Card & Identity Layout**:
-  - **Desktop View**: หน้าปกกราฟิกสูง `h-52`, รูปโปรไฟล์ขนาดใหญ่ `h-36 w-36` พร้อมปุ่มเต็มข้อความ (`แชร์โปรไฟล์`, `แก้ไขข้อมูลส่วนตัว`, `Key`)
-  - **Mobile View**: หน้าปกกะทัดรัด `h-28`, รูปโปรไฟล์ปรับสัดส่วน `h-20 w-20`, ชุดปุ่ม Action Bar กะทัดรัดป้องกันข้อความตัดขึ้น 3 บรรทัด (แสดงปุ่มแชร์ไอคอน, ปุ่มแก้ไข `Edit + แก้ไข`, และปุ่มเปลี่ยนรหัสผ่าน)
-  - ซ่อนป้ายสิทธิ์ซ้ำซ้อนเมื่อเปิดดูโปรไฟล์ตนเอง เพื่อให้แถบนำทางด้านบนแสดงผลแถวเดียวสะอาดตา
-- **การเข้าดูโปรไฟล์ผู้อื่น (Social Profile View - `/profile/[id]`)**:
-  - ผู้ดูแลระบบหรือผู้มียศที่มีสิทธิ์ สามารถคลิกไอคอนดวงตา (👁️) จากหน้ารายชื่อผู้ใช้ เพื่อเปิดดูโปรไฟล์ของบุคลากรท่านนั้นๆ
-  - ระบบตรวจสอบสิทธิ์: หากมียศที่อนุญาตให้แก้ไขได้ (หรือเป็น ROOT) จะแสดงปุ่มแก้ไขตามปกติ หากมียศที่ดูได้อย่างเดียว ระบบจะซ่อนปุ่มแก้ไขเพื่อป้องกันการดัดแปลงข้อมูล
-- **Contribution Activity (ตารางกิจกรรม Real-Time)**:
-  - Responsive Heatmap แสดงผล 52 สัปดาห์เต็มความกว้างของการ์ด พร้อมระบบเลื่อนแนวนอนนุ่มนวล เชื่อมต่อกับตาราง `ActivityLog` ใน PostgreSQL 100%
-- **Modular Section-Specific Edit Modals**:
-  1. *ข้อมูลพื้นฐาน (Basic Info)*: รูปโปรไฟล์, ชื่อ-นามสกุล, ตำแหน่ง, เบอร์โทร, วันเกิด, ประวัติย่อ
-  2. *ประวัติการศึกษา (Education)*: เพิ่ม/ลบ ระดับการศึกษา, สาขาวิชา, สถาบัน, ปีที่จบ
-  3. *ประวัติการทำงาน (Work Experience)*: เพิ่ม/ลบ ตำแหน่ง, องค์กร/หน่วยงาน, ระยะเวลา
-  4. *ข้อมูลใบอนุญาตประกอบวิชาชีพ / คุณวุฒิวิชาชีพ (Teacher Licenses)*: บันทึกข้อมูลใบอนุญาตแบบละเอียด
-  5. *ทักษะความเชี่ยวชาญ (Skills)*: เพิ่ม/ลบ แท็กทักษะ
-  6. *เปลี่ยนรหัสผ่าน (Password Change)*: เปลี่ยนรหัสผ่านใหม่
+- **Global Context (`AcademicYearContext`)**:
+  - เก็บสถานะ `selectedYear` (2569, 2568, 2567, 2566, 2565) และ `selectedSemester` (ภาคเรียนที่ 1, ภาคเรียนที่ 2, ตลอดปีการศึกษา)
+  - จดจำค่าที่เลือกไว้ใน `localStorage` (`techsar_academic_year`, `techsar_academic_semester`) ทำให้ผู้ใช้ไม่ต้องเลือกซ้ำเมื่อสลับหน้าหรือรีเฟรช
+- **Navbar Selector Popover**:
+  - แสดงปุ่มเลือกปี/เทอมบน Navbar ด้านบน (`📅 ปีการศึกษา 2568 [เทอม 1]`) พร้อมหน้าต่างตัวเลือกแบบด่วน
+  - ปรับการแสดงผลบนมือถือเป็นชิปกะทัดรัด (`2568/1`) ไม่เบียดบังพื้นที่หน้าจอ
+- **Sidebar Active Indicator**:
+  - แสดงป้ายกำกับปีการศึกษาและเทอมที่มุมบนของ Sidebar ใต้โลโก้สถาบัน
 
 ---
 
-## 4. ระบบใบอนุญาตประกอบวิชาชีพและคุณวุฒิสายอาชีพ (Teacher & Vocational Licenses)
+## 4. ระบบภาพรวม 2 ส่วนแยกกัน (Dual Overview: Teacher vs Student Dashboards)
 
-ออกแบบรองรับบริบทจริงของวิทยาลัยเทคนิคสังกัด สอศ. และมาตรฐานวิชาชีพครู (คุรุสภา) โดยแยกจัดเก็บในตาราง `TeacherLicense`:
+แถบ Sidebar และระบบหน้าแรกแยก **แดชบอร์ดภาพรวม (Overview)** ออกเป็น 2 ด้านอย่างชัดเจน เพื่อตอบโจทย์การประเมิน SAR ทั้งด้านครูและด้านผู้เรียน:
 
-1. **ใบอนุญาตประกอบวิชาชีพครู (คุรุสภา)**:
-   - **B-License (ชั้นต้น)**: อายุ 5 ปี (มาตรฐานสำหรับครูจบ ป.ตรีครุศาสตร์/ศึกษาศาสตร์ หรือ ป.บัณฑิต)
-   - **A-License (ชั้นสูง)**: อายุ 7 ปี (มาตรฐานขั้นสูง มีผลงานประเมินระดับเชี่ยวชาญ)
-   - **P-License (ปฏิบัติหน้าที่ครู)**: อายุ 2 ปี (ผู้ผ่านเกณฑ์ทดสอบรับรองความรู้คุรุสภา)
-2. **หนังสืออนุญาตปฏิบัติการสอนโดยไม่มีใบประกอบฯ (ผ่อนผันคุรุสภา สอศ.)**:
-   - สำหรับ **ครูพิเศษสอน / ครูจ้างสอนสายช่าง** ที่จบ ป.ตรี วิศวกรรมศาสตร์/เทคโนโลยี แต่ยังไม่มีใบประกอบวิชาชีพครู
-   - บันทึกการขอรับการผ่อนผัน **ครั้งที่ 1, ครั้งที่ 2, ครั้งที่ 3** (คราวละ 2 ปี รวมไม่เกิน 6 ปี)
-   - **ระบบแจ้งเตือนรอบที่ 3**: แสดงกล่องเตือนสีแดงแจ้งเตือนว่าเป็นการผ่อนผันครั้งสุดท้าย ต้องเร่งพัฒนาวุฒิครูก่อนหมดอายุ
-3. **คุณวุฒิวิชาชีพและมาตรฐานฝีมือแรงงานเฉพาะทางสายอาชีวะ**:
-   - **คุณวุฒิวิชาชีพ (TPQI)**: สถาบันคุณวุฒิวิชาชีพ เช่น สาขา IT, นักพัฒนาระบบ, ดิจิทัลคอนเทนต์
-   - **มาตรฐานฝีมือแรงงานแห่งชาติ (DSD)**: กรมพัฒนาฝีมือแรงงาน เช่น ช่างซ่อมไมโครคอมพิวเตอร์, ช่างติดตั้งเครือข่าย
-   - **ใบประกอบวิชาชีพวิศวกรรมควบคุม (กว.)**: สภาวิศวกร เช่น วิศวกรรมคอมพิวเตอร์, วิศวกรรมไฟฟ้า
-   - **ใบรับรองมาตรฐานวิชาชีพสากล (International Certifications)**: เช่น Cisco CCNA, CompTIA Security+, Microsoft Certified
-4. **ระบบแจ้งเตือนวันหมดอายุ (Expiration Badges & Days Counter)**:
-   - คำนวณวันหมดอายุอัตโนมัติตามอายุเริ่มต้นของใบอนุญาตประเภทนั้นๆ
-   - Badge สถานะ: `ปกติ (Active)`, `กำลังจะหมดอายุ (Expiring Soon - ภายใน 90 วัน)`, `หมดอายุแล้ว (Expired)`, และ `อยู่ระหว่างยื่นคำขอต่ออายุ (In Renewal)`
-   - รองรับการแนบไฟล์หลักฐานเอกสาร (PDF/PNG/JPG) ผ่าน MinIO S3 พร้อมปุ่มดู/ดาวน์โหลดไฟล์
+1. **ภาพรวมงานครูและบุคลากร (`/dashboard`)**:
+   - ตรวจสอบสถานะใบประกอบวิชาชีพครู (KSP Alerts: A/B/P License และหนังสือผ่อนผันครั้งที่ 1, 2, 3)
+   - สรุปข้อมูลบุคลากรในสังกัด, อัตราส่วนครูที่มีใบประกอบฯ ตามเกณฑ์ SAR (สอศ.)
+   - มีปุ่มสลับไปดูภาพรวมงานนักเรียน/นักศึกษาแบบ 1-Click
+2. **ภาพรวมงานนักเรียนและนักศึกษา (`/dashboard/students`)**:
+   - แดชบอร์ดมุ่งเน้น **มาตรฐานที่ 1 คุณภาพของผู้สำเร็จการศึกษาอาชีวศึกษา (SAR สอศ.)**
+   - การ์ดสถิติตัวชี้วัด (KPIs): ยอดลงทะเบียนนักเรียน (ปวช./ปวส.), อัตราการเข้าชั้นเรียนเฉลี่ย (%), อัตราการผ่านการประเมินสมรรถนะวิชาชีพ (TPQI/DSD/กว. %), อัตราคงอยู่ของผู้เรียน (Retention Rate %), และการเข้าร่วมกิจกรรมพัฒนาผู้เรียน (%)
+   - ลิงก์ด่วนเข้าสู่โมดูลงานนักเรียน 4 ด้าน
 
 ---
 
-## 5. ระบบจัดการหมวดหมู่และประเภทใบอนุญาต (Dedicated Route: `/admin/licenses`)
+## 5. ระบบงานครูและบุคลากรตามเกณฑ์ SAR (Teacher System Architecture)
 
-ระบบได้แยกหน้าการตั้งค่าประเภทใบอนุญาตออกมาเป็น Route อิสระ **`/admin/licenses`** พร้อมจัดหมวดหมู่ใน Sidebar เพื่อให้ผู้ดูแลระบบทำงานได้สะดวกและเป็นสัดส่วน:
+เมนูและโครงสร้างรองรับการเก็บร่องรอยหลักฐานงานครูตาม **มาตรฐานที่ 2 การจัดการอาชีวศึกษา และ มาตรฐานที่ 3 การสร้างสังคมแห่งการเรียนรู้**:
+
+1. **โปรไฟล์และผลงานครู (`/profile`)**:
+   - Social Profile ของครู, ประวัติการศึกษา, ประวัติการทำงาน, ทักษะความเชี่ยวชาญ และ Heatmap กิจกรรมการบันทึกข้อมูล (Contribution Graph 52 สัปดาห์)
+2. **แผนการสอน & หลังสอน (`/teachers/lesson-plans`)**:
+   - จัดเก็บแผนการจัดการเรียนรู้มุ่งเน้นสมรรถนะอาชีพ, บันทึกหลังการจัดการเรียนรู้ และร่องรอยการวัดประเมินผลตามสภาพจริง
+3. **การพัฒนาวิชาชีพ & อบรม (`/teachers/trainings`)**:
+   - บันทึกประวัติการฝึกอบรม, ชั่วโมงสะสมการพัฒนาวิชาชีพ (เกณฑ์ขั้นต่ำ 20 ชม./ปี), กิจกรรม PLC และการแนบวุฒิบัตร
+4. **งานวิจัย & สิ่งประดิษฐ์ (`/teachers/researches`)**:
+   - ฐานข้อมูลงานวิจัยในชั้นเรียน (Action Research), นวัตกรรมการจัดการเรียนรู้, สื่อการสอน และผลงานสิ่งประดิษฐ์คนรุ่นใหม่
+
+---
+
+## 6. ระบบงานนักเรียน/นักศึกษาเชื่อมโยงครู (Student System Architecture)
+
+เชื่อมต่อข้อมูลการปฏิบัติงานจริงระหว่างครูผู้สอน/ครูที่ปรึกษา กับข้อมูลของนักเรียน:
+
+1. **ทะเบียนข้อมูลนักเรียน (`/students`)**:
+   - ฐานข้อมูลประวัตินักเรียน-นักศึกษา แยกตามระดับชั้น (ปวช./ปวส.), สาขาวิชา, กลุ่มเรียน และครูที่ปรึกษา เพื่อติดตามอัตราคงอยู่และการสำเร็จการศึกษา
+2. **เช็คชื่อเข้าเรียน & พฤติกรรม (`/students/attendance`)**:
+   - บันทึกเวลาเรียนรายคาบโดยครูผู้สอนเพื่อตรวจสอบเกณฑ์เวลาเรียน 80% ก่อนสอบปลายภาค พร้อมบันทึกพฤติกรรมวินัย
+3. **ผลสัมฤทธิ์ & สมรรถนะ (`/students/competencies`)**:
+   - ติดตามผลการเรียน (GPAX), ผลคะแนนการทดสอบระดับชาติด้านอาชีวศึกษา (V-NET) และผลการประเมินมาตรฐานฝีมือแรงงาน (TPQI/DSD/กว.)
+4. **กิจกรรมผู้เรียน & หน้าเสาธง (`/students/activities`)**:
+   - บันทึกการเข้าร่วมกิจกรรมหน้าเสาธง (เกณฑ์ 85%), กิจกรรมชมรมวิชาชีพ (อวท.) และกิจกรรมจิตอาสาบำเพ็ญประโยชน์
+
+---
+
+## 7. ระบบจัดการหมวดหมู่และประเภทใบอนุญาต (Dedicated Route: `/admin/licenses`)
+
+ระบบได้แยกหน้าการตั้งค่าประเภทใบอนุญาตออกมาเป็น Route อิสระ **`/admin/licenses`** พร้อมจัดหมวดหมู่ใน Sidebar:
 
 ### 1. ระบบจัดการหมวดหมู่ใบอนุญาต (Dynamic License Category Manager):
 - **Model ใน Database**: ตาราง `LicenseCategoryConfig` ใน PostgreSQL (`code`, `title`, `description`, `icon`, `color`, `sortOrder`, `isActive`, `isSystem`)
 - **Category Manager Modal**:
   - แสดงรายการหมวดหมู่ทั้งหมด พร้อมนับจำนวนประเภทใบอนุญาตที่สังกัด
   - สร้างหมวดหมู่ใหม่ กำหนดชื่อ, รหัส Code, ไอคอน, โทนสี, และลำดับการแสดงผล
-  - แก้ไขข้อมูลหมวดหมู่ หรือสลับเปิด/ปิดการใช้งาน (Toggle Active)
   - ลบหมวดหมู่ที่ไม่ได้ใช้งานได้อย่างปลอดภัย (มีระบบป้องกันการลบหมวดหมู่ที่มีประเภทใบอนุญาตอยู่)
   - ปุ่มคืนค่าหมวดหมู่เริ่มต้น (Reset Defaults: `ksp`, `vocational`, `other`)
-- **เชื่อมโยง Dropdown ในฟอร์ม**:
-  - ช่องเลือกหมวดหมู่ใน Modal สร้าง/แก้ไขประเภทใบอนุญาต ดึงข้อมูลจากตาราง Category แบบไดนามิก
-  - มีปุ่มลัด **`+ เพิ่มหมวดหมู่ใหม่`** ไว้ข้างหัวข้อหมวดหมู่เพื่อให้ Admin สร้างหมวดหมู่ได้ทันที
 
 ### 2. การตั้งค่าประเภทใบอนุญาต (License Configurations CRUD):
 - เพิ่ม/แก้ไข/ลบ ประเภทใบอนุญาตได้เองโดยไม่ต้องแก้ไขโค้ด
@@ -146,58 +157,40 @@
 - กำหนด **อายุใช้งานเริ่มต้น (defaultYears)**, หน่วยงานผู้ออก (Issuer), โทนสี และไอคอน
 - เปิด/ปิดตัวเลือก: **รอบผ่อนผัน (requiresProvisionalRound)** และ **ให้ระบุสาขา/ระดับ (requiresTitle)**
 
-### 3. ระบบจัดการตัวเลือกแนะนำแบบไดนามิก (Dynamic Preset Chips Manager):
-- Admin สามารถเพิ่มหรือลบตัวเลือกแนะนำ (Preset Chips) ได้แบบ Inline บนการ์ด หรือใน Modal (เช่น `+ สาขาวิชาชีพ AI และ Data`, `+ ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 2`)
-- เมื่อผู้ใช้งานเปิด Modal เพิ่มใบอนุญาตในหน้า `/profile` ชิปเหล่านี้จะปรากฏให้ผู้ใช้คลิกเลือกเพื่อเติมข้อความลงในช่องสาขา/ระดับได้ทันที
-
-### 4. เมนู Sidebar แบบจัดกลุ่ม (Categorized Grouped Sidebar):
-- **ระบบงานทั่วไป (Main Menu)**: แดชบอร์ด (Dashboard), โปรไฟล์บุคลากร (Profile)
-- **การจัดการผู้ใช้และสิทธิ์ (User & Access Control)**: จัดการผู้ใช้งานและยศ/สิทธิ์ (`/admin/users`)
-- **มาตรฐานวิชาชีพและใบอนุญาต (License & Standards)**: ตั้งค่าประเภทใบประกอบ (`/admin/licenses`)
-- **การดูแลระบบแม่ข่าย (System Administration)**: ศูนย์ควบคุมและมอนิเตอร์ (`/admin/system` - ROOT Only)
-
 ---
 
-## 6. ศูนย์ควบคุมและมอนิเตอร์ระบบ (System Monitor & Telemetry Command Center)
+## 8. ศูนย์ควบคุมและมอนิเตอร์ระบบ (System Monitor & Telemetry Command Center)
 
 หน้าศูนย์ควบคุมระบบ (`/admin/system`) สงวนสิทธิ์เฉพาะ **ROOT** เท่านั้น:
 
 1. **Dual-Node Real-Time Streaming (อัปเดตสดทุก 2.5 วินาที)**:
-   - **Node 1: เครื่อง App Server (Web Host)**: สตรีม % CPU (จำนวน Core / รุ่น), การใช้งาน RAM (ใช้ไป / คงเหลือ / ทั้งหมด GB), Heap Used (MB), Node Version, และ Uptime
-   - **Node 2: เครื่อง Database Server (Proxmox CT 102)**: สตรีม Query Load CPU บน 2 vCPUs, RAM ที่ใช้งานจริง (จาก 4.0 GB), พื้นที่ฮาร์ดดิสก์ (**ใช้ไป / คงเหลือจาก 32.0 GB**), สถานะ PostgreSQL (Port 5432 / Ping ms / Active Connections), และสถานะ MinIO S3 (Port 9000 / Ping ms / จำนวนไฟล์)
+   - **Node 1: เครื่อง App Server (Web Host)**: สตรีม % CPU, RAM, Heap Used, Node Version, Uptime
+   - **Node 2: เครื่อง Database Server (Proxmox CT 102)**: สตรีม Query Load CPU, RAM 4.0 GB, พื้นที่ดิสก์ 32.0 GB, สถานะ PostgreSQL (Port 5432) และ MinIO S3 (Port 9000)
 2. **วิเคราะห์ขนาดตารางใน Database (PostgreSQL Tables Breakdown)**:
-   - แสดงรายการตาราง `User`, `RoleDefinition`, `TeacherLicense`, `LicenseTypeConfig`, `LicenseCategoryConfig`, `ActivityLog` พร้อม **จำนวนแถวจริง (Row Count)** และ **ขนาดพื้นที่จริงบนดิสก์ (`pg_total_relation_size`)**
+   - แสดงตาราง `User`, `RoleDefinition`, `TeacherLicense`, `LicenseTypeConfig`, `LicenseCategoryConfig`, `ActivityLog` พร้อมแถวและขนาดพื้นที่
 3. **Active SQL Queries Monitor (`pg_stat_activity`)**:
-   - แสดงคำสั่ง SQL Query ที่กำลังทำงานสด, Process ID (PID), ผู้ใช้งาน และระยะเวลาที่ทำงาน
+   - แสดงคำสั่ง SQL Query ที่กำลังทำงานสด, PID, User, และ Runtime
 4. **Streaming Audit Logs**:
-   - บันทึกกิจกรรมระบบสตรีมสดเข้าสู่หน้าจอทันที พร้อมระบบค้นหา Real-Time
-5. **Environment Variables Inspector**:
-   - ตรวจสอบค่าตัวแปร ENV ที่โหลดในระบบ พร้อมปุ่มกดแสดง/ซ่อนค่า Secret
-6. **Unified Back Button Placement**:
-   - ปุ่มย้อนกลับ `← กลับหน้าหลัก (Dashboard)` อยู่ด้านนอกการ์ดหลักอย่างเป็นระเบียบ สอดคล้องกันทุกหน้า
+   - บันทึกกิจกรรมระบบสตรีมสดเข้าสู่หน้าจอทันที
 
 ---
 
-## 7. ระบบสำรองข้อมูลและ Snapshot (Database Backup & Restore System)
+## 9. ระบบสำรองข้อมูลและ Snapshot (Database Backup & Restore System)
 
 - **ปุ่มสร้าง Snapshot**: กดปุ่มเพื่อเปิด **Modal สร้าง Snapshot**
-  - กำหนด **ชื่อ Snapshot (Name)**: เช่น *"สำรองข้อมูลก่อนเริ่มปีการศึกษาใหม่"*
-  - กำหนด **คำอธิบายเพิ่มเติม (Description)**: บันทึกเหตุผลในการสำรองข้อมูล
-  - แสดงกล่องสรุปข้อมูลผู้ใช้, ยศ/สิทธิ์, และใบอนุญาตที่จะถูกจัดเก็บ
-- **การจัดเก็บข้อมูล**:
-  - แปลงข้อมูล Users, Roles, TeacherLicenses, LicenseConfigs, LicenseCategoryConfigs, ActivityLogs เป็น JSON Snapshot แล้วอัปโหลดไปยัง MinIO S3 Bucket `qa-evidences/system-backups/`
-  - บันทึกลง `ActivityLog` พร้อมชื่อผู้สร้างและขนาดไฟล์
+  - กำหนด **ชื่อ Snapshot (Name)** และ **คำอธิบาย (Description)**
+  - แปลงข้อมูล Users, Roles, TeacherLicenses, LicenseConfigs, ActivityLogs เป็น JSON Snapshot แล้วอัปโหลดไปยัง MinIO S3 Bucket `qa-evidences/system-backups/`
 - **การดาวน์โหลด**:
   - รายการ Snapshot แสดงชื่อตัวหนา คำอธิบาย และปุ่มกด **ดาวน์โหลดไฟล์ JSON** ลงเครื่องได้ทันที
 
 ---
 
-## 8. โครงสร้างโค้ดและ API Endpoints (Codebase & API Reference)
+## 10. โครงสร้างโค้ดและ API Endpoints (Codebase & API Reference)
 
 ```
 services/qa-web/
 ├── prisma/
-│   └── schema.prisma                  # PostgreSQL Schema (User, RoleDefinition, TeacherLicense, LicenseTypeConfig, LicenseCategoryConfig, ActivityLog)
+│   └── schema.prisma                  # PostgreSQL Schema
 ├── src/
 │   ├── app/
 │   │   ├── (admin)/
@@ -205,10 +198,20 @@ services/qa-web/
 │   │   │   ├── admin/system/          # ศูนย์มอนิเตอร์และตั้งค่าโครงสร้างระบบ (ROOT Only)
 │   │   │   └── admin/users/           # จัดการผู้ใช้งานและยศ/สิทธิ์การใช้งาน (2 Tabs: Users & Roles)
 │   │   ├── (dashboard)/
-│   │   │   ├── dashboard/             # หน้าหลักแดชบอร์ดข้อมูลบุคลากร
-│   │   │   └── profile/               # หน้าโปรไฟล์ส่วนตัว และ Social Profile View (/profile/[id])
+│   │   │   ├── dashboard/             # แดชบอร์ดภาพรวมงานครูและบุคลากร (Teacher Overview)
+│   │   │   │   └── students/          # แดชบอร์ดภาพรวมงานนักเรียน/นักศึกษา (Student Overview)
+│   │   │   ├── profile/               # หน้าโปรไฟล์ส่วนตัว และ Social Profile View (/profile/[id])
+│   │   │   ├── teachers/
+│   │   │   │   ├── lesson-plans/      # แผนการจัดการเรียนรู้ & บันทึกหลังสอน
+│   │   │   │   ├── trainings/         # การพัฒนาวิชาชีพ & อบรมสัมมนา
+│   │   │   │   └── researches/        # งานวิจัย นวัตกรรม & สิ่งประดิษฐ์
+│   │   │   └── students/
+│   │   │       ├── page.tsx           # ทะเบียนข้อมูลนักเรียน/นักศึกษา
+│   │   │       ├── attendance/        # บันทึกการเข้าเรียน & พฤติกรรม
+│   │   │       ├── competencies/      # ผลสัมฤทธิ์ & สมรรถนะวิชาชีพ
+│   │   │       └── activities/        # กิจกรรมผู้เรียน & หน้าเสาธง
 │   │   ├── api/
-│   │   │   ├── admin/license-categories/ # CRUD APIs + Reset Defaults หมวดหมู่ใบอนุญาต
+│   │   │   ├── admin/license-categories/ # CRUD APIs สำหรับหมวดหมู่ใบอนุญาต
 │   │   │   ├── admin/license-configs/    # CRUD APIs + Reset Defaults + Preset Chips Manager
 │   │   │   ├── admin/roles/              # CRUD APIs สำหรับจัดการยศ/สิทธิ์
 │   │   │   ├── admin/system/backup/      # GET/POST Snapshot สำรองข้อมูล S3
@@ -219,27 +222,26 @@ services/qa-web/
 │   │   │   ├── auth/[...nextauth]/       # NextAuth.js Authentication Handlers
 │   │   │   ├── files/[...key]/           # S3 File Stream & Download Proxy
 │   │   │   ├── license-categories/       # GET ดึงหมวดหมู่ที่ Active
-│   │   │   ├── license-configs/          # GET ดึงประเภทใบอนุญาตที่ Active สำหรับหน้าโปรไฟล์
-│   │   │   ├── profile/                  # GET/PUT อัปเดตโปรไฟล์ตนเองและประวัติใบอนุญาต
-│   │   │   ├── profile/[id]/             # GET/PUT ดูและแก้ไขโปรไฟล์ผู้อื่น (ตามสิทธิ์ RBAC)
+│   │   │   ├── license-configs/          # GET ดึงประเภทใบอนุญาตที่ Active
+│   │   │   ├── profile/                  # GET/PUT อัปเดตโปรไฟล์ตนเอง
+│   │   │   ├── profile/[id]/             # GET/PUT ดูและแก้ไขโปรไฟล์ผู้อื่น
 │   │   │   └── upload/                   # อัปโหลดรูปภาพและไฟล์หลักฐานไปยัง MinIO S3
 │   │   └── login/                        # หน้าเข้าสู่ระบบ
 │   ├── components/
-│   │   ├── layout/                       # AppShell, AppSidebar (Grouped Nav), Navbar, SidebarContext
+│   │   ├── layout/
+│   │   │   ├── AcademicYearContext.tsx   # Global State จัดการปีการศึกษา (2568) และภาคเรียน (เทอม 1, 2)
+│   │   │   ├── AppShell.tsx              # Root Layout Shell หุ้ม AcademicYearProvider & SidebarProvider
+│   │   │   ├── AppSidebar.tsx            # 4 Grouped Nav (Dual Overview, Teacher, Student, Admin)
+│   │   │   ├── Navbar.tsx                # Top Bar พร้อม Term Selector Popover & Profile Dropdown
+│   │   │   └── SidebarContext.tsx        # Context ควบคุมการย่อ/ขยาย Sidebar
 │   │   ├── profile/                      # ContributionGraph (Responsive 52-Week Heatmap)
 │   │   └── ui/                           # ImageUpload, DocumentUpload
-│   ├── lib/
-│   │   ├── activity.ts                   # ฟังก์ชันบันทึก ActivityLog กลาง
-│   │   ├── auth.ts                       # NextAuth Configuration & Live DB Callback
-│   │   ├── license-defaults.ts           # รายการค่าตั้งต้นใบอนุญาต หมวดหมู่ และ Auto-Seed Helper
-│   │   ├── prisma.ts                     # Prisma Client Singleton
-│   │   └── s3.ts                         # AWS SDK S3 Client สำหรับ MinIO
-│   └── middleware.ts                     # Route Protection & RBAC Guard
+│   └── middleware.ts                     # Route Protection & RBAC Guard (ครอบคลุม /admin, /dashboard, /profile, /teachers, /students)
 ```
 
 ---
 
-## 9. ตัวแปรสภาพแวดล้อม (Environment Variables)
+## 11. ตัวแปรสภาพแวดล้อม (Environment Variables)
 
 สร้างไฟล์ `.env` ในโฟลเดอร์ `services/qa-web/`:
 
@@ -264,7 +266,7 @@ NODE_ENV="development"
 
 ---
 
-## 10. คู่มือการติดตั้งและรันระบบ (Setup & Deployment Guide)
+## 12. คู่มือการติดตั้งและรันระบบ (Setup & Deployment Guide)
 
 ### 1. ติดตั้ง Dependencies:
 ```bash

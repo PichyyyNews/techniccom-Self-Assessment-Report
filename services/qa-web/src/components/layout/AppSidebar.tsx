@@ -6,17 +6,26 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
-  Users,
-  FileBadge,
+  GraduationCap,
   User,
+  BookOpen,
+  Award,
+  Lightbulb,
+  Users,
+  CheckSquare,
+  Trophy,
+  Flag,
+  ShieldCheck,
+  FileBadge,
+  Server,
+  Calendar,
   PanelLeftClose,
   PanelLeftOpen,
-  Server,
-  Layers,
   Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSidebar } from "./SidebarContext";
+import { useAcademicYear } from "./AcademicYearContext";
 
 interface NavItem {
   title: string;
@@ -41,6 +50,7 @@ export function AppSidebar({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { isCollapsed, toggleCollapse, setMobileOpen } = useSidebar();
+  const { shortTermLabel } = useAcademicYear();
 
   const isRoot = session?.user?.role === "ROOT";
   const userPermissions = session?.user?.permissions || ["/dashboard"];
@@ -52,32 +62,91 @@ export function AppSidebar({
   const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
   const effectiveCollapsed = isMobile ? false : isCollapsed;
 
-  // Grouped Navigation Structure
+  // Grouped Navigation Structure: 4 Groups (Dual Overview + Teacher System + Student System + Administration)
   const navGroups: NavGroup[] = [
     {
       groupTitle: "ภาพรวมระบบ (OVERVIEW)",
       items: [
         {
-          title: "หน้าหลัก (Dashboard)",
+          title: "ภาพรวมงานครู/บุคลากร",
           href: "/dashboard",
           icon: LayoutDashboard,
           show: canAccessDashboard,
         },
         {
-          title: "โปรไฟล์และผลงาน",
+          title: "ภาพรวมงานนักเรียน/นศ.",
+          href: "/dashboard/students",
+          icon: GraduationCap,
+          show: canAccessDashboard,
+          badge: "ใหม่",
+        },
+      ],
+    },
+    {
+      groupTitle: "ระบบงานครู & บุคลากร (TEACHER)",
+      items: [
+        {
+          title: "โปรไฟล์และผลงานครู",
           href: "/profile",
           icon: User,
+          show: true,
+        },
+        {
+          title: "แผนการสอน & หลังสอน",
+          href: "/teachers/lesson-plans",
+          icon: BookOpen,
+          show: true,
+        },
+        {
+          title: "การพัฒนาวิชาชีพ & อบรม",
+          href: "/teachers/trainings",
+          icon: Award,
+          show: true,
+        },
+        {
+          title: "งานวิจัย & สิ่งประดิษฐ์",
+          href: "/teachers/researches",
+          icon: Lightbulb,
           show: true,
         },
       ],
     },
     {
-      groupTitle: "การบริหารข้อมูลบุคลากร (MANAGEMENT)",
+      groupTitle: "ระบบงานนักเรียน & นักศึกษา (STUDENT)",
+      items: [
+        {
+          title: "ทะเบียนข้อมูลนักเรียน",
+          href: "/students",
+          icon: Users,
+          show: true,
+        },
+        {
+          title: "เช็คชื่อเข้าเรียน & พฤติกรรม",
+          href: "/students/attendance",
+          icon: CheckSquare,
+          show: true,
+        },
+        {
+          title: "ผลสัมฤทธิ์ & สมรรถนะ",
+          href: "/students/competencies",
+          icon: Trophy,
+          show: true,
+        },
+        {
+          title: "กิจกรรมผู้เรียน & หน้าเสาธง",
+          href: "/students/activities",
+          icon: Flag,
+          show: true,
+        },
+      ],
+    },
+    {
+      groupTitle: "การบริหารระบบ & สิทธิ์ (ADMIN)",
       items: [
         {
           title: "จัดการผู้ใช้และสิทธิ์",
           href: "/admin/users",
-          icon: Users,
+          icon: ShieldCheck,
           show: canManageUsers,
           badge: isRoot ? "ROOT" : undefined,
         },
@@ -88,11 +157,6 @@ export function AppSidebar({
           show: canManageLicenses,
           badge: isRoot ? "ROOT" : undefined,
         },
-      ],
-    },
-    {
-      groupTitle: "โครงสร้างพื้นฐาน & ระบบ (INFRASTRUCTURE)",
-      items: [
         {
           title: "ตั้งค่าระบบ & มอนิเตอร์",
           href: "/admin/system",
@@ -131,7 +195,7 @@ export function AppSidebar({
         className
       )}
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top Header: Logo & Collapse Button */}
         <div className="flex h-12 items-center justify-between pb-3 border-b border-slate-100">
           <Link
@@ -146,7 +210,7 @@ export function AppSidebar({
             <img
               src="/logo.svg"
               alt="TechSAR Logo"
-              className="h-10 w-10 object-contain flex-shrink-0"
+              className="h-9 w-9 object-contain flex-shrink-0"
             />
 
             {!effectiveCollapsed && (
@@ -155,7 +219,7 @@ export function AppSidebar({
                   TechSAR
                 </div>
                 <div className="text-[10px] text-slate-400 font-semibold mt-1">
-                  ระบบงานประกันคุณภาพ
+                  ระบบประกันคุณภาพตามเกณฑ์ SAR
                 </div>
               </div>
             )}
@@ -193,32 +257,43 @@ export function AppSidebar({
           </div>
         )}
 
-        {/* Grouped Navigation Menu */}
-        <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-220px)] pr-0.5 no-scrollbar">
+        {/* Active Term Indicator Banner (when not collapsed) */}
+        {!effectiveCollapsed && (
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+            <div className="flex items-center gap-1.5 text-slate-600 font-medium truncate">
+              <Calendar className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+              <span className="truncate">{shortTermLabel}</span>
+            </div>
+            <span className="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-black uppercase flex-shrink-0">
+              SAR
+            </span>
+          </div>
+        )}
+
+        {/* Grouped Navigation Menu with scrollable area */}
+        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-250px)] pr-0.5 no-scrollbar">
           {navGroups.map((group, groupIdx) => {
             const visibleItems = group.items.filter((item) => item.show);
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={groupIdx} className="space-y-1.5">
-                {/* Group Title (Hidden when collapsed) */}
-                {!effectiveCollapsed && (
-                  <div className="px-3 text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+              <div key={groupIdx} className="space-y-1">
+                {/* Group Section Header */}
+                {!effectiveCollapsed ? (
+                  <div className="px-3 pt-2 pb-1 text-[10px] font-black tracking-wider text-slate-400 uppercase">
                     {group.groupTitle}
                   </div>
+                ) : (
+                  <div className="my-2 border-t border-slate-100 mx-2" />
                 )}
 
-                {/* Group Divider when collapsed */}
-                {effectiveCollapsed && groupIdx > 0 && (
-                  <div className="w-8 h-px bg-slate-200 mx-auto my-2" />
-                )}
-
-                <nav className="space-y-1">
+                {/* Group Menu Items */}
+                <div className="space-y-0.5">
                   {visibleItems.map((item) => {
-                    const Icon = item.icon;
                     const isActive =
                       pathname === item.href ||
                       (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                    const Icon = item.icon;
 
                     return (
                       <Link
@@ -227,64 +302,71 @@ export function AppSidebar({
                         onClick={handleLinkClick}
                         title={effectiveCollapsed ? item.title : undefined}
                         className={clsx(
-                          "flex items-center rounded-2xl transition-all duration-150 group select-none",
-                          effectiveCollapsed
-                            ? "justify-center p-3"
-                            : "justify-between px-3.5 py-2.5 text-xs font-bold",
+                          "group flex items-center gap-2.5 rounded-xl py-2 font-medium text-xs transition-all relative",
+                          effectiveCollapsed ? "justify-center px-2" : "px-3",
                           isActive
-                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            ? "bg-blue-600 text-white font-bold shadow-xs shadow-blue-200"
+                            : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
                         )}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Icon
-                            className={clsx(
-                              "h-4 w-4 sm:h-4.5 sm:w-4.5 flex-shrink-0",
-                              isActive
-                                ? "text-white"
-                                : "text-slate-400 group-hover:text-slate-600"
-                            )}
-                          />
-                          {!effectiveCollapsed && (
-                            <span className="truncate">{item.title}</span>
+                        <Icon
+                          className={clsx(
+                            "h-4 w-4 flex-shrink-0 transition",
+                            isActive
+                              ? "text-white"
+                              : "text-slate-400 group-hover:text-slate-700"
                           )}
-                        </div>
+                        />
 
+                        {!effectiveCollapsed && (
+                          <span className="truncate flex-1">{item.title}</span>
+                        )}
+
+                        {/* Badges */}
                         {!effectiveCollapsed && item.badge && (
                           <span
                             className={clsx(
-                              "px-1.5 py-0.5 text-[9px] font-black rounded-md flex-shrink-0 ml-1",
+                              "text-[10px] font-black px-1.5 py-0.5 rounded-md uppercase leading-none",
                               isActive
-                                ? "bg-white/20 text-white"
-                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                                ? "bg-white/25 text-white"
+                                : item.badge === "ใหม่"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : item.badge === "ROOT"
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-blue-100 text-blue-700"
                             )}
                           >
                             {item.badge}
                           </span>
                         )}
+
+                        {/* Collapsed Active Indicator Dot */}
+                        {effectiveCollapsed && isActive && (
+                          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-white" />
+                        )}
                       </Link>
                     );
                   })}
-                </nav>
+                </div>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Bottom User Card */}
-      {session?.user && (
-        <div className="pt-3 border-t border-slate-100">
+      {/* Bottom User Profile Section */}
+      <div className="pt-3 border-t border-slate-100">
+        {session?.user ? (
           <Link
             href="/profile"
             onClick={handleLinkClick}
             className={clsx(
-              "block rounded-2xl border border-slate-200/80 bg-slate-50/70 transition hover:bg-slate-100/80 group",
-              effectiveCollapsed ? "p-2 flex justify-center" : "p-3"
+              "flex items-center gap-3 p-2 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-slate-100 hover:border-slate-200 transition group",
+              effectiveCollapsed ? "justify-center" : "justify-between"
             )}
-            title={effectiveCollapsed ? `${session.user.name} (${session.user.roleTitle || session.user.role})` : undefined}
+            title={effectiveCollapsed ? session.user.name || "โปรไฟล์" : undefined}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 overflow-hidden">
               {session.user.avatarUrl ? (
                 <img
                   src={session.user.avatarUrl}
@@ -296,41 +378,46 @@ export function AppSidebar({
                       (target.nextElementSibling as HTMLElement).style.display = "flex";
                     }
                   }}
-                  className="h-9 w-9 rounded-xl object-cover border border-slate-200 flex-shrink-0 bg-white"
+                  className="h-8 w-8 rounded-xl object-cover border border-slate-200 flex-shrink-0"
                 />
               ) : null}
               <div
                 style={{ display: session.user.avatarUrl ? "none" : "flex" }}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs shadow-xs flex-shrink-0"
+                className="h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xs shadow-2xs flex-shrink-0"
               >
                 {userInitial}
               </div>
 
               {!effectiveCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-600 transition">
-                      {session.user.name}
-                    </span>
-                    <span
-                      className={clsx(
-                        "px-1.5 py-0.5 text-[9px] font-black rounded flex-shrink-0 truncate max-w-[85px]",
-                        getRoleBadgeStyle(session.user.roleColor, isRoot)
-                      )}
-                    >
-                      {session.user.roleTitle || (isRoot ? "ROOT" : "บุคลากร")}
-                    </span>
-                  </div>
-
-                  <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
-                    {session.user.position || "บุคลากรวิทยาลัย"}
-                  </div>
+                <div className="overflow-hidden text-left">
+                  <p className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition">
+                    {session.user.name}
+                  </p>
+                  <span
+                    className={clsx(
+                      "inline-flex items-center px-1.5 py-0.2 rounded-md text-[9px] font-bold mt-0.5",
+                      getRoleBadgeStyle(session.user.roleColor, isRoot)
+                    )}
+                  >
+                    {isRoot ? "ROOT" : session.user.roleTitle || "บุคลากร"}
+                  </span>
                 </div>
               )}
             </div>
           </Link>
-        </div>
-      )}
+        ) : (
+          <Link
+            href="/login"
+            className={clsx(
+              "flex items-center gap-2 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95",
+              effectiveCollapsed ? "justify-center px-2" : "justify-center px-4"
+            )}
+          >
+            <User className="h-4 w-4" />
+            {!effectiveCollapsed && <span>เข้าสู่ระบบ</span>}
+          </Link>
+        )}
+      </div>
     </aside>
   );
 }

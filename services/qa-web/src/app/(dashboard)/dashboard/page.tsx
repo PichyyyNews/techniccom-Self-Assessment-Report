@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Award,
   Clock,
+  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
@@ -238,6 +239,21 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Dual Overview Mode Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-blue-50/80 border border-blue-200">
+        <div className="flex items-center gap-2 text-xs font-bold text-blue-950">
+          <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-black">ภาพรวม 1 จาก 2</span>
+          <span>ภาพรวมงานครูและบุคลากร (Teacher Overview)</span>
+        </div>
+        <Link
+          href="/dashboard/students"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-blue-600 hover:text-white text-blue-700 text-xs font-bold border border-blue-200 transition shadow-2xs group"
+        >
+          <GraduationCap className="h-3.5 w-3.5 text-blue-600 group-hover:text-white transition" />
+          <span>สลับไปดูภาพรวมงานนักเรียน/นักศึกษา →</span>
+        </Link>
+      </div>
 
       {/* 1. Header Profile Banner */}
       <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm">

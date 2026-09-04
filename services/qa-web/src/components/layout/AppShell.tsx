@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
+import { AcademicYearProvider } from "./AcademicYearContext";
 import { AppSidebar } from "./AppSidebar";
 import { Navbar } from "./Navbar";
 
@@ -40,7 +41,9 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <AppShellContent>{children}</AppShellContent>
+      <AcademicYearProvider>
+        <AppShellContent>{children}</AppShellContent>
+      </AcademicYearProvider>
     </SidebarProvider>
   );
 }

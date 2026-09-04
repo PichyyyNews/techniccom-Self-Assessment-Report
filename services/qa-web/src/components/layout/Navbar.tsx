@@ -10,22 +10,41 @@ import {
   ChevronDown,
   Shield,
   Menu,
+  Calendar,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
+import { useAcademicYear } from "./AcademicYearContext";
 
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const { toggleMobile } = useSidebar();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const {
+    selectedYear,
+    setSelectedYear,
+    selectedSemester,
+    setSelectedSemester,
+    availableYears,
+    availableSemesters,
+    shortTermLabel,
+  } = useAcademicYear();
 
-  // Close dropdown on click outside
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [termDropdownOpen, setTermDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const termDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (termDropdownRef.current && !termDropdownRef.current.contains(event.target as Node)) {
+        setTermDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -39,8 +58,16 @@ export function Navbar() {
 
   // Dynamic Page Title
   const getPageTitle = () => {
-    if (pathname === "/dashboard") return "ภาพรวมและข้อมูลส่วนตัว";
+    if (pathname === "/dashboard") return "ภาพรวมงานครูและบุคลากร";
+    if (pathname === "/dashboard/students") return "ภาพรวมงานนักเรียนและนักศึกษา";
     if (pathname === "/profile") return "โปรไฟล์และประวัติการทำงาน";
+    if (pathname === "/teachers/lesson-plans") return "แผนการจัดการเรียนรู้ & บันทึกหลังสอน";
+    if (pathname === "/teachers/trainings") return "การพัฒนาวิชาชีพ & อบรมสัมมนา";
+    if (pathname === "/teachers/researches") return "งานวิจัย นวัตกรรม & สิ่งประดิษฐ์";
+    if (pathname === "/students") return "ทะเบียนข้อมูลนักเรียน/นักศึกษา";
+    if (pathname === "/students/attendance") return "บันทึกการเข้าเรียน & พฤติกรรม";
+    if (pathname === "/students/competencies") return "ผลสัมฤทธิ์ & สมรรถนะวิชาชีพ";
+    if (pathname === "/students/activities") return "กิจกรรมผู้เรียน & หน้าเสาธง";
     if (pathname.startsWith("/admin/system")) return "ตั้งค่าระบบและมอนิเตอร์เซิร์ฟเวอร์";
     if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งานและสิทธิ์";
     if (pathname.startsWith("/admin/licenses")) return "ตั้งค่าประเภทใบอนุญาต & มาตรฐานวิชาชีพ";
@@ -61,20 +88,132 @@ export function Navbar() {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Page Title (No redundant logo text) */}
-        <div className="text-sm font-bold text-slate-800">
+        {/* Page Title */}
+        <div className="text-sm font-bold text-slate-800 line-clamp-1">
           {getPageTitle()}
         </div>
       </div>
 
-      {/* Right side: Profile Avatar with Dropdown Menu */}
-      <div className="flex items-center gap-4">
+      {/* Right side: Academic Term Selector + Profile Avatar */}
+      <div className="flex items-center gap-2.5 sm:gap-4">
+        {/* 1. Global Academic Year / Term Selector */}
+        <div className="relative" ref={termDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setTermDropdownOpen(!termDropdownOpen)}
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-800 text-xs font-bold transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
+            title="คลิกเพื่อสลับปีการศึกษาหรือภาคเรียน (มีผลทั่วทั้งระบบ)"
+          >
+            <Calendar className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+            <span className="hidden sm:inline font-bold">ปีการศึกษา {selectedYear}</span>
+            <span className="sm:hidden font-bold">{selectedYear}</span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-600 text-[10px] text-white font-black leading-none">
+              {availableSemesters.find((s) => s.value === selectedSemester)?.shortLabel || "เทอม 1"}
+            </span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 text-blue-600 transition-transform duration-200 ${
+                termDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {/* Term Popover Dropdown */}
+          {termDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-200/80 animate-in fade-in zoom-in-95 duration-100 z-50">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">รอบปีการศึกษาและเทอม</h4>
+                    <p className="text-[10px] text-slate-400">คัดกรองข้อมูลตามเกณฑ์ประเมิน SAR</p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                  กำลังใช้งาน
+                </span>
+              </div>
+
+              {/* 1. Year Selector */}
+              <div className="mb-3">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  1. เลือกปีการศึกษา (Academic Year)
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {availableYears.map((year) => {
+                    const isSelected = selectedYear === year;
+                    return (
+                      <button
+                        key={year}
+                        type="button"
+                        onClick={() => setSelectedYear(year)}
+                        className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition ${
+                          isSelected
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                        {year}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Semester Selector */}
+              <div className="mb-3">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  2. เลือกภาคเรียน (Semester)
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {availableSemesters.map((sem) => {
+                    const isSelected = selectedSemester === sem.value;
+                    return (
+                      <button
+                        key={sem.value}
+                        type="button"
+                        onClick={() => setSelectedSemester(sem.value)}
+                        className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition text-center ${
+                          isSelected
+                            ? "bg-indigo-600 text-white shadow-xs"
+                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                        {sem.shortLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary Indicator */}
+              <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+                  <span>เลือกไว้: <strong className="text-slate-900">{shortTermLabel}</strong></span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTermDropdownOpen(false)}
+                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs"
+                >
+                  ตกลง
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2. User Profile Dropdown */}
         {session?.user ? (
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2.5 p-1 sm:p-1.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
+              className="flex items-center gap-2 p-1 sm:p-1.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
             >
               {/* Avatar Image or Initial */}
               {session.user.avatarUrl ? (
@@ -88,17 +227,17 @@ export function Navbar() {
                       (target.nextElementSibling as HTMLElement).style.display = "flex";
                     }
                   }}
-                  className="h-9 w-9 rounded-xl object-cover border border-slate-200"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl object-cover border border-slate-200"
                 />
               ) : null}
               <div
                 style={{ display: session.user.avatarUrl ? "none" : "flex" }}
-                className="h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs"
+                className="h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs"
               >
                 {userInitial}
               </div>
 
-              <div className="hidden md:block text-left pr-1">
+              <div className="hidden lg:block text-left pr-1">
                 <div className="text-xs font-bold text-slate-800 leading-tight">
                   {session.user.name}
                 </div>
@@ -114,7 +253,7 @@ export function Navbar() {
               />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* User Dropdown Menu */}
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-64 rounded-3xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-200/80 animate-in fade-in zoom-in-95 duration-100 z-50">
                 {/* Header in Dropdown */}
@@ -149,18 +288,6 @@ export function Navbar() {
                     <User className="h-4 w-4 text-slate-400" />
                     โปรไฟล์ของฉัน (Profile)
                   </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      alert("ระบบตั้งค่า (Setting) จะเปิดให้ใช้งานในเฟสถัดไป");
-                    }}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition text-left"
-                  >
-                    <Settings className="h-4 w-4 text-slate-400" />
-                    ตั้งค่าระบบ (Setting)
-                  </button>
                 </div>
 
                 {/* Divider & Logout */}
