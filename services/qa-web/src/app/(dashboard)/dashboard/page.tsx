@@ -247,38 +247,38 @@ export default async function DashboardPage() {
           </Box>
 
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, alignSelf: { xs: "stretch", md: "auto" } }}>
-            <Button
-              component={Link}
-              href="/dashboard/students"
-              size="small"
-              variant="outlined"
-              startIcon={<SchoolIcon sx={{ fontSize: 16 }} />}
-              sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
-            >
-              สลับไปงานนักเรียน
-            </Button>
-            <Button
-              component={Link}
-              href="/quick-upload"
-              size="small"
-              variant="contained"
-              startIcon={<BoltIcon sx={{ fontSize: 16 }} />}
-              sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem", fontWeight: 600 }}
-            >
-              อัปโหลดหลักฐาน
-            </Button>
-            {canManageUsers && (
+            <Link href="/dashboard/students" style={{ textDecoration: "none" }}>
               <Button
-                component={Link}
-                href="/admin/users"
                 size="small"
                 variant="outlined"
-                color="secondary"
-                startIcon={<PeopleAltIcon sx={{ fontSize: 16 }} />}
+                startIcon={<SchoolIcon sx={{ fontSize: 16 }} />}
                 sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
               >
-                จัดการผู้ใช้
+                สลับไปงานนักเรียน
               </Button>
+            </Link>
+            <Link href="/quick-upload" style={{ textDecoration: "none" }}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<BoltIcon sx={{ fontSize: 16 }} />}
+                sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem", fontWeight: 600 }}
+              >
+                อัปโหลดหลักฐาน
+              </Button>
+            </Link>
+            {canManageUsers && (
+              <Link href="/admin/users" style={{ textDecoration: "none" }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<PeopleAltIcon sx={{ fontSize: 16 }} />}
+                  sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
+                >
+                  จัดการผู้ใช้
+                </Button>
+              </Link>
             )}
           </Box>
         </Box>
