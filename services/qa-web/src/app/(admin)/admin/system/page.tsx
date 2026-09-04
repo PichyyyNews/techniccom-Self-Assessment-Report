@@ -3,49 +3,59 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  Server,
-  Database,
-  HardDrive,
-  Cpu,
-  Activity,
-  ShieldAlert,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  Download,
-  Terminal,
-  Key,
-  Clock,
-  ArrowLeft,
-  FileJson,
-  Layers,
-  Network,
-  Shield,
-  Search,
-  Loader2,
-  Check,
-  Play,
-  Pause,
-  Table,
-  Gauge,
-  Sparkles,
-  Radio,
-  Globe,
-  Boxes,
-  Zap,
-  ArrowUpRight,
-  ChevronRight,
-  HardDriveDownload,
-  CircleDot,
-  Plus,
-  X,
-  FileText,
-  User,
-  Info,
-} from "lucide-react";
-import { clsx } from "clsx";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Grid from "@mui/material/Grid";
+
+import DnsIcon from "@mui/icons-material/Dns";
+import StorageIcon from "@mui/icons-material/Storage";
+import MemoryIcon from "@mui/icons-material/Memory";
+import SpeedIcon from "@mui/icons-material/Speed";
+import ComputerIcon from "@mui/icons-material/Computer";
+import SecurityIcon from "@mui/icons-material/Security";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import DownloadIcon from "@mui/icons-material/Download";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DataObjectIcon from "@mui/icons-material/DataObject";
+import HubIcon from "@mui/icons-material/Hub";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckIcon from "@mui/icons-material/Check";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PauseIcon from "@mui/icons-material/Pause";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import PublicIcon from "@mui/icons-material/Public";
+import BackupIcon from "@mui/icons-material/Backup";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import PersonIcon from "@mui/icons-material/Person";
+import InfoIcon from "@mui/icons-material/Info";
 
 interface MetricsData {
   timestamp: string;
@@ -181,8 +191,19 @@ export default function SystemAdminPage() {
   const [backingUp, setBackingUp] = useState(false);
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
   const [logSearch, setLogSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"servers" | "database" | "logs" | "backups" | "config">("servers");
+  const [activeTab, setActiveTab] = useState<number>(0);
   const [lastStreamTime, setLastStreamTime] = useState<string>("");
+
+  // Feedback Snackbar
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // Modal State for Creating Snapshot
   const [showSnapshotModal, setShowSnapshotModal] = useState(false);
@@ -242,7 +263,7 @@ export default function SystemAdminPage() {
   }, [isRoot, isStreaming]);
 
   const openCreateSnapshotModal = () => {
-    const defaultName = `Snapshot_${new Date().toLocaleDateString("th-TH").replace(/\//g, "-")}_${new Date().toLocaleTimeString("th-TH").replace(/:/g, "")}`;
+    const defaultName = `Snapshot_${new Date().toLocaleDateString("th-TH").replace(/\//g, "_")}_${new Date().toLocaleTimeString("th-TH").replace(/:/g, "")}`;
     setSnapshotName(defaultName);
     setSnapshotDescription("");
     setShowSnapshotModal(true);
@@ -251,7 +272,11 @@ export default function SystemAdminPage() {
   const handleCreateBackupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!snapshotName.trim()) {
-      alert("กรุณากรอกชื่อ Snapshot");
+      setSnackbar({
+        open: true,
+        message: "กรุณาระบุชื่อ Snapshot",
+        severity: "warning",
+      });
       return;
     }
 
@@ -269,15 +294,27 @@ export default function SystemAdminPage() {
       const data = await res.json();
       if (res.ok) {
         setShowSnapshotModal(false);
-        alert(`สร้าง Snapshot สำรองข้อมูลสำเร็จ!\nชื่อ: ${data.backup.name} (${data.backup.sizeKB} KB)`);
+        setSnackbar({
+          open: true,
+          message: `สร้าง Snapshot สำรองข้อมูลสำเร็จ ${data.backup.name} (${data.backup.sizeKB} KB)`,
+          severity: "success",
+        });
         fetchBackups();
         fetchMetrics();
       } else {
-        alert(data.error || "เกิดข้อผิดพลาดในการสำรองข้อมูล");
+        setSnackbar({
+          open: true,
+          message: data.error || "เกิดข้อผิดพลาดในการสำรองข้อมูล",
+          severity: "error",
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      setSnackbar({
+        open: true,
+        message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์",
+        severity: "error",
+      });
     } finally {
       setBackingUp(false);
     }
@@ -299,24 +336,26 @@ export default function SystemAdminPage() {
 
   if (!isRoot) {
     return (
-      <div className="w-full max-w-7xl mx-auto p-4 sm:p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[60vh]">
-        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 border border-rose-200 shadow-sm">
-          <ShieldAlert className="h-8 w-8" />
-        </div>
-        <h1 className="text-xl font-black text-slate-900">
-          จำกัดสิทธิ์การเข้าถึง (Access Restricted)
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 max-w-md">
-          หน้านี้สงวนสิทธิ์เฉพาะผู้ดูแลระบบสูงสุด (ROOT Admin) เท่านั้นสำหรับตั้งค่าและตรวจสอบโครงสร้างพื้นฐานเซิร์ฟเวอร์
-        </p>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-500/20 hover:bg-blue-700 transition"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          กลับหน้าหลัก (Dashboard)
-        </Link>
-      </div>
+      <Box sx={{ width: "100%", maxWidth: 1280, mx: "auto", p: { xs: 2, sm: 4 }, textAlign: "center", minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <Paper elevation={0} sx={{ p: 4, border: "1px solid", borderColor: "divider", maxWidth: 480, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <SecurityIcon sx={{ fontSize: 56, color: "error.main" }} />
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            จำกัดสิทธิ์การเข้าถึง (Access Restricted)
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            หน้านี้สงวนสิทธิ์เฉพาะผู้ดูแลระบบสูงสุด (ROOT Admin) เท่านั้นสำหรับตั้งค่าและตรวจสอบโครงสร้างพื้นฐานเซิร์ฟเวอร์
+          </Typography>
+          <Button
+            component={Link}
+            href="/dashboard"
+            variant="contained"
+            startIcon={<ArrowBackIcon />}
+            sx={{ mt: 1, fontWeight: 700 }}
+          >
+            กลับหน้าหลัก
+          </Button>
+        </Paper>
+      </Box>
     );
   }
 
@@ -337,1096 +376,995 @@ export default function SystemAdminPage() {
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-8">
-      {/* Top Breadcrumb navigation */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href="/dashboard"
-            className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
-            <span>กลับหน้าหลัก (Dashboard)</span>
-          </Link>
-          <span className="text-slate-300">/</span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
-            <Shield className="h-3 w-3" />
-            ROOT COMMAND CENTER
-          </span>
-        </div>
-      </div>
-
-      {/* ================= 1. CLEAN LIGHT THEME HERO HEADER (FULLY RESPONSIVE) ================= */}
-      <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5">
-          {/* Title & Description */}
-          <div className="space-y-1 sm:space-y-1.5">
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              ศูนย์มอนิเตอร์ & ตั้งค่าโครงสร้างระบบ
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-              สตรีมมิ่งสถานะฮาร์ดแวร์แบบ Real-Time แยก 2 เครื่องเซิร์ฟเวอร์ (Web Host & Proxmox CT 102) พร้อมตรวจจับขนาดฐานข้อมูลและบันทึกประวัติการทำงาน
-            </p>
-          </div>
-
-          {/* Real-time Streaming Controls Bar (Mobile-Optimized) */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200/70 w-full lg:w-auto">
-            {/* Live Indicator Pill */}
-            <button
-              type="button"
-              onClick={() => setIsStreaming(!isStreaming)}
-              className={clsx(
-                "flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition active:scale-95 shadow-2xs select-none min-h-[42px]",
-                isStreaming
-                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100/60"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-              )}
+    <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", p: { xs: 1.25, sm: 2 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
             >
-              <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                {isStreaming && (
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                )}
-                <span
-                  className={clsx(
-                    "relative inline-flex rounded-full h-2.5 w-2.5",
-                    isStreaming ? "bg-emerald-500" : "bg-slate-400"
-                  )}
-                />
-              </span>
-              <span className="tracking-wide text-center truncate">{isStreaming ? "LIVE (2.5s)" : "PAUSED"}</span>
-              {isStreaming ? (
-                <Pause className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-              ) : (
-                <Play className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-              )}
-            </button>
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            ศูนย์มอนิเตอร์และตั้งค่าโครงสร้างระบบ
+          </Typography>
+          <Tooltip title="สตรีมมิ่งสถานะฮาร์ดแวร์แบบ Real Time แยก 2 เครื่องเซิร์ฟเวอร์ พร้อมตรวจจับขนาดฐานข้อมูล">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip
+            icon={<SecurityIcon sx={{ fontSize: "0.8rem !important" }} />}
+            label="ROOT COMMAND CENTER"
+            size="small"
+            color="error"
+            variant="outlined"
+            sx={{ fontWeight: 800, fontSize: "0.6875rem", height: 20, display: { xs: "none", sm: "inline-flex" } }}
+          />
+        </Box>
 
-            {/* Quick Refresh Button */}
-            <button
-              type="button"
+        {/* Real-time Streaming Controls Bar */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Button
+            variant={isStreaming ? "contained" : "outlined"}
+            color={isStreaming ? "success" : "inherit"}
+            size="small"
+            startIcon={isStreaming ? <PauseIcon sx={{ fontSize: 14 }} /> : <PlayArrowIcon sx={{ fontSize: 14 }} />}
+            onClick={() => setIsStreaming(!isStreaming)}
+            sx={{ fontWeight: 700, px: 1.25, py: 0.35, fontSize: "0.725rem" }}
+          >
+            {isStreaming ? "LIVE (2.5s)" : "PAUSED"}
+          </Button>
+
+          <Tooltip title="รีเฟรชข้อมูลทันที">
+            <IconButton
+              size="small"
               onClick={() => {
                 fetchMetrics();
                 fetchBackups();
               }}
-              title="รีเฟรชข้อมูลทันที"
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100/80 text-slate-700 border border-slate-200 transition active:scale-95 shadow-2xs min-h-[42px] flex items-center justify-center"
+              sx={{ p: 0.4 }}
             >
-              <RefreshCw className={clsx("h-4 w-4 text-blue-600", loading && "animate-spin")} />
-            </button>
+              <RefreshIcon sx={{ fontSize: 18 }} className={loading ? "animate-spin" : ""} />
+            </IconButton>
+          </Tooltip>
 
-            {/* Snapshot Trigger Button -> Opens Modal */}
-            <button
-              type="button"
-              onClick={openCreateSnapshotModal}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition active:scale-95 min-h-[42px]"
-            >
-              <HardDriveDownload className="h-3.5 w-3.5" />
-              <span className="truncate">สร้าง Snapshot</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Header Summary Sub-Bar */}
-        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 text-xs text-slate-500">
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-[11px] sm:text-xs">
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CircleDot className="h-2.5 w-2.5 text-emerald-500 flex-shrink-0" />
-              Web: <strong className="text-slate-900 font-mono">Port {web?.port || 3000}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CircleDot className="h-2.5 w-2.5 text-blue-500 flex-shrink-0" />
-              DB: <strong className="text-slate-900 font-mono">10.10.10.102</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CircleDot className="h-2.5 w-2.5 text-indigo-500 flex-shrink-0" />
-              Tailscale: <strong className="text-slate-900 font-mono truncate max-w-[110px] sm:max-w-none">100.125.250.85</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between sm:justify-end gap-1.5 text-[11px] text-slate-400">
-            <span>อัปเดตล่าสุด:</span>
-            <strong className="font-mono text-emerald-700 font-bold">{lastStreamTime || "กำลังเชื่อมต่อ..."}</strong>
-          </div>
-        </div>
-      </div>
-
-      {/* ================= 2. DUAL-NODE STREAMING SYSTEM DASHBOARD (2 LIGHT CARDS) ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
-        {/* ================= NODE 1: WEB APPLICATION HOST ================= */}
-        <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
-          {/* Header Strip */}
-          <div className="flex items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs flex-shrink-0">
-                <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase flex-shrink-0">
-                    Node 1
-                  </span>
-                  <h2 className="text-sm sm:text-base lg:text-lg font-black text-slate-900 tracking-tight truncate">
-                    เครื่องเว็บแอปพลิเคชัน (App Server)
-                  </h2>
-                </div>
-                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate mt-0.5">
-                  {web?.service} • Platform: {web?.platform}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0 self-start sm:self-center">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Active
-            </div>
-          </div>
-
-          {/* Web Telemetry Meters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* Meter 1: Web CPU */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                  <Cpu className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
-                  Web CPU Usage
-                </span>
-                <span className="font-mono font-black text-sm sm:text-base text-slate-900">
-                  {web?.cpu.percent ?? 0}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className={clsx(
-                    "h-full rounded-full transition-all duration-500",
-                    (web?.cpu.percent || 0) < 60
-                      ? "bg-blue-600"
-                      : (web?.cpu.percent || 0) < 85
-                      ? "bg-amber-500"
-                      : "bg-rose-500"
-                  )}
-                  style={{ width: `${Math.min(100, Math.max(5, web?.cpu.percent || 0))}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-400 pt-0.5">
-                <span>{web?.cpu.cores || 4} Cores Total</span>
-                <span className="truncate max-w-[120px] sm:max-w-[140px]">{web?.cpu.model}</span>
-              </div>
-            </div>
-
-            {/* Meter 2: Web RAM */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                  <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-600" />
-                  Web System RAM
-                </span>
-                <span className="font-mono font-black text-sm sm:text-base text-slate-900">
-                  {web?.ram.percent ?? 0}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className={clsx(
-                    "h-full rounded-full transition-all duration-500",
-                    (web?.ram.percent || 0) < 70
-                      ? "bg-indigo-600"
-                      : (web?.ram.percent || 0) < 90
-                      ? "bg-amber-500"
-                      : "bg-rose-500"
-                  )}
-                  style={{ width: `${Math.min(100, Math.max(5, web?.ram.percent || 0))}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-500 pt-0.5">
-                <span>ใช้: <strong className="text-slate-800">{web?.ram.usedGB} GB</strong></span>
-                <span>เหลือ: <strong className="text-emerald-700">{web?.ram.freeGB} GB</strong> / {web?.ram.totalGB} GB</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Node 1 Hardware & Runtime Metrics Grid */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-50 p-3 sm:p-3.5 rounded-2xl border border-slate-200/70 text-xs">
-            <div className="space-y-0.5 min-w-0">
-              <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Heap Used</span>
-              <strong className="text-slate-900 font-mono font-bold text-xs sm:text-sm truncate block">{web?.ram.heapUsedMB} MB</strong>
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Node Version</span>
-              <strong className="text-slate-900 font-mono font-bold text-xs sm:text-sm truncate block">{web?.nodeVersion}</strong>
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Server Uptime</span>
-              <strong className="text-slate-900 font-bold text-[10px] sm:text-xs truncate block">{formatUptime(web?.uptimeSeconds || 0)}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* ================= NODE 2: DATABASE SERVER (PROXMOX CT 102) ================= */}
-        <div className="rounded-3xl bg-white border border-slate-200/80 p-4 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
-          {/* Header Strip */}
-          <div className="flex items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs flex-shrink-0">
-                <Database className="h-5 w-5 sm:h-6 sm:w-6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase flex-shrink-0">
-                    Node 2
-                  </span>
-                  <h2 className="text-sm sm:text-base lg:text-lg font-black text-slate-900 tracking-tight truncate">
-                    เครื่องฐานข้อมูล (Database Server)
-                  </h2>
-                </div>
-                <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate mt-0.5">
-                  {dbNode?.hostname} • IP: {dbNode?.ip} ({dbNode?.tailscaleIp})
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold shadow-2xs flex-shrink-0 self-start sm:self-center">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              LXC CT 102
-            </div>
-          </div>
-
-          {/* Database Telemetry Meters (CPU, RAM, DISK) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            {/* DB CPU */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                  <Cpu className="h-3.5 w-3.5 text-emerald-600" />
-                  DB CPU
-                </span>
-                <span className="font-mono font-black text-xs sm:text-sm text-slate-900">
-                  {dbNode?.cpu.percent ?? 0}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.cpu.percent || 0))}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400">
-                <span>{dbNode?.cpu.cores} vCPUs</span>
-                <span className="text-emerald-700 font-bold">Query Load</span>
-              </div>
-            </div>
-
-            {/* DB RAM */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                  <Gauge className="h-3.5 w-3.5 text-indigo-600" />
-                  DB RAM
-                </span>
-                <span className="font-mono font-black text-xs sm:text-sm text-slate-900">
-                  {dbNode?.ram.percent ?? 0}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.ram.percent || 0))}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-500">
-                <span>ใช้: <strong>{dbNode?.ram.usedGB} GB</strong></span>
-                <span>/ {dbNode?.ram.totalGB} GB</span>
-              </div>
-            </div>
-
-            {/* CT 102 Disk Space */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600 flex items-center gap-1">
-                  <HardDrive className="h-3.5 w-3.5 text-amber-600" />
-                  ดิสก์ CT 102
-                </span>
-                <span className="font-mono font-black text-xs sm:text-sm text-slate-900">
-                  {dbNode?.disk.percent ?? 0}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(5, dbNode?.disk.percent || 0))}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-500">
-                <span>เหลือ: <strong className="text-emerald-700">{dbNode?.disk.freeGB} GB</strong></span>
-                <span>/ {dbNode?.disk.totalGB} GB</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Database Services Health Strip (Postgres & MinIO S3) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-            {/* PostgreSQL Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span className="font-bold text-slate-900 truncate">PostgreSQL (5432)</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] flex-shrink-0">
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                  {pg?.latencyMs} ms
-                </span>
-                <span className="text-slate-500">({pg?.activeConnections} conn)</span>
-              </div>
-            </div>
-
-            {/* MinIO S3 Service */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span className="font-bold text-slate-900 truncate">MinIO S3 (9000)</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] flex-shrink-0">
-                <span className="font-mono font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                  {minio?.latencyMs} ms
-                </span>
-                <span className="text-slate-500">({minio?.objectCount} ไฟล์)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ================= 3. SEGMENTED TABS (HORIZONTALLY SCROLLABLE ON MOBILE) ================= */}
-      <div className="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 min-w-max">
-          <button
-            onClick={() => setActiveTab("servers")}
-            className={clsx(
-              "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-1.5 sm:gap-2 shadow-2xs whitespace-nowrap",
-              activeTab === "servers"
-                ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            )}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<BackupIcon sx={{ fontSize: 15 }} />}
+            onClick={openCreateSnapshotModal}
+            sx={{ fontWeight: 700, px: 1.25, py: 0.35, fontSize: "0.75rem" }}
           >
-            <Server className="h-3.5 w-3.5 text-blue-600" />
-            โครงข่าย 2 Server Nodes
-          </button>
+            สร้าง Snapshot
+          </Button>
+        </Box>
+      </Box>
 
-          <button
-            onClick={() => setActiveTab("database")}
-            className={clsx(
-              "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-1.5 sm:gap-2 shadow-2xs whitespace-nowrap",
-              activeTab === "database"
-                ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            )}
-          >
-            <Table className="h-3.5 w-3.5 text-emerald-600" />
-            ความจุตาราง Database
-          </button>
+      {/* Node Status Sub-bar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 1.5,
+          border: "1px solid",
+          borderColor: "divider",
+          mb: 3,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+        }}
+      >
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <FiberManualRecordIcon sx={{ fontSize: 10, color: "success.main" }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>Web Port</Typography>
+            <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "text.primary" }}>
+              {web?.port || 3000}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <FiberManualRecordIcon sx={{ fontSize: 10, color: "primary.main" }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>DB Host</Typography>
+            <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "text.primary" }}>
+              10.10.10.102
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            <FiberManualRecordIcon sx={{ fontSize: 10, color: "secondary.main" }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>Tailscale IP</Typography>
+            <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "text.primary" }}>
+              100.125.250.85
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>อัปเดตล่าสุด</Typography>
+          <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "success.main" }}>
+            {lastStreamTime || "กำลังเชื่อมต่อ"}
+          </Typography>
+        </Box>
+      </Paper>
 
-          <button
-            onClick={() => setActiveTab("logs")}
-            className={clsx(
-              "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-1.5 sm:gap-2 shadow-2xs whitespace-nowrap",
-              activeTab === "logs"
-                ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            )}
-          >
-            <Terminal className="h-3.5 w-3.5 text-purple-600" />
-            Streaming Logs
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800">
-              {filteredLogs.length}
-            </span>
-          </button>
+      {/* ================= 2. DUAL-NODE STREAMING SYSTEM CARDS ================= */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        {/* NODE 1: WEB APPLICATION HOST */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Paper elevation={0} sx={{ p: 2.5, border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 2, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <PublicIcon color="primary" />
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chip label="Node 1" size="small" sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700 }} />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary" }}>
+                      เครื่องเว็บแอปพลิเคชัน (App Server)
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {web?.service} • Platform {web?.platform}
+                  </Typography>
+                </Box>
+              </Box>
+              <Chip label="Active" size="small" color="success" variant="outlined" sx={{ fontWeight: 700, height: 22 }} />
+            </Box>
 
-          <button
-            onClick={() => setActiveTab("backups")}
-            className={clsx(
-              "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-1.5 sm:gap-2 shadow-2xs whitespace-nowrap",
-              activeTab === "backups"
-                ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            )}
-          >
-            <FileJson className="h-3.5 w-3.5 text-amber-600" />
-            Snapshot & Backups
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800">
-              {backups.length}
-            </span>
-          </button>
+            {/* Meters: CPU & RAM */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <MemoryIcon fontSize="small" color="primary" />
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>Web CPU</Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 800 }}>
+                      {web?.cpu.percent ?? 0}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(5, web?.cpu.percent || 0))}
+                    color={(web?.cpu.percent || 0) > 80 ? "error" : "primary"}
+                    sx={{ height: 6, borderRadius: 3, mb: 1 }}
+                  />
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block" }}>
+                    {web?.cpu.cores || 4} Cores Total
+                  </Typography>
+                </Paper>
+              </Grid>
 
-          <button
-            onClick={() => setActiveTab("config")}
-            className={clsx(
-              "px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-black transition duration-150 select-none flex items-center gap-1.5 sm:gap-2 shadow-2xs whitespace-nowrap",
-              activeTab === "config"
-                ? "bg-white text-blue-700 shadow-sm border border-slate-200/70"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-            )}
-          >
-            <Key className="h-3.5 w-3.5 text-slate-600" />
-            ENV Config
-          </button>
-        </div>
-      </div>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <SpeedIcon fontSize="small" color="secondary" />
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>Web RAM</Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 800 }}>
+                      {web?.ram.percent ?? 0}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(5, web?.ram.percent || 0))}
+                    color={(web?.ram.percent || 0) > 85 ? "error" : "secondary"}
+                    sx={{ height: 6, borderRadius: 3, mb: 1 }}
+                  />
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block" }}>
+                    ใช้ {web?.ram.usedGB} GB จาก {web?.ram.totalGB} GB
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
 
-      {/* ================= TAB 1: SERVERS & TOPOLOGY ================= */}
-      {activeTab === "servers" && (
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-5 sm:space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3 sm:pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs flex-shrink-0">
-                <Network className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-900">
-                  แผนผังการเชื่อมโยงระบบจริง (Live Network Topology & Data Flow)
-                </h3>
-                <p className="text-xs text-slate-400">
-                  โครงสร้างการสื่อสารและ Port Mapping ระหว่าง Web Host, Proxmox VE 8.x, CT 102, และ Docker Services
-                </p>
-              </div>
-            </div>
+            {/* Hardware Info */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 1 }}>
+              <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Heap Used</Typography>
+                <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>{web?.ram.heapUsedMB} MB</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Node Version</Typography>
+                <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>{web?.nodeVersion}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Uptime</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>{formatUptime(web?.uptimeSeconds || 0)}</Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-5">
-              {/* Node 1: Web App */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 sm:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-blue-600" />
+        {/* NODE 2: DATABASE SERVER (PROXMOX CT 102) */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Paper elevation={0} sx={{ p: 2.5, border: "1px solid", borderColor: "divider", height: "100%" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 2, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <StorageIcon color="success" />
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chip label="Node 2" size="small" color="success" sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700 }} />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary" }}>
+                      เครื่องฐานข้อมูล (Database Server)
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
+                    {dbNode?.hostname} • IP {dbNode?.ip}
+                  </Typography>
+                </Box>
+              </Box>
+              <Chip label="LXC CT 102" size="small" color="success" variant="outlined" sx={{ fontWeight: 700, height: 22 }} />
+            </Box>
+
+            {/* Meters: CPU, RAM, Disk */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>DB CPU</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 800 }}>
+                      {dbNode?.cpu.percent ?? 0}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(5, dbNode?.cpu.percent || 0))}
+                    color="success"
+                    sx={{ height: 6, borderRadius: 3, mb: 1 }}
+                  />
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block" }}>
+                    {dbNode?.cpu.cores} vCPUs
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>DB RAM</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 800 }}>
+                      {dbNode?.ram.percent ?? 0}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(5, dbNode?.ram.percent || 0))}
+                    color="primary"
+                    sx={{ height: 6, borderRadius: 3, mb: 1 }}
+                  />
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block" }}>
+                    ใช้ {dbNode?.ram.usedGB} GB จาก {dbNode?.ram.totalGB} GB
+                  </Typography>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Paper variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>ดิสก์ CT 102</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 800 }}>
+                      {dbNode?.disk.percent ?? 0}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(5, dbNode?.disk.percent || 0))}
+                    color="warning"
+                    sx={{ height: 6, borderRadius: 3, mb: 1 }}
+                  />
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block" }}>
+                    เหลือ {dbNode?.disk.freeGB} GB จาก {dbNode?.disk.totalGB} GB
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Services Strip */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <FiberManualRecordIcon sx={{ fontSize: 10, color: "success.main" }} />
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>PostgreSQL (5432)</Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "success.main" }}>
+                    {pg?.latencyMs} ms ({pg?.activeConnections} conn)
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <FiberManualRecordIcon sx={{ fontSize: 10, color: "success.main" }} />
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>MinIO S3 (9000)</Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "success.main" }}>
+                    {minio?.latencyMs} ms ({minio?.objectCount} ไฟล์)
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* ================= 3. NAVIGATION TABS ================= */}
+      <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            px: 2,
+            "& .MuiTab-root": {
+              minHeight: 48,
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              textTransform: "none",
+            },
+          }}
+        >
+          <Tab icon={<HubIcon fontSize="small" />} iconPosition="start" label="โครงข่าย 2 Server Nodes" />
+          <Tab icon={<TableChartIcon fontSize="small" />} iconPosition="start" label="ความจุตาราง Database" />
+          <Tab
+            icon={<TerminalIcon fontSize="small" />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <span>Streaming Logs</span>
+                <Chip label={filteredLogs.length} size="small" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+              </Box>
+            }
+          />
+          <Tab
+            icon={<DataObjectIcon fontSize="small" />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <span>Snapshot & Backups</span>
+                <Chip label={backups.length} size="small" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+              </Box>
+            }
+          />
+          <Tab icon={<VpnKeyIcon fontSize="small" />} iconPosition="start" label="ENV Config" />
+        </Tabs>
+      </Paper>
+
+      {/* ================= TAB 0: SERVERS & TOPOLOGY ================= */}
+      {activeTab === 0 && (
+        <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 2, mb: 2.5, borderBottom: "1px solid", borderColor: "divider" }}>
+            <HubIcon color="primary" />
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                แผนผังการเชื่อมโยงระบบจริง (Live Network Topology & Data Flow)
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                โครงสร้างการสื่อสารและ Port Mapping ระหว่าง Web Host, Proxmox VE 8.x, CT 102, และ Docker Services
+              </Typography>
+            </Box>
+          </Box>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
+                    <PublicIcon fontSize="small" color="primary" />
                     1. Web Application Host
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
-                    Online
-                  </span>
-                </div>
-                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Framework:</span>
-                    <strong className="text-slate-900">Next.js 16 App Router</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Port:</span>
-                    <strong className="font-mono text-blue-600 font-bold">Port 3000</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Auth Engine:</span>
-                    <span className="font-bold text-emerald-700">NextAuth Live DB</span>
-                  </div>
-                </div>
-              </div>
+                  </Typography>
+                  <Chip label="Online" size="small" color="success" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.8125rem" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Framework</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>Next.js 16 App Router</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Port</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "primary.main" }}>
+                      Port 3000
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Auth Engine</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: "success.main" }}>NextAuth Live DB</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
 
-              {/* Node 2: Proxmox Host */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 sm:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <Server className="h-4 w-4 text-amber-600" />
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
+                    <DnsIcon fontSize="small" color="warning" />
                     2. Proxmox VE 8.x Host
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
-                    Online
-                  </span>
-                </div>
-                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Node Name:</span>
-                    <strong className="text-slate-900">techniccom</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Tailscale IP:</span>
-                    <strong className="font-mono text-blue-600 font-bold">100.125.250.85</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Local LAN IP:</span>
-                    <span className="font-mono text-slate-700">192.168.1.250</span>
-                  </div>
-                </div>
-              </div>
+                  </Typography>
+                  <Chip label="Online" size="small" color="success" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.8125rem" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Node Name</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>techniccom</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Tailscale IP</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "primary.main" }}>
+                      100.125.250.85
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Local LAN IP</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>192.168.1.250</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
 
-              {/* Node 3: CT 102 Container */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 sm:space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <Database className="h-4 w-4 text-emerald-600" />
-                    3. CT 102 (database-server)
-                  </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800">
-                    Running
-                  </span>
-                </div>
-                <div className="text-xs space-y-1.5 text-slate-600 pt-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Internal IP:</span>
-                    <strong className="font-mono text-indigo-700 font-bold">10.10.10.102</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Postgres 16:</span>
-                    <span className="font-mono font-bold text-emerald-700">Port 5432</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">MinIO S3:</span>
-                    <span className="font-mono font-bold text-slate-800">Port 9000 / 9001</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}>
+                    <StorageIcon fontSize="small" color="success" />
+                    3. CT 102 (database server)
+                  </Typography>
+                  <Chip label="Running" size="small" color="success" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.8125rem" }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Internal IP</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "secondary.main" }}>
+                      10.10.10.102
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>Postgres 16</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "success.main" }}>
+                      Port 5432
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>MinIO S3</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>Port 9000 / 9001</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Paper>
       )}
 
-      {/* ================= TAB 2: DATABASE STORAGE & TABLES & QUERIES ================= */}
-      {activeTab === "database" && (
-        <div className="space-y-5 sm:space-y-6">
-          {/* Database Summary & Table Sizes */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-4 sm:space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-2xs flex-shrink-0">
-                  <Table className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-900">
+      {/* ================= TAB 1: DATABASE STORAGE & TABLES & QUERIES ================= */}
+      {activeTab === 1 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Table Stats */}
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+            <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid", borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <TableChartIcon color="success" />
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                     ขนาดความจุของแต่ละตารางใน PostgreSQL ({dbNode?.disk.dbSizePretty || "0 MB"})
-                  </h3>
-                  <p className="text-xs text-slate-400">
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
                     วิเคราะห์ขนาดตารางจริงและจำนวนแถวข้อมูล (Live Relation Tuples & Size)
-                  </p>
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
 
-            {/* Desktop Table View */}
-            <div className="hidden sm:block rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
-                  <tr>
-                    <th className="p-3.5">ชื่อตาราง (Table Name)</th>
-                    <th className="p-3.5">จำนวนแถวข้อมูล (Row Count)</th>
-                    <th className="p-3.5">ขนาดความจุ (Size)</th>
-                    <th className="p-3.5 text-right">สัดส่วนใน DB</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-mono">
-                  {(pg?.tableStats || []).map((t) => {
-                    const totalBytes = dbNode?.disk.dbSizeBytes || 1;
-                    const percent = parseFloat(((t.sizeBytes / totalBytes) * 100).toFixed(1));
-                    return (
-                      <tr key={t.tableName} className="hover:bg-slate-50/70 transition">
-                        <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
-                          <Table className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+            <Table size="small">
+              <TableHead sx={{ bgcolor: "grey.50" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ชื่อตาราง (Table Name)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>จำนวนแถวข้อมูล</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ขนาดความจุ</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>สัดส่วนใน DB</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(pg?.tableStats || []).map((t) => {
+                  const totalBytes = dbNode?.disk.dbSizeBytes || 1;
+                  const percent = parseFloat(((t.sizeBytes / totalBytes) * 100).toFixed(1));
+
+                  return (
+                    <TableRow key={t.tableName} hover>
+                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <TableChartIcon fontSize="small" sx={{ color: "success.main" }} />
                           {t.tableName}
-                        </td>
-                        <td className="p-3.5 text-slate-700 font-semibold">{t.rowCount.toLocaleString()} แถว</td>
-                        <td className="p-3.5 text-emerald-700 font-bold">{t.sizePretty}</td>
-                        <td className="p-3.5 text-right">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <span className="text-slate-500 text-[11px] font-sans font-bold">{percent}%</span>
-                            <div className="w-20 bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5">
-                              <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${Math.max(5, percent)}%` }} />
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{t.rowCount.toLocaleString()} แถว</TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 700, color: "success.main" }}>
+                        {t.sizePretty}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+                          <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>
+                            {percent}%
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.max(5, percent)}
+                            color="success"
+                            sx={{ width: 80, height: 6, borderRadius: 3 }}
+                          />
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-            {/* Mobile Card View (Zero Horizontal Overflow) */}
-            <div className="sm:hidden space-y-2.5">
-              {(pg?.tableStats || []).map((t) => {
-                const totalBytes = dbNode?.disk.dbSizeBytes || 1;
-                const percent = parseFloat(((t.sizeBytes / totalBytes) * 100).toFixed(1));
-                return (
-                  <div key={t.tableName} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                        <Table className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                        {t.tableName}
-                      </span>
-                      <span className="text-xs font-mono font-bold text-emerald-700">{t.sizePretty}</span>
-                    </div>
+          {/* Active Live Queries */}
+          <Paper elevation={0} sx={{ p: 2.5, border: "1px solid", borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, pb: 1.5, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+              <TerminalIcon color="primary" />
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                  คำสั่ง SQL Query ที่กำลังทำงานสด (Active Queries)
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  ตรวจสอบคำสั่ง Database ที่กำลังรันในขณะนี้
+                </Typography>
+              </Box>
+            </Box>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span>{t.rowCount.toLocaleString()} แถว</span>
-                      <span className="font-bold">{percent}% ของ DB</span>
-                    </div>
-
-                    <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${Math.max(5, percent)}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Live Queries (pg_stat_activity) */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-3.5 sm:space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-3.5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 shadow-2xs flex-shrink-0">
-                  <Terminal className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-900">
-                    คำสั่ง SQL Query ที่กำลังทำงานสด (Active Queries)
-                  </h3>
-                  <p className="text-xs text-slate-400">ตรวจสอบคำสั่ง Database ที่กำลังรันในขณะนี้</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              {(pg?.activeQueries || []).length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-3 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                  ไม่มีคำสั่งค้าง (Database พร้อมรับงานใหม่)
-                </p>
-              ) : (
-                pg?.activeQueries.map((q) => (
-                  <div key={q.pid} className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-[11px] text-slate-500">
-                      <span>PID: <strong className="text-slate-900">{q.pid}</strong> ({q.user})</span>
-                      <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {q.state} • {q.duration}
-                      </span>
-                    </div>
-                    <p className="text-slate-800 break-words font-semibold bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200 text-[11px] sm:text-xs">
+            {(pg?.activeQueries || []).length === 0 ? (
+              <Box sx={{ p: 4, textAlign: "center", bgcolor: "grey.50", borderRadius: 1 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                  ไม่มีคำสั่งค้าง Database พร้อมรับงานใหม่
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                {pg?.activeQueries.map((q) => (
+                  <Paper key={q.pid} variant="outlined" sx={{ p: 1.5, bgcolor: "grey.50" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
+                      <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700 }}>
+                        PID {q.pid} ({q.user})
+                      </Typography>
+                      <Chip label={`${q.state} • ${q.duration}`} size="small" color="success" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: "block",
+                        fontFamily: "monospace",
+                        p: 1,
+                        bgcolor: "background.paper",
+                        borderRadius: 0.5,
+                        wordBreak: "break-all",
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
                       {q.query}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+                    </Typography>
+                  </Paper>
+                ))}
+              </Box>
+            )}
+          </Paper>
+        </Box>
       )}
 
-      {/* ================= TAB 3: STREAMING REAL-TIME LOGS ================= */}
-      {activeTab === "logs" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-200 shadow-2xs flex-shrink-0">
-                <Terminal className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
+      {/* ================= TAB 2: STREAMING REAL-TIME LOGS ================= */}
+      {activeTab === 2 && (
+        <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              gap: 2,
+              pb: 2,
+              mb: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <TerminalIcon color="secondary" />
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                   บันทึกกิจกรรมสด (Live Logs)
-                  {isStreaming && <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />}
-                </h3>
-                <p className="text-xs text-slate-400">อัปเดตแบบ Realtime ทุก 2.5 วินาที</p>
-              </div>
-            </div>
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  อัปเดตแบบ Realtime ทุก 2.5 วินาที
+                </Typography>
+              </Box>
+            </Box>
 
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={logSearch}
-                onChange={(e) => setLogSearch(e.target.value)}
-                placeholder="ค้นหา Log..."
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 font-medium"
-              />
-            </div>
-          </div>
+            <TextField
+              size="small"
+              placeholder="ค้นหา Log"
+              value={logSearch}
+              onChange={(e) => setLogSearch(e.target.value)}
+              sx={{ width: { xs: "100%", sm: 280 } }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Box>
 
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-0.5">
+          <Box sx={{ maxHeight: 500, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
             {filteredLogs.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                ไม่พบบันทึกกิจกรรม
-              </div>
+              <Box sx={{ p: 6, textAlign: "center", bgcolor: "grey.50", borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>ไม่พบบันทึกกิจกรรม</Typography>
+              </Box>
             ) : (
               filteredLogs.map((log) => (
-                <div
+                <Paper
                   key={log.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs transition hover:bg-slate-100/80 shadow-2xs"
+                  variant="outlined"
+                  sx={{
+                    p: 1.5,
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    justifyContent: "space-between",
+                    gap: 1,
+                  }}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={clsx(
-                        "px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-black uppercase font-mono flex-shrink-0 shadow-2xs",
-                        log.action.includes("BACKUP")
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                          : log.action.includes("UPDATE")
-                          ? "bg-blue-100 text-blue-800 border border-blue-200"
-                          : "bg-purple-100 text-purple-800 border border-purple-200"
-                      )}
-                    >
-                      {log.action}
-                    </span>
-                    <span className="font-bold text-slate-900 truncate text-xs">{log.title}</span>
-                  </div>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                    <Chip
+                      label={log.action}
+                      size="small"
+                      color={log.action.includes("BACKUP") ? "success" : log.action.includes("UPDATE") ? "primary" : "secondary"}
+                      sx={{ height: 22, fontSize: "0.7rem", fontWeight: 700, fontFamily: "monospace" }}
+                    />
+                    <Typography variant="body2" noWrap sx={{ fontWeight: 700, color: "text.primary" }}>
+                      {log.title}
+                    </Typography>
+                  </Box>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-2 text-[10px] sm:text-[11px] text-slate-400 font-medium pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-200/50">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
                     {log.user && (
-                      <span className="truncate max-w-[140px] sm:max-w-none text-slate-500">
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {log.user.name}
-                      </span>
+                      </Typography>
                     )}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Clock className="h-3 w-3" />
-                      <span>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <AccessTimeIcon sx={{ fontSize: "0.875rem", color: "text.disabled" }} />
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {new Date(log.createdAt).toLocaleDateString("th-TH", {
                           day: "numeric",
                           month: "short",
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
               ))
             )}
-          </div>
-        </div>
+          </Box>
+        </Paper>
       )}
 
-      {/* ================= TAB 4: SNAPSHOTS & BACKUPS ================= */}
-      {activeTab === "backups" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs flex-shrink-0">
-                <FileJson className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-900">
+      {/* ================= TAB 3: SNAPSHOTS & BACKUPS ================= */}
+      {activeTab === 3 && (
+        <Paper elevation={0} sx={{ p: 3, border: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              gap: 2,
+              pb: 2,
+              mb: 2.5,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <DataObjectIcon color="warning" />
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                   รายการ Snapshot ใน MinIO S3 ({backups.length} ไฟล์)
-                </h3>
-                <p className="text-xs text-slate-400">
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   ไฟล์ JSON Snapshot สำรอง Users, Roles และ ActivityLogs ทั้งหมด
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
 
-            <button
-              type="button"
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
               onClick={openCreateSnapshotModal}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-black text-xs shadow-md shadow-blue-500/25 hover:bg-blue-700 transition active:scale-95 w-full sm:w-auto"
+              sx={{ fontWeight: 700 }}
             >
-              <Plus className="h-4 w-4" />
               สร้าง Snapshot ใหม่
-            </button>
-          </div>
+            </Button>
+          </Box>
 
           {backups.length === 0 ? (
-            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs">
-              ยังไม่มีไฟล์สำรองข้อมูล กดปุ่มสร้าง Snapshot เพื่อสำรองข้อมูล
-            </div>
+            <Box sx={{ p: 6, textAlign: "center", bgcolor: "grey.50", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                ยังไม่มีไฟล์สำรองข้อมูล กดปุ่มสร้าง Snapshot เพื่อสำรองข้อมูล
+              </Typography>
+            </Box>
           ) : (
-            <>
-              {/* Desktop Table */}
-              <div className="hidden sm:block rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
-                    <tr>
-                      <th className="p-3.5">ชื่อ Snapshot / คำอธิบาย</th>
-                      <th className="p-3.5">ผู้สร้าง (Creator)</th>
-                      <th className="p-3.5">ขนาดไฟล์</th>
-                      <th className="p-3.5">วันที่บันทึก</th>
-                      <th className="p-3.5 text-right">ดาวน์โหลด</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {backups.map((b) => (
-                      <tr key={b.key} className="hover:bg-slate-50/70 transition">
-                        <td className="p-3.5">
-                          <div className="flex items-start gap-2.5">
-                            <FileJson className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <span className="font-bold text-slate-900 text-xs block">{b.name}</span>
-                              {b.description && (
-                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{b.description}</p>
-                              )}
-                              <span className="font-mono text-[10px] text-slate-400 block mt-0.5">{b.filename}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-3.5 text-slate-600 font-medium">
-                          <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
-                            <User className="h-3 w-3 text-slate-400" />
-                            {b.creator}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-slate-700 font-semibold font-mono">{b.sizeKB} KB</td>
-                        <td className="p-3.5 text-slate-500 font-medium">
-                          {new Date(b.lastModified).toLocaleDateString("th-TH", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <a
-                            href={`/api/files/${b.key}`}
-                            download={b.filename}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-black text-xs transition shadow-2xs border border-blue-200"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            ดาวน์โหลด
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Cards */}
-              <div className="sm:hidden space-y-2.5">
-                {backups.map((b) => (
-                  <div key={b.key} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <FileJson className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <span className="font-bold text-xs text-slate-900 block truncate">{b.name}</span>
-                        {b.description && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{b.description}</p>
-                        )}
-                        <span className="font-mono text-[10px] text-slate-400 block truncate mt-0.5">{b.filename}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
-                      <span>ขนาด: <strong className="text-slate-800 font-mono">{b.sizeKB} KB</strong></span>
-                      <span>
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: "grey.50" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ชื่อ Snapshot และคำอธิบาย</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ผู้สร้าง</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ขนาดไฟล์</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>วันที่บันทึก</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>ดาวน์โหลด</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {backups.map((b) => (
+                    <TableRow key={b.key} hover>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                          <DataObjectIcon fontSize="small" sx={{ color: "warning.main", mt: 0.25 }} />
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{b.name}</Typography>
+                            {b.description && (
+                              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                                {b.description}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" sx={{ fontFamily: "monospace", color: "text.disabled", display: "block" }}>
+                              {b.filename}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          icon={<PersonIcon sx={{ fontSize: "0.875rem !important" }} />}
+                          label={b.creator}
+                          size="small"
+                          variant="outlined"
+                          sx={{ height: 22, fontSize: "0.75rem" }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>{b.sizeKB} KB</TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.8125rem" }}>
                         {new Date(b.lastModified).toLocaleDateString("th-TH", {
                           day: "numeric",
                           month: "short",
+                          year: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                      </span>
-                    </div>
-                    <a
-                      href={`/api/files/${b.key}`}
-                      download={b.filename}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs border border-blue-200 shadow-2xs transition"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      ดาวน์โหลดไฟล์ Snapshot
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          component="a"
+                          href={`/api/files/${b.key}`}
+                          download={b.filename}
+                          target="_blank"
+                          rel="noreferrer"
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DownloadIcon fontSize="small" />}
+                          sx={{ fontWeight: 700 }}
+                        >
+                          ดาวน์โหลด
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
-        </div>
+        </Paper>
       )}
 
-      {/* ================= TAB 5: ENVIRONMENT CONFIG ================= */}
-      {activeTab === "config" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-8 shadow-sm space-y-4 sm:space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs flex-shrink-0">
-                <Key className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-900">
-                  การตั้งค่าตัวแปรระบบ (Environment Variables Inspector)
-                </h3>
-                <p className="text-xs text-slate-400">ตรวจสอบค่าคอนฟิกที่โหลดในระบบ (ค่าสำคัญจะถูกปิดบัง)</p>
-              </div>
-            </div>
-          </div>
+      {/* ================= TAB 4: ENVIRONMENT CONFIG ================= */}
+      {activeTab === 4 && (
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+            <VpnKeyIcon color="warning" />
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                การตั้งค่าตัวแปรระบบ (Environment Variables Inspector)
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                ตรวจสอบค่าคอนฟิกที่โหลดในระบบ ค่าสำคัญจะถูกปิดบังเพื่อความปลอดภัย
+              </Typography>
+            </Box>
+          </Box>
 
-          {/* Desktop Table */}
-          <div className="hidden sm:block rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-wider">
-                <tr>
-                  <th className="p-3.5">Variable Key</th>
-                  <th className="p-3.5">Category</th>
-                  <th className="p-3.5">Configured Value</th>
-                  <th className="p-3.5 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-mono">
-                {STATIC_ENV_CONFIG.map((env) => (
-                  <tr key={env.key} className="hover:bg-slate-50/70 transition">
-                    <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2">
-                      {env.isSecret && <Key className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
+          <Table size="small">
+            <TableHead sx={{ bgcolor: "grey.50" }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Variable Key</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>Configured Value</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {STATIC_ENV_CONFIG.map((env) => (
+                <TableRow key={env.key} hover>
+                  <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {env.isSecret && <VpnKeyIcon fontSize="small" sx={{ color: "warning.main" }} />}
                       {env.key}
-                    </td>
-                    <td className="p-3.5 font-sans font-semibold text-slate-600">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[11px]">
-                        {env.type}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-700">
-                      {env.isSecret ? (
-                        <div className="flex items-center gap-2.5">
-                          <span>{revealedSecrets[env.key] ? env.value : "••••••••••••••••"}</span>
-                          <button
-                            type="button"
-                            onClick={() => toggleReveal(env.key)}
-                            className="font-sans text-[11px] font-bold text-blue-600 hover:underline px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200"
-                          >
-                            {revealedSecrets[env.key] ? "ซ่อน" : "แสดง"}
-                          </button>
-                        </div>
-                      ) : (
-                        <span>{env.value}</span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-right font-sans">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                        <Check className="h-3.5 w-3.5" />
-                        Loaded
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="sm:hidden space-y-2.5">
-            {STATIC_ENV_CONFIG.map((env) => (
-              <div key={env.key} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    {env.isSecret && <Key className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
-                    {env.key}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 text-[10px] font-semibold">
-                    {env.type}
-                  </span>
-                </div>
-
-                <div className="p-2 bg-white rounded-xl border border-slate-200 font-mono text-[11px] text-slate-800 break-all">
-                  {env.isSecret ? (
-                    <div className="flex items-center justify-between gap-2">
-                      <span>{revealedSecrets[env.key] ? env.value : "••••••••••••••••"}</span>
-                      <button
-                        type="button"
-                        onClick={() => toggleReveal(env.key)}
-                        className="font-sans text-[10px] font-bold text-blue-600 px-2 py-0.5 rounded bg-blue-50 border border-blue-200 flex-shrink-0"
-                      >
-                        {revealedSecrets[env.key] ? "ซ่อน" : "แสดง"}
-                      </button>
-                    </div>
-                  ) : (
-                    <span>{env.value}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={env.type} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
+                  </TableCell>
+                  <TableCell sx={{ fontFamily: "monospace" }}>
+                    {env.isSecret ? (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <span>{revealedSecrets[env.key] ? env.value : "••••••••••••••••"}</span>
+                        <Button
+                          size="small"
+                          variant="text"
+                          onClick={() => toggleReveal(env.key)}
+                          sx={{ fontSize: "0.75rem", minWidth: "auto", p: 0.5 }}
+                        >
+                          {revealedSecrets[env.key] ? "ซ่อน" : "แสดง"}
+                        </Button>
+                      </Box>
+                    ) : (
+                      <span>{env.value}</span>
+                    )}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Chip
+                      icon={<CheckIcon sx={{ fontSize: "0.875rem !important" }} />}
+                      label="Loaded"
+                      size="small"
+                      color="success"
+                      sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {/* ================= SNAPSHOT CREATION MODAL ================= */}
-      {showSnapshotModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs">
-                  <HardDriveDownload className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">สร้าง Snapshot สำรองข้อมูลระบบ</h3>
-                  <p className="text-xs text-slate-400">บันทึกข้อมูล Users, Roles และ ActivityLogs ไปยัง MinIO S3</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowSnapshotModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <Dialog
+        open={showSnapshotModal}
+        onClose={() => setShowSnapshotModal(false)}
+        fullWidth
+        maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <BackupIcon color="primary" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+              สร้าง Snapshot สำรองข้อมูลระบบ
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setShowSnapshotModal(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
 
-            {/* Modal Form */}
-            <form onSubmit={handleCreateBackupSubmit} className="space-y-4">
-              {/* Snapshot Name */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  ชื่อ Snapshot <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={snapshotName}
-                  onChange={(e) => setSnapshotName(e.target.value)}
-                  placeholder="เช่น Snapshot_ก่อนเริ่มเทอมใหม่ หรือ Full_Backup_2026"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
+        <form onSubmit={handleCreateBackupSubmit}>
+          <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="ชื่อ Snapshot"
+              required
+              fullWidth
+              size="small"
+              placeholder="เช่น Snapshot_ก่อนเริ่มเทอมใหม่ หรือ Full_Backup_2026"
+              value={snapshotName}
+              onChange={(e) => setSnapshotName(e.target.value)}
+            />
 
-              {/* Snapshot Description */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  คำอธิบายเพิ่มเติม / บันทึกช่วยจำ (Description)
-                </label>
-                <textarea
-                  rows={3}
-                  value={snapshotDescription}
-                  onChange={(e) => setSnapshotDescription(e.target.value)}
-                  placeholder="เช่น สำรองข้อมูลผู้ใช้งานและยศสิทธิ์ทั้งหมดก่อนอัปเดตระบบ หรือ สำรองข้อมูลประจำสัปดาห์..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-                />
-              </div>
+            <TextField
+              label="คำอธิบายเพิ่มเติมหรือบันทึกช่วยจำ"
+              multiline
+              rows={3}
+              fullWidth
+              size="small"
+              placeholder="เช่น สำรองข้อมูลผู้ใช้งานและยศสิทธิ์ทั้งหมดก่อนอัปเดตระบบ"
+              value={snapshotDescription}
+              onChange={(e) => setSnapshotDescription(e.target.value)}
+            />
 
-              {/* Data Summary Box */}
-              <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200/70 space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-blue-900 font-bold">
-                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span>ข้อมูลที่จะถูกสำรองและบันทึกลงในไฟล์ Snapshot:</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                  <div className="bg-white p-2 rounded-xl border border-blue-100">
-                    <span className="text-[10px] text-slate-400 block font-semibold">บัญชีผู้ใช้</span>
-                    <strong className="text-slate-900 font-bold text-xs">{metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "User")?.rowCount ?? "-"} บัญชี</strong>
-                  </div>
-                  <div className="bg-white p-2 rounded-xl border border-blue-100">
-                    <span className="text-[10px] text-slate-400 block font-semibold">ยศ/สิทธิ์</span>
-                    <strong className="text-slate-900 font-bold text-xs">{metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "RoleDefinition")?.rowCount ?? "-"} สิทธิ์</strong>
-                  </div>
-                  <div className="bg-white p-2 rounded-xl border border-blue-100">
-                    <span className="text-[10px] text-slate-400 block font-semibold">ปลายทาง</span>
-                    <strong className="text-indigo-700 font-bold text-[11px] truncate block">MinIO S3</strong>
-                  </div>
-                </div>
-              </div>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: "primary.50", borderColor: "primary.200" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                <InfoIcon fontSize="small" color="primary" />
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>
+                  ข้อมูลที่จะถูกสำรองและบันทึกลงในไฟล์ Snapshot
+                </Typography>
+              </Box>
+              <Grid container spacing={1}>
+                <Grid size={{ xs: 4 }}>
+                  <Paper sx={{ p: 1, textAlign: "center" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>บัญชีผู้ใช้</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      {metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "User")?.rowCount ?? 0} บัญชี
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <Paper sx={{ p: 1, textAlign: "center" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>ยศหรือสิทธิ์</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      {metrics?.databaseServerNode.services.postgres.tableStats.find(t => t.tableName === "RoleDefinition")?.rowCount ?? 0} สิทธิ์
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <Paper sx={{ p: 1, textAlign: "center" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>ปลายทาง</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "secondary.main" }}>MinIO S3</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Paper>
+          </DialogContent>
 
-              {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowSnapshotModal(false)}
-                  disabled={backingUp}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={backingUp}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 transition active:scale-95 disabled:opacity-50"
-                >
-                  {backingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDriveDownload className="h-4 w-4" />}
-                  <span>{backingUp ? "กำลังสร้าง Snapshot..." : "ยืนยันการสร้าง Snapshot"}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setShowSnapshotModal(false)} disabled={backingUp} color="inherit">
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="contained" disabled={backingUp} startIcon={backingUp ? <CircularProgress size={16} /> : <BackupIcon />}>
+              {backingUp ? "กำลังสร้าง Snapshot..." : "ยืนยันการสร้าง Snapshot"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Feedback Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%", boxShadow: 3 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

@@ -2,238 +2,340 @@
 
 import React from "react";
 import Link from "next/link";
-import {
-  GraduationCap,
-  Users,
-  CheckSquare,
-  Trophy,
-  Calendar,
-  ArrowLeft,
-  Sparkles,
-  TrendingUp,
-  Award,
-  BookOpen,
-  ChevronRight,
-  ShieldCheck,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import SchoolIcon from "@mui/icons-material/School";
+import GroupsIcon from "@mui/icons-material/Groups";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
 export default function StudentDashboardPage() {
-  const { selectedYear, selectedSemester, termLabel } = useAcademicYear();
+  const { termLabel } = useAcademicYear();
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      {/* 1. Top Breadcrumb with Unified Back Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 text-xs font-bold transition shadow-2xs group"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>← กลับหน้าหลัก (ภาพรวมงานครู)</span>
-        </Link>
-
-        {/* Term Badge Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-xs text-blue-800 font-bold">
-          <Calendar className="h-3.5 w-3.5 text-blue-600" />
-          <span>ข้อมูลประจำ: {termLabel}</span>
-        </div>
-      </div>
-
-      {/* 2. Hero Header Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-slate-200">
-        <div className="relative z-10 space-y-3 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-bold text-blue-200">
-            <GraduationCap className="h-3.5 w-3.5 text-blue-300" />
-            มาตรฐานที่ 1 คุณภาพของผู้สำเร็จการศึกษาอาชีวศึกษา (SAR สอศ.)
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             ภาพรวมงานนักเรียนและนักศึกษา
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            ศูนย์กลางการติดตามผลสัมฤทธิ์ทางการเรียน สถิติการเข้าเรียน สมรรถนะวิชาชีพ และกิจกรรมผู้เรียน
-            ประจำ {termLabel} เชื่อมโยงข้อมูลตรงระหว่างครูผู้สอน ครูที่ปรึกษา และงานทะเบียน
-          </p>
-        </div>
+          </Typography>
+          <Tooltip title="ติดตามผลสัมฤทธิ์ทางการเรียน สถิติการเข้าเรียน สมรรถนะวิชาชีพ และกิจกรรมผู้เรียน">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+        </Box>
 
-        {/* Background graphic decoration */}
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-      </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Chip
+            icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
+            label={`ข้อมูลประจำ ${termLabel}`}
+            variant="outlined"
+            size="small"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+          <Button
+            component={Link}
+            href="/dashboard"
+            variant="outlined"
+            size="small"
+            startIcon={<ArrowBackIcon sx={{ fontSize: 15 }} />}
+            sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
+          >
+            ภาพรวมงานครู
+          </Button>
+        </Box>
+      </Box>
 
-      {/* 3. SAR KPI Cards (ตามเกณฑ์มาตรฐาน สอศ.) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. SAR KPI Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+          gap: 2,
+        }}
+      >
         {/* Metric 1 */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md transition">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2.5 rounded-2xl bg-blue-50 text-blue-600">
-              <Users className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-              ปวช. / ปวส.
-            </span>
-          </div>
-          <div className="text-2xl font-black text-slate-900">1,248 คน</div>
-          <div className="text-xs font-bold text-slate-500 mt-1">
-            นักเรียน-นักศึกษาลงทะเบียน
-          </div>
-          <div className="text-[11px] text-emerald-600 font-semibold mt-2 flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" /> อัตราคงอยู่ 98.4% (สูงกว่าเกณฑ์)
-          </div>
-        </div>
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: "primary.50",
+                color: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <GroupsIcon fontSize="small" />
+            </Box>
+            <Chip size="small" label="ปวช และ ปวส" variant="outlined" />
+          </Box>
+          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+            1,248 คน
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            นักเรียนนักศึกษาลงทะเบียน
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: "success.main" }}>
+            <TrendingUpIcon sx={{ fontSize: 14 }} />
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              อัตราคงอยู่ 98.4% ผ่านเกณฑ์
+            </Typography>
+          </Box>
+        </Paper>
 
         {/* Metric 2 */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md transition">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600">
-              <CheckSquare className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-              รายคาบ/วัน
-            </span>
-          </div>
-          <div className="text-2xl font-black text-slate-900">92.6%</div>
-          <div className="text-xs font-bold text-slate-500 mt-1">
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: "success.50",
+                color: "success.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FactCheckIcon fontSize="small" />
+            </Box>
+            <Chip size="small" label="รายคาบและวัน" color="success" variant="outlined" />
+          </Box>
+          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+            92.6%
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             อัตราการเข้าชั้นเรียนเฉลี่ย
-          </div>
-          <div className="text-[11px] text-slate-400 font-semibold mt-2">
-            บันทึกโดยครูผู้สอน 100%
-          </div>
-        </div>
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+            บันทึกโดยครูผู้สอนครบถ้วน
+          </Typography>
+        </Paper>
 
         {/* Metric 3 */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md transition">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600">
-              <Trophy className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-              มาตรฐานฝีมือ
-            </span>
-          </div>
-          <div className="text-2xl font-black text-slate-900">89.2%</div>
-          <div className="text-xs font-bold text-slate-500 mt-1">
-            ผ่านการประเมินสมรรถนะวิชาชีพ
-          </div>
-          <div className="text-[11px] text-purple-600 font-semibold mt-2">
-            TPQI / DSD / สภาวิศวกร
-          </div>
-        </div>
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: "secondary.50",
+                color: "secondary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <EmojiEventsIcon fontSize="small" />
+            </Box>
+            <Chip size="small" label="มาตรฐานฝีมือ" color="secondary" variant="outlined" />
+          </Box>
+          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+            89.2%
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            ผ่านการประเมินสมรรถนะ
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+            TPQI DSD และสภาวิชาชีพ
+          </Typography>
+        </Paper>
 
         {/* Metric 4 */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md transition">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600">
-              <Award className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
-              กิจกรรมหน้าเสาธง
-            </span>
-          </div>
-          <div className="text-2xl font-black text-slate-900">95.1%</div>
-          <div className="text-xs font-bold text-slate-500 mt-1">
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: "warning.50",
+                color: "warning.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <WorkspacePremiumIcon fontSize="small" />
+            </Box>
+            <Chip size="small" label="กิจกรรมผู้เรียน" color="warning" variant="outlined" />
+          </Box>
+          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+            95.1%
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             เข้าร่วมกิจกรรมพัฒนาผู้เรียน
-          </div>
-          <div className="text-[11px] text-amber-600 font-semibold mt-2">
-            ผ่านเกณฑ์กิจกรรมชมรม & จิตอาสา
-          </div>
-        </div>
-      </div>
+          </Typography>
+          <Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 1, fontWeight: 600 }}>
+            ผ่านเกณฑ์กิจกรรมชมรมและจิตอาสา
+          </Typography>
+        </Paper>
+      </Box>
 
-      {/* 4. Quick Navigation Cards to Student Modules */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">
-              โมดูลระบบงานนักเรียน (เชื่อมโยงกับครูผู้สอน)
-            </h3>
-            <p className="text-xs text-slate-400">
-              ระบบบันทึกและรวบรวมหลักฐานร่องรอยเพื่อนำเข้าเล่มรายงานการประเมินตนเอง (SAR)
-            </p>
-          </div>
-        </div>
+      {/* 3. Quick Navigation Modules */}
+      <Paper sx={{ p: 2.5 }}>
+        <Typography variant="h4" sx={{ mb: 0.5 }}>
+          โมดูลระบบงานนักเรียน
+        </Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+          ระบบบันทึกและรวบรวมหลักฐานร่องรอยเพื่อนำเข้าเล่มรายงานการประเมินตนเอง SAR
+        </Typography>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+            gap: 1.5,
+          }}
+        >
+          <Paper
+            component={Link}
             href="/students"
-            className="p-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 transition group flex flex-col justify-between"
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              textDecoration: "none",
+              color: "inherit",
+              bgcolor: "background.default",
+              transition: "all 0.15s ease",
+              "&:hover": { borderColor: "primary.main", bgcolor: "background.paper" },
+            }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 rounded-xl bg-white text-blue-600 shadow-2xs border border-slate-100">
-                <Users className="h-4 w-4" />
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <GroupsIcon color="primary" fontSize="small" />
+              <ChevronRightIcon fontSize="small" sx={{ color: "text.secondary" }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
                 ทะเบียนข้อมูลนักเรียน
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                 ฐานข้อมูลประวัติและสถานะนักศึกษา
-              </div>
-            </div>
-          </Link>
+              </Typography>
+            </Box>
+          </Paper>
 
-          <Link
+          <Paper
+            component={Link}
             href="/students/attendance"
-            className="p-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-200 transition group flex flex-col justify-between"
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              textDecoration: "none",
+              color: "inherit",
+              bgcolor: "background.default",
+              transition: "all 0.15s ease",
+              "&:hover": { borderColor: "primary.main", bgcolor: "background.paper" },
+            }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 rounded-xl bg-white text-emerald-600 shadow-2xs border border-slate-100">
-                <CheckSquare className="h-4 w-4" />
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">
-                เช็คชื่อ & พฤติกรรม
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <FactCheckIcon color="success" fontSize="small" />
+              <ChevronRightIcon fontSize="small" sx={{ color: "text.secondary" }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                เช็คชื่อและพฤติกรรม
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                 บันทึกการเข้าเรียนรายคาบและพฤติกรรม
-              </div>
-            </div>
-          </Link>
+              </Typography>
+            </Box>
+          </Paper>
 
-          <Link
+          <Paper
+            component={Link}
             href="/students/competencies"
-            className="p-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-purple-50/60 hover:border-purple-200 transition group flex flex-col justify-between"
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              textDecoration: "none",
+              color: "inherit",
+              bgcolor: "background.default",
+              transition: "all 0.15s ease",
+              "&:hover": { borderColor: "primary.main", bgcolor: "background.paper" },
+            }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 rounded-xl bg-white text-purple-600 shadow-2xs border border-slate-100">
-                <Trophy className="h-4 w-4" />
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-purple-600 group-hover:translate-x-0.5 transition" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">
-                ผลสัมฤทธิ์ & สมรรถนะ
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                เกรดเฉลี่ย, V-NET และใบรับรองทักษะ
-              </div>
-            </div>
-          </Link>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <EmojiEventsIcon color="secondary" fontSize="small" />
+              <ChevronRightIcon fontSize="small" sx={{ color: "text.secondary" }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                ผลสัมฤทธิ์และสมรรถนะ
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                เกรดเฉลี่ย VNET และใบรับรองทักษะ
+              </Typography>
+            </Box>
+          </Paper>
 
-          <Link
+          <Paper
+            component={Link}
             href="/students/activities"
-            className="p-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-amber-50/60 hover:border-amber-200 transition group flex flex-col justify-between"
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              textDecoration: "none",
+              color: "inherit",
+              bgcolor: "background.default",
+              transition: "all 0.15s ease",
+              "&:hover": { borderColor: "primary.main", bgcolor: "background.paper" },
+            }}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 rounded-xl bg-white text-amber-600 shadow-2xs border border-slate-100">
-                <Award className="h-4 w-4" />
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-amber-600 group-hover:translate-x-0.5 transition" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-slate-800 group-hover:text-amber-700">
-                กิจกรรมผู้เรียน & ชมรม
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                เช็คชื่อหน้าเสาธงและชมรมวิชาชีพ
-              </div>
-            </div>
-          </Link>
-        </div>
-      </div>
-    </div>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <WorkspacePremiumIcon color="warning" fontSize="small" />
+              <ChevronRightIcon fontSize="small" sx={{ color: "text.secondary" }} />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                กิจกรรมผู้เรียนและชมรม
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+                เช็คชื่อหน้าเสาธงและกิจกรรมจิตอาสา
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      </Paper>
+    </Box>
   );
 }

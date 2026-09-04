@@ -3,32 +3,66 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  FileBadge,
-  Plus,
-  ArrowLeft,
-  Filter,
-  RefreshCw,
-  Loader2,
-  Edit2,
-  Trash2,
-  X,
-  Sparkles,
-  Shield,
-  Clock,
-  Briefcase,
-  GraduationCap,
-  Award,
-  FileText,
-  Tag,
-  Check,
-  FolderPlus,
-  Folder,
-  Settings2,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
+import BadgeIcon from "@mui/icons-material/Badge";
+import AddIcon from "@mui/icons-material/Add";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SecurityIcon from "@mui/icons-material/Security";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import WorkIcon from "@mui/icons-material/Work";
+import SchoolIcon from "@mui/icons-material/School";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import DescriptionIcon from "@mui/icons-material/Description";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import CheckIcon from "@mui/icons-material/Check";
+import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
+import FolderIcon from "@mui/icons-material/Folder";
+import TuneIcon from "@mui/icons-material/Tune";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import WarningIcon from "@mui/icons-material/Warning";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+
+const FileBadge = BadgeIcon;
+const Plus = AddIcon;
+const ArrowLeft = ArrowBackIcon;
+const Filter = FilterListIcon;
+const RefreshCw = RefreshIcon;
+const Loader2 = ({ className }: { className?: string }) => (
+  <CircularProgress size={16} sx={{ display: "inline-flex" }} />
+);
+const Edit2 = EditIcon;
+const Trash2 = DeleteIcon;
+const X = CloseIcon;
+const Sparkles = AutoAwesomeIcon;
+const Shield = SecurityIcon;
+const Clock = AccessTimeIcon;
+const Briefcase = WorkIcon;
+const GraduationCap = SchoolIcon;
+const Award = EmojiEventsIcon;
+const FileText = DescriptionIcon;
+const Tag = LocalOfferIcon;
+const Check = CheckIcon;
+const FolderPlus = CreateNewFolderIcon;
+const Folder = FolderIcon;
+const Settings2 = TuneIcon;
+const CheckCircle2 = CheckCircleIcon;
+const XCircle = CancelIcon;
+const AlertTriangle = WarningIcon;
 import { clsx } from "clsx";
 
 export interface LicenseCategoryItem {
@@ -162,6 +196,20 @@ export default function AdminLicensesPage() {
     isActive: true,
   });
 
+  // Feedback Snackbar & Confirm Dialog
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ open: false, message: "", severity: "success" });
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: string;
+    onConfirm: () => Promise<void>;
+  }>({ open: false, title: "", content: "", onConfirm: async () => {} });
+
   // Fetch License Configs
   const fetchLicenseConfigs = async () => {
     try {
@@ -233,7 +281,7 @@ export default function AdminLicensesPage() {
   const handleCategoryFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryFormData.title || !categoryFormData.code) {
-      alert("กรุณากรอกรหัสและชื่อหมวดหมู่");
+      setSnackbar({ open: true, message: "กรุณากรอกรหัสและชื่อหมวดหมู่", severity: "warning" });
       return;
     }
 
@@ -254,16 +302,17 @@ export default function AdminLicensesPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหมู่");
+        setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหมู่", severity: "error" });
         return;
       }
 
       setShowCategoryEditModal(false);
+      setSnackbar({ open: true, message: "บันทึกหมวดหมู่สำเร็จ", severity: "success" });
       fetchCategories();
       fetchLicenseConfigs();
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
     } finally {
       setCategoryFormSubmitting(false);
     }
@@ -285,24 +334,30 @@ export default function AdminLicensesPage() {
     }
   };
 
-  const handleDeleteCategory = async (cat: LicenseCategoryItem) => {
-    if (!confirm(`คุณต้องการลบหมวดหมู่ "${cat.title}" ใช่หรือไม่?`)) return;
-
-    try {
-      const res = await fetch(`/api/admin/license-categories?id=${cat.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการลบหมวดหมู่");
-        return;
-      }
-      fetchCategories();
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
-    }
+  const handleDeleteCategory = (cat: LicenseCategoryItem) => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการลบหมวดหมู่",
+      content: `ต้องการลบหมวดหมู่ "${cat.title}" หรือไม่`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/license-categories?id=${cat.id}`, {
+            method: "DELETE",
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการลบหมวดหมู่", severity: "error" });
+            return;
+          }
+          setSnackbar({ open: true, message: "ลบหมวดหมู่เรียบร้อยแล้ว", severity: "success" });
+          fetchCategories();
+          fetchLicenseConfigs();
+        } catch (err) {
+          console.error(err);
+          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
+        }
+      },
+    });
   };
 
   // License Config Actions
@@ -359,7 +414,7 @@ export default function AdminLicensesPage() {
   const handleLicenseFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseFormData.title || !licenseFormData.code) {
-      alert("กรุณากรอกรหัสและชื่อประเภทใบอนุญาต");
+      setSnackbar({ open: true, message: "กรุณากรอกรหัสและชื่อประเภทใบอนุญาต", severity: "warning" });
       return;
     }
 
@@ -380,15 +435,16 @@ export default function AdminLicensesPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกประเภทใบอนุญาต");
+        setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการบันทึกประเภทใบอนุญาต", severity: "error" });
         return;
       }
 
       setShowLicenseModal(false);
+      setSnackbar({ open: true, message: "บันทึกประเภทใบอนุญาตสำเร็จ", severity: "success" });
       fetchLicenseConfigs();
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
     } finally {
       setLicenseFormSubmitting(false);
     }
@@ -409,51 +465,57 @@ export default function AdminLicensesPage() {
     }
   };
 
-  const handleDeleteLicense = async (item: LicenseConfigItem) => {
-    if (!confirm(`คุณต้องการลบประเภทใบอนุญาต "${item.title}" ใช่หรือไม่?`)) return;
-
-    try {
-      const res = await fetch(`/api/admin/license-configs?id=${item.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการลบประเภทใบอนุญาต");
-        return;
-      }
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
-    }
+  const handleDeleteLicense = (item: LicenseConfigItem) => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการลบประเภทใบอนุญาต",
+      content: `ต้องการลบประเภทใบอนุญาต "${item.title}" หรือไม่`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/license-configs?id=${item.id}`, {
+            method: "DELETE",
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการลบประเภทใบอนุญาต", severity: "error" });
+            return;
+          }
+          setSnackbar({ open: true, message: "ลบประเภทใบอนุญาตเรียบร้อยแล้ว", severity: "success" });
+          fetchLicenseConfigs();
+        } catch (err) {
+          console.error(err);
+          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
+        }
+      },
+    });
   };
 
-  const handleResetLicenseDefaults = async () => {
-    if (
-      !confirm(
-        "คุณต้องการคืนค่าเริ่มต้นมาตรฐานของประเภทใบอนุญาตทั้งหมดใช่หรือไม่? (ประเภทที่มีอยู่แล้วจะได้รับการอัปเดตและรายการที่ขาดจะถูกสร้างใหม่)"
-      )
-    )
-      return;
-
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset-defaults" }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("คืนค่าเริ่มต้นประเภทใบอนุญาตมาตรฐานเรียบร้อยแล้ว");
-        fetchLicenseConfigs();
-        fetchCategories();
-      } else {
-        alert(data.error || "เกิดข้อผิดพลาดในการคืนค่าเริ่มต้น");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-    }
+  const handleResetLicenseDefaults = () => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการคืนค่าเริ่มต้น",
+      content: "ต้องการคืนค่าเริ่มต้นมาตรฐานของประเภทใบอนุญาตทั้งหมดหรือไม่ ประเภทที่มีอยู่แล้วจะได้รับการอัปเดตและรายการที่ขาดจะถูกสร้างใหม่",
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/license-configs", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "reset-defaults" }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setSnackbar({ open: true, message: "คืนค่าเริ่มต้นประเภทใบอนุญาตมาตรฐานเรียบร้อยแล้ว", severity: "success" });
+            fetchLicenseConfigs();
+            fetchCategories();
+          } else {
+            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการคืนค่าเริ่มต้น", severity: "error" });
+          }
+        } catch (err) {
+          console.error(err);
+          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อ", severity: "error" });
+        }
+      },
+    });
   };
 
   // Inline Preset Chip Management
@@ -512,55 +574,43 @@ export default function AdminLicensesPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      {/* ================= HERO HEADER ================= */}
-      <div className="rounded-3xl bg-white border border-slate-200/80 p-5 sm:p-7 shadow-sm space-y-4 sm:space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5">
-          {/* Title & Navigation */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-600 transition"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                หน้าหลัก (Dashboard)
-              </Link>
-              <span className="text-slate-300">/</span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black bg-teal-50 text-teal-700 border border-teal-200">
-                <FileBadge className="h-3 w-3" />
-                LICENSE CONFIGURATION
-              </span>
-            </div>
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+      {/* ================= COMPACT HEADER ================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-200">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="p-1 rounded-md text-slate-500 hover:text-teal-600 hover:bg-slate-100 transition"
+            title="กลับหน้าหลัก"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+            ตั้งค่าประเภทใบอนุญาตและมาตรฐานวิชาชีพ
+          </h1>
+          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+            {categories.length} หมวดหมู่
+          </span>
+        </div>
 
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-              ตั้งค่าประเภทใบอนุญาต & มาตรฐานวิชาชีพ
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-              บริหารจัดการประเภทใบประกอบวิชาชีพครู (คุรุสภา), หนังสือผ่อนผัน สอศ., และคุณวุฒิสายอาชีพ (TPQI/DSD/กว.) พร้อมชิปตัวเลือกแนะนำ (Preset Chips)
-            </p>
-          </div>
+        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setShowCategoryManagerModal(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+          >
+            <Folder className="h-3.5 w-3.5 text-teal-600" />
+            จัดการหมวดหมู่
+          </button>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto">
-            <button
-              type="button"
-              onClick={() => setShowCategoryManagerModal(true)}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs min-h-[42px]"
-            >
-              <Folder className="h-4 w-4 text-teal-600" />
-              จัดการหมวดหมู่ ({categories.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={openCreateLicenseModal}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-teal-600 text-white font-bold text-xs shadow-md shadow-teal-500/20 hover:bg-teal-700 transition active:scale-95 min-h-[42px]"
-            >
-              <Plus className="h-4 w-4" />
-              เพิ่มประเภทใบอนุญาตใหม่
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={openCreateLicenseModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white font-medium text-xs hover:bg-teal-700 transition shadow-xs"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            เพิ่มใบอนุญาตใหม่
+          </button>
         </div>
       </div>
 
@@ -1339,6 +1389,51 @@ export default function AdminLicensesPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{confirmDialog.content}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))} color="inherit">
+            ยกเลิก
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              setConfirmDialog((prev) => ({ ...prev, open: false }));
+              await confirmDialog.onConfirm();
+            }}
+          >
+            ยืนยัน
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Feedback Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%", boxShadow: 3 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

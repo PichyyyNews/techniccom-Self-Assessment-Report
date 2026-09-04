@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import ThemeRegistry from "@/theme/ThemeRegistry";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="th" className="light">
       <body className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-blue-500 selection:text-white`}>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <ThemeRegistry>
+          <SessionProvider>
+            {children}
+          </SessionProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );

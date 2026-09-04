@@ -1,20 +1,27 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import {
-  User,
-  Settings,
-  LogOut,
-  ChevronDown,
-  Shield,
-  Menu,
-  Calendar,
-  Check,
-  Sparkles,
-} from "lucide-react";
 import Link from "next/link";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Avatar from "@mui/material/Avatar";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import MenuIcon from "@mui/icons-material/Menu";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CheckIcon from "@mui/icons-material/Check";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import PersonIcon from "@mui/icons-material/Person";
+import SecurityIcon from "@mui/icons-material/Security";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useSidebar } from "./SidebarContext";
 import { useAcademicYear } from "./AcademicYearContext";
 
@@ -32,288 +39,325 @@ export function Navbar() {
     shortTermLabel,
   } = useAcademicYear();
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [termDropdownOpen, setTermDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const termDropdownRef = useRef<HTMLDivElement>(null);
+  // Term popover state
+  const [termAnchorEl, setTermAnchorEl] = useState<null | HTMLElement>(null);
+  const isTermOpen = Boolean(termAnchorEl);
 
-  // Close dropdowns on click outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-      if (termDropdownRef.current && !termDropdownRef.current.contains(event.target as Node)) {
-        setTermDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // User menu state
+  const [userAnchorEl, setUserAnchorEl] = useState<null | HTMLElement>(null);
+  const isUserOpen = Boolean(userAnchorEl);
 
   const isRoot = session?.user?.role === "ROOT";
   const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
 
-  // Dynamic Page Title
   const getPageTitle = () => {
     if (pathname === "/dashboard") return "ภาพรวมงานครูและบุคลากร";
     if (pathname === "/dashboard/students") return "ภาพรวมงานนักเรียนและนักศึกษา";
     if (pathname === "/profile") return "โปรไฟล์และประวัติการทำงาน";
-    if (pathname === "/teachers/lesson-plans") return "แผนการจัดการเรียนรู้ & บันทึกหลังสอน";
-    if (pathname === "/teachers/trainings") return "การพัฒนาวิชาชีพ & อบรมสัมมนา";
-    if (pathname === "/teachers/researches") return "งานวิจัย นวัตกรรม & สิ่งประดิษฐ์";
-    if (pathname === "/students") return "ทะเบียนข้อมูลนักเรียน/นักศึกษา";
-    if (pathname === "/students/attendance") return "บันทึกการเข้าเรียน & พฤติกรรม";
-    if (pathname === "/students/competencies") return "ผลสัมฤทธิ์ & สมรรถนะวิชาชีพ";
-    if (pathname === "/students/activities") return "กิจกรรมผู้เรียน & หน้าเสาธง";
+    if (pathname === "/teachers/lesson-plans") return "แผนการจัดการเรียนรู้ และ บันทึกหลังสอน";
+    if (pathname === "/teachers/trainings") return "การพัฒนาวิชาชีพ และ อบรมสัมมนา";
+    if (pathname === "/teachers/researches") return "งานวิจัย นวัตกรรม และ สิ่งประดิษฐ์";
+    if (pathname === "/students") return "ทะเบียนข้อมูลนักเรียนและนักศึกษา";
+    if (pathname === "/students/attendance") return "บันทึกการเข้าเรียน และ พฤติกรรม";
+    if (pathname === "/students/competencies") return "ผลสัมฤทธิ์ และ สมรรถนะวิชาชีพ";
+    if (pathname === "/students/activities") return "กิจกรรมผู้เรียน และ หน้าเสาธง";
     if (pathname.startsWith("/admin/system")) return "ตั้งค่าระบบและมอนิเตอร์เซิร์ฟเวอร์";
     if (pathname.startsWith("/admin/users")) return "จัดการบัญชีผู้ใช้งานและสิทธิ์";
-    if (pathname.startsWith("/admin/licenses")) return "ตั้งค่าประเภทใบอนุญาต & มาตรฐานวิชาชีพ";
+    if (pathname.startsWith("/admin/licenses")) return "ตั้งค่าประเภทใบอนุญาต และ มาตรฐานวิชาชีพ";
+    if (pathname === "/quick-upload") return "ทางลัดอัปโหลดด่วน";
+    if (pathname === "/stock") return "คลังไฟล์หลักฐาน";
     return "ระบบงานประกันคุณภาพ";
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-8 backdrop-blur transition-all">
+    <Box
+      component="header"
+      sx={{
+        position: "sticky",
+        top: 0,
+        zIndex: 30,
+        display: "flex",
+        height: 64,
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        bgcolor: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(8px)",
+        px: { xs: 2, sm: 3 },
+      }}
+    >
       {/* Left side: Mobile Toggle & Page Title */}
-      <div className="flex items-center gap-3">
-        {/* Mobile Toggle Button */}
-        <button
-          type="button"
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <IconButton
           onClick={toggleMobile}
-          className="md:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition active:scale-95"
-          aria-label="Toggle Navigation Drawer"
+          sx={{ display: { xs: "inline-flex", md: "none" } }}
+          size="small"
+          aria-label="เปิดเมนูนำทาง"
         >
-          <Menu className="h-5 w-5" />
-        </button>
+          <MenuIcon fontSize="small" />
+        </IconButton>
 
-        {/* Page Title */}
-        <div className="text-sm font-bold text-slate-800 line-clamp-1">
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 600,
+            color: "text.primary",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {getPageTitle()}
-        </div>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Right side: Academic Term Selector + Profile Avatar */}
-      <div className="flex items-center gap-2.5 sm:gap-4">
-        {/* 1. Global Academic Year / Term Selector */}
-        <div className="relative" ref={termDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setTermDropdownOpen(!termDropdownOpen)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-800 text-xs font-bold transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
-            title="คลิกเพื่อสลับปีการศึกษาหรือภาคเรียน (มีผลทั่วทั้งระบบ)"
-          >
-            <Calendar className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-            <span className="hidden sm:inline font-bold">ปีการศึกษา {selectedYear}</span>
-            <span className="sm:hidden font-bold">{selectedYear}</span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-600 text-[10px] text-white font-black leading-none">
-              {availableSemesters.find((s) => s.value === selectedSemester)?.shortLabel || "เทอม 1"}
-            </span>
-            <ChevronDown
-              className={`h-3.5 w-3.5 text-blue-600 transition-transform duration-200 ${
-                termDropdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        {/* Global Academic Year / Term Selector */}
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={(e) => setTermAnchorEl(e.currentTarget)}
+          startIcon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
+          endIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+          sx={{
+            borderColor: "primary.light",
+            bgcolor: "primary.50",
+            color: "primary.main",
+            fontWeight: 600,
+            py: 0.5,
+            px: 1.5,
+            borderRadius: 2,
+          }}
+        >
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, mr: 0.5 }}>
+            ปีการศึกษา
+          </Box>
+          {selectedYear}
+          <Chip
+            size="small"
+            label={availableSemesters.find((s) => s.value === selectedSemester)?.shortLabel || "เทอม 1"}
+            color="primary"
+            sx={{ ml: 1, height: 20, fontSize: "0.6875rem", fontWeight: 700 }}
+          />
+        </Button>
 
-          {/* Term Popover Dropdown */}
-          {termDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-200/80 animate-in fade-in zoom-in-95 duration-100 z-50">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-                    <Calendar className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800">รอบปีการศึกษาและเทอม</h4>
-                    <p className="text-[10px] text-slate-400">คัดกรองข้อมูลตามเกณฑ์ประเมิน SAR</p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                  กำลังใช้งาน
-                </span>
-              </div>
+        {/* Term Popover Menu */}
+        <Menu
+          anchorEl={termAnchorEl}
+          open={isTermOpen}
+          onClose={() => setTermAnchorEl(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: 320,
+                p: 2,
+                mt: 1,
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+              },
+            },
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary" }}>
+                รอบปีการศึกษาและเทอม
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                คัดกรองข้อมูลตามเกณฑ์ประเมิน SAR
+              </Typography>
+            </Box>
+            <Chip size="small" label="กำลังใช้งาน" color="success" variant="outlined" />
+          </Box>
 
-              {/* 1. Year Selector */}
-              <div className="mb-3">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  1. เลือกปีการศึกษา (Academic Year)
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {availableYears.map((year) => {
-                    const isSelected = selectedYear === year;
-                    return (
-                      <button
-                        key={year}
-                        type="button"
-                        onClick={() => setSelectedYear(year)}
-                        className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition ${
-                          isSelected
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                        {year}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          <Divider sx={{ my: 1.5 }} />
 
-              {/* 2. Semester Selector */}
-              <div className="mb-3">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  2. เลือกภาคเรียน (Semester)
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {availableSemesters.map((sem) => {
-                    const isSelected = selectedSemester === sem.value;
-                    return (
-                      <button
-                        key={sem.value}
-                        type="button"
-                        onClick={() => setSelectedSemester(sem.value)}
-                        className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl text-xs font-bold transition text-center ${
-                          isSelected
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                        {sem.shortLabel}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* Year Selector */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 1 }}>
+              เลือกปีการศึกษา
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+              {availableYears.map((year) => {
+                const isSelected = selectedYear === year;
+                return (
+                  <Button
+                    key={year}
+                    size="small"
+                    variant={isSelected ? "contained" : "outlined"}
+                    onClick={() => setSelectedYear(year)}
+                    startIcon={isSelected ? <CheckIcon sx={{ fontSize: 14 }} /> : undefined}
+                    sx={{ minWidth: 0, py: 0.5 }}
+                  >
+                    {year}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
 
-              {/* Summary Indicator */}
-              <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-slate-600 font-medium">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-                  <span>เลือกไว้: <strong className="text-slate-900">{shortTermLabel}</strong></span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setTermDropdownOpen(false)}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition shadow-2xs"
-                >
-                  ตกลง
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+          {/* Semester Selector */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 1 }}>
+              เลือกภาคเรียน
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+              {availableSemesters.map((sem) => {
+                const isSelected = selectedSemester === sem.value;
+                return (
+                  <Button
+                    key={sem.value}
+                    size="small"
+                    variant={isSelected ? "contained" : "outlined"}
+                    color={isSelected ? "secondary" : "primary"}
+                    onClick={() => setSelectedSemester(sem.value)}
+                    startIcon={isSelected ? <CheckIcon sx={{ fontSize: 14 }} /> : undefined}
+                    sx={{ minWidth: 0, py: 0.5 }}
+                  >
+                    {sem.shortLabel}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Box>
 
-        {/* 2. User Profile Dropdown */}
+          <Divider sx={{ my: 1.5 }} />
+
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <AutoAwesomeIcon sx={{ fontSize: 16, color: "primary.main" }} />
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                เลือกไว้ <strong style={{ color: "#0f172a" }}>{shortTermLabel}</strong>
+              </Typography>
+            </Box>
+            <Button size="small" variant="contained" onClick={() => setTermAnchorEl(null)}>
+              ตกลง
+            </Button>
+          </Box>
+        </Menu>
+
+        {/* User Profile Menu */}
         {session?.user ? (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 p-1 sm:p-1.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
+          <>
+            <Button
+              variant="text"
+              onClick={(e) => setUserAnchorEl(e.currentTarget)}
+              sx={{
+                p: 0.5,
+                borderRadius: 3,
+                color: "text.primary",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
-              {/* Avatar Image or Initial */}
-              {session.user.avatarUrl ? (
-                <img
-                  src={session.user.avatarUrl}
-                  alt={session.user.name || "Avatar"}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.style.display = "none";
-                    if (target.nextElementSibling) {
-                      (target.nextElementSibling as HTMLElement).style.display = "flex";
-                    }
-                  }}
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl object-cover border border-slate-200"
-                />
-              ) : null}
-              <div
-                style={{ display: session.user.avatarUrl ? "none" : "flex" }}
-                className="h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-sm shadow-xs"
+              <Avatar
+                src={session.user.avatarUrl || undefined}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  bgcolor: "primary.main",
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
+                }}
               >
                 {userInitial}
-              </div>
-
-              <div className="hidden lg:block text-left pr-1">
-                <div className="text-xs font-bold text-slate-800 leading-tight">
+              </Avatar>
+              <Box sx={{ display: { xs: "none", lg: "block" }, textAlign: "left" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                   {session.user.name}
-                </div>
-                <div className="text-[10px] text-slate-400 font-medium">
-                  {session.user.roleTitle || (isRoot ? "ROOT" : "บุคลากร")}
-                </div>
-              </div>
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1 }}>
+                  {session.user.roleTitle || (isRoot ? "ผู้ดูแลระบบสูงสุด" : "บุคลากร")}
+                </Typography>
+              </Box>
+              <ExpandMoreIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+            </Button>
 
-              <ChevronDown
-                className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
-                  dropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+            <Menu
+              anchorEl={userAnchorEl}
+              open={isUserOpen}
+              onClose={() => setUserAnchorEl(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    width: 240,
+                    p: 1,
+                    mt: 1,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  },
+                },
+              }}
+            >
+              <Box sx={{ px: 1.5, py: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {session.user.name}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                  {session.user.email}
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  {isRoot ? (
+                    <Chip
+                      size="small"
+                      icon={<SecurityIcon sx={{ fontSize: 14 }} />}
+                      label="ผู้ดูแลระบบสูงสุด"
+                      color="error"
+                      variant="outlined"
+                    />
+                  ) : (
+                    <Chip size="small" label="บุคลากร" color="primary" variant="outlined" />
+                  )}
+                </Box>
+              </Box>
 
-            {/* User Dropdown Menu */}
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 rounded-3xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-200/80 animate-in fade-in zoom-in-95 duration-100 z-50">
-                {/* Header in Dropdown */}
-                <div className="p-3 border-b border-slate-100 mb-1">
-                  <p className="text-xs font-bold text-slate-900 truncate">
-                    {session.user.name}
-                  </p>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                    {session.user.email}
-                  </p>
-                  <div className="mt-2">
-                    {isRoot ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                        <Shield className="h-3 w-3" />
-                        ผู้ดูแลระบบสูงสุด (ROOT)
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                        บุคลากร (STAFF)
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <Divider sx={{ my: 1 }} />
 
-                {/* Menu Items */}
-                <div className="space-y-0.5">
-                  <Link
-                    href="/profile"
-                    onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
-                  >
-                    <User className="h-4 w-4 text-slate-400" />
-                    โปรไฟล์ของฉัน (Profile)
-                  </Link>
-                </div>
+              <MenuItem
+                component={Link}
+                href="/profile"
+                onClick={() => setUserAnchorEl(null)}
+                sx={{ borderRadius: 1.5, gap: 1.5, py: 1 }}
+              >
+                <PersonIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                <Typography variant="body2">โปรไฟล์ของฉัน</Typography>
+              </MenuItem>
 
-                {/* Divider & Logout */}
-                <div className="pt-1 mt-1 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition text-left"
-                  >
-                    <LogOut className="h-4 w-4 text-rose-500" />
-                    ออกจากระบบ (Logout)
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              <Divider sx={{ my: 1 }} />
+
+              <MenuItem
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                sx={{ borderRadius: 1.5, gap: 1.5, py: 1, color: "error.main" }}
+              >
+                <LogoutIcon fontSize="small" color="error" />
+                <Typography variant="body2" sx={{ color: "error.main", fontWeight: 600 }}>
+                  ออกจากระบบ
+                </Typography>
+              </MenuItem>
+            </Menu>
+          </>
         ) : (
-          <Link
+          <Button
+            component={Link}
             href="/login"
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
+            variant="contained"
+            size="small"
+            startIcon={<PersonIcon />}
           >
-            <User className="h-3.5 w-3.5" />
             เข้าสู่ระบบ
-          </Link>
+          </Button>
         )}
-      </div>
-    </header>
+      </Box>
+    </Box>
   );
 }

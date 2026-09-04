@@ -3,31 +3,59 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  Users,
-  UserPlus,
-  Shield,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Edit2,
-  Trash2,
-  Loader2,
-  ArrowLeft,
-  X,
-  Phone,
-  Calendar,
-  Briefcase,
-  ShieldCheck,
-  Plus,
-  LayoutDashboard,
-  Eye,
-  Edit3,
-  FileBadge,
-  Check,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Avatar from "@mui/material/Avatar";
+import Checkbox from "@mui/material/Checkbox";
+import Grid from "@mui/material/Grid";
+
+import GroupIcon from "@mui/icons-material/Group";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import SecurityIcon from "@mui/icons-material/Security";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CloseIcon from "@mui/icons-material/Close";
+import PhoneIcon from "@mui/icons-material/Phone";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import WorkIcon from "@mui/icons-material/Work";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import AddIcon from "@mui/icons-material/Add";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import BadgeIcon from "@mui/icons-material/Badge";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+
 import { ImageUpload } from "@/components/ui/ImageUpload";
-import { clsx } from "clsx";
 
 interface RoleDef {
   id: string;
@@ -69,7 +97,7 @@ interface PermissionGroup {
     key: string;
     title: string;
     description: string;
-    icon: any;
+    icon: React.ElementType;
   }[];
 }
 
@@ -81,19 +109,19 @@ const AVAILABLE_PERMISSION_GROUPS: PermissionGroup[] = [
         key: "/dashboard",
         title: "หน้าหลักบุคลากร (Dashboard)",
         description: "เข้าถึงภาพรวมระบบและข้อมูลส่วนตัว",
-        icon: LayoutDashboard,
+        icon: DashboardIcon,
       },
       {
         key: "/admin/users",
         title: "จัดการผู้ใช้และสิทธิ์ (User & Role Management)",
         description: "จัดการบัญชีบุคลากร กำหนดยศ และสิทธิ์การเข้าถึง",
-        icon: Users,
+        icon: GroupIcon,
       },
       {
         key: "/admin/licenses",
         title: "จัดการประเภทใบอนุญาต (License Types & Standards)",
         description: "จัดการประเภทใบอนุญาต คุรุสภา TPQI DSD กว. และตัวเลือกแนะนำ",
-        icon: FileBadge,
+        icon: BadgeIcon,
       },
     ],
   },
@@ -102,15 +130,15 @@ const AVAILABLE_PERMISSION_GROUPS: PermissionGroup[] = [
     items: [
       {
         key: "profile.view_all",
-        title: "ดูโปรไฟล์ของบุคลากรทุกคนได้ (Read-Only Social View)",
+        title: "ดูโปรไฟล์ของบุคลากรทุกคนได้ (Read Only Social View)",
         description: "สามารถเปิดดูโปรไฟล์ วุฒิ ประวัติ ทักษะ และกิจกรรมของบุคลากรท่านอื่นได้",
-        icon: Eye,
+        icon: VisibilityIcon,
       },
       {
         key: "profile.edit_all",
-        title: "แก้ไขโปรไฟล์ของบุคลากรท่านอื่นได้ (Edit Others' Profile)",
+        title: "แก้ไขโปรไฟล์ของบุคลากรท่านอื่นได้ (Edit Others Profile)",
         description: "สามารถแก้ไขข้อมูลส่วนตัว วุฒิ ประวัติ ทักษะ และรูปของบุคลากรท่านอื่นได้",
-        icon: Edit3,
+        icon: EditIcon,
       },
     ],
   },
@@ -119,21 +147,21 @@ const AVAILABLE_PERMISSION_GROUPS: PermissionGroup[] = [
 const ALL_PERMISSIONS = AVAILABLE_PERMISSION_GROUPS.flatMap((g) => g.items);
 
 const COLOR_OPTIONS = [
-  { value: "teal", label: "สีเขียวหัวเป็ด (Teal)", badge: "bg-teal-50 text-teal-700 border-teal-200" },
-  { value: "blue", label: "สีน้ำเงิน (Blue)", badge: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "purple", label: "สีม่วง (Purple)", badge: "bg-purple-50 text-purple-700 border-purple-200" },
-  { value: "emerald", label: "สีเขียว (Emerald)", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  { value: "amber", label: "สีส้ม/ทอง (Amber)", badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  { value: "indigo", label: "สีคราม (Indigo)", badge: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  { value: "rose", label: "สีแดง (Rose)", badge: "bg-rose-50 text-rose-700 border-rose-200" },
-  { value: "slate", label: "สีเทา (Slate)", badge: "bg-slate-50 text-slate-700 border-slate-200" },
+  { value: "teal", label: "สีเขียวหัวเป็ด (Teal)" },
+  { value: "blue", label: "สีน้ำเงิน (Blue)" },
+  { value: "purple", label: "สีม่วง (Purple)" },
+  { value: "emerald", label: "สีเขียว (Emerald)" },
+  { value: "amber", label: "สีส้มหรือทอง (Amber)" },
+  { value: "indigo", label: "สีคราม (Indigo)" },
+  { value: "rose", label: "สีแดง (Rose)" },
+  { value: "slate", label: "สีเทา (Slate)" },
 ];
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
 
   // Active Tab: Users or Roles
-  const [activeTab, setActiveTab] = useState<"users" | "roles">("users");
+  const [activeTab, setActiveTab] = useState<number>(0);
 
   // Users State
   const [users, setUsers] = useState<UserData[]>([]);
@@ -144,6 +172,17 @@ export default function AdminUsersPage() {
   // Roles State
   const [roles, setRoles] = useState<RoleDef[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
+
+  // Feedback Snackbar
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // User Modal State
   const [showUserModal, setShowUserModal] = useState(false);
@@ -172,6 +211,19 @@ export default function AdminUsersPage() {
     description: "",
     color: "blue",
     permissions: ["/dashboard"],
+  });
+
+  // Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: string;
+    onConfirm: () => Promise<void>;
+  }>({
+    open: false,
+    title: "",
+    content: "",
+    onConfirm: async () => {},
   });
 
   // Fetch Users
@@ -225,16 +277,6 @@ export default function AdminUsersPage() {
     return age >= 0 ? age : null;
   };
 
-  // Badge Color Helper
-  const getBadgeStyle = (color?: string | null) => {
-    if (color === "rose") return "bg-rose-50 text-rose-700 border-rose-200";
-    if (color === "purple") return "bg-purple-50 text-purple-700 border-purple-200";
-    if (color === "emerald") return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    if (color === "amber") return "bg-amber-50 text-amber-700 border-amber-200";
-    if (color === "teal") return "bg-teal-50 text-teal-700 border-teal-200";
-    return "bg-blue-50 text-blue-700 border-blue-200";
-  };
-
   // User Actions
   const openCreateUserModal = () => {
     setUserModalMode("create");
@@ -284,16 +326,29 @@ export default function AdminUsersPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        setSnackbar({
+          open: true,
+          message: data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
+          severity: "error",
+        });
         return;
       }
 
       setShowUserModal(false);
+      setSnackbar({
+        open: true,
+        message: userModalMode === "create" ? "เพิ่มผู้ใช้งานสำเร็จ" : "บันทึกการแก้ไขสำเร็จ",
+        severity: "success",
+      });
       fetchUsers();
       fetchRoles();
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setSnackbar({
+        open: true,
+        message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์",
+        severity: "error",
+      });
     } finally {
       setUserFormSubmitting(false);
     }
@@ -308,33 +363,66 @@ export default function AdminUsersPage() {
       });
 
       if (res.ok) {
+        setSnackbar({
+          open: true,
+          message: user.isActive ? "ระงับการใช้งานบัญชีเรียบร้อย" : "เปิดใช้งานบัญชีเรียบร้อย",
+          severity: "success",
+        });
         fetchUsers();
       } else {
         const data = await res.json();
-        alert(data.error || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้");
+        setSnackbar({
+          open: true,
+          message: data.error || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้",
+          severity: "error",
+        });
       }
     } catch (err) {
       console.error(err);
+      setSnackbar({
+        open: true,
+        message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
+        severity: "error",
+      });
     }
   };
 
-  const handleDeleteUser = async (user: UserData) => {
-    if (!confirm(`คุณต้องการลบผู้ใช้ "${user.name}" (${user.email}) ใช่หรือไม่?`)) return;
+  const handleDeleteUser = (user: UserData) => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการลบผู้ใช้",
+      content: `ต้องการลบผู้ใช้ "${user.name}" (${user.email}) ออกจากระบบหรือไม่ การกระทำนี้ไม่สามารถย้อนกลับได้`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${user.id}`, {
+            method: "DELETE",
+          });
 
-    try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        fetchUsers();
-      } else {
-        const data = await res.json();
-        alert(data.error || "ไม่สามารถลบผู้ใช้ได้");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+          if (res.ok) {
+            setSnackbar({
+              open: true,
+              message: "ลบผู้ใช้เรียบร้อยแล้ว",
+              severity: "success",
+            });
+            fetchUsers();
+          } else {
+            const data = await res.json();
+            setSnackbar({
+              open: true,
+              message: data.error || "ไม่สามารถลบผู้ใช้ได้",
+              severity: "error",
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setSnackbar({
+            open: true,
+            message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
+            severity: "error",
+          });
+        }
+      },
+    });
   };
 
   // Role Actions
@@ -380,39 +468,71 @@ export default function AdminUsersPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกยศ/สิทธิ์");
+        setSnackbar({
+          open: true,
+          message: data.error || "เกิดข้อผิดพลาดในการบันทึกยศหรือสิทธิ์",
+          severity: "error",
+        });
         return;
       }
 
       setShowRoleModal(false);
+      setSnackbar({
+        open: true,
+        message: roleModalMode === "create" ? "สร้างยศใหม่สำเร็จ" : "บันทึกข้อมูลยศสำเร็จ",
+        severity: "success",
+      });
       fetchRoles();
       fetchUsers();
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setSnackbar({
+        open: true,
+        message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์",
+        severity: "error",
+      });
     } finally {
       setRoleFormSubmitting(false);
     }
   };
 
-  const handleDeleteRole = async (role: RoleDef) => {
-    if (!confirm(`คุณต้องการลบยศ "${role.title}" ใช่หรือไม่?`)) return;
+  const handleDeleteRole = (role: RoleDef) => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการลบยศ",
+      content: `ต้องการลบยศ "${role.title}" หรือไม่ ผู้ใช้ในยศนี้อาจได้รับผลกระทบ`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/roles/${role.id}`, {
+            method: "DELETE",
+          });
 
-    try {
-      const res = await fetch(`/api/admin/roles/${role.id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        fetchRoles();
-        fetchUsers();
-      } else {
-        const data = await res.json();
-        alert(data.error || "ไม่สามารถลบยศนี้ได้");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+          if (res.ok) {
+            setSnackbar({
+              open: true,
+              message: "ลบยศเรียบร้อยแล้ว",
+              severity: "success",
+            });
+            fetchRoles();
+            fetchUsers();
+          } else {
+            const data = await res.json();
+            setSnackbar({
+              open: true,
+              message: data.error || "ไม่สามารถลบยศนี้ได้",
+              severity: "error",
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setSnackbar({
+            open: true,
+            message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
+            severity: "error",
+          });
+        }
+      },
+    });
   };
 
   const togglePermission = (permKey: string) => {
@@ -439,669 +559,774 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-      {/* 1. Header with Breadcrumb & Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-2">
-          <div>
-            <Link
+    <Box sx={{ width: "100%", maxWidth: 1300, mx: "auto", p: { xs: 1.25, sm: 2 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
               href="/dashboard"
-              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
             >
-              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
-              <span>กลับหน้าหลัก (Dashboard)</span>
-            </Link>
-          </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             จัดการบัญชีผู้ใช้และสิทธิ์การใช้งาน
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            กำหนดข้อมูลบุคลากร รูปประจำตัว ควบคุมยศ และสิทธิ์การเข้าถึงแต่ละหน้าเว็บ
-          </p>
-        </div>
+          </Typography>
+          <Tooltip title="กำหนดข้อมูลบุคลากร รูปประจำตัว ควบคุมยศ และสิทธิ์การเข้าถึงแต่ละส่วนของระบบ">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
 
-        {/* Dynamic Create Button */}
-        <div>
-          {activeTab === "users" && (
-            <button
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          {activeTab === 0 ? (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PersonAddIcon sx={{ fontSize: 15 }} />}
               onClick={openCreateUserModal}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 flex-shrink-0"
+              sx={{ px: 1.5, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
             >
-              <UserPlus className="h-4 w-4" />
               เพิ่มผู้ใช้งานใหม่
-            </button>
-          )}
-
-          {activeTab === "roles" && (
-            <button
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon sx={{ fontSize: 15 }} />}
               onClick={openCreateRoleModal}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95 flex-shrink-0"
+              sx={{ px: 1.5, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
             >
-              <Plus className="h-4 w-4" />
-              สร้างยศ/สิทธิ์ใหม่
-            </button>
+              สร้างยศใหม่
+            </Button>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      {/* 2. Segmented Pill Tabs (2 Tabs: Users & Roles) */}
-      <div className="flex p-1.5 bg-slate-200/60 rounded-2xl border border-slate-200/80 shadow-2xs overflow-x-auto gap-1.5 max-w-md">
-        <button
-          onClick={() => setActiveTab("users")}
-          className={clsx(
-            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
-            activeTab === "users"
-              ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
-          )}
+      {/* 2. Tabs: Users & Roles */}
+      <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          sx={{
+            px: 2,
+            "& .MuiTab-root": {
+              minHeight: 48,
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              textTransform: "none",
+            },
+          }}
         >
-          <Users className="h-4 w-4 flex-shrink-0" />
-          <span>รายชื่อผู้ใช้งาน</span>
-          <span
-            className={clsx(
-              "px-2 py-0.5 text-xs font-black rounded-md",
-              activeTab === "users" ? "bg-blue-50 text-blue-700" : "bg-slate-300/70 text-slate-700"
-            )}
-          >
-            {users.length}
-          </span>
-        </button>
+          <Tab
+            icon={<GroupIcon fontSize="small" />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <span>รายชื่อผู้ใช้งาน</span>
+                <Chip label={users.length} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700 }} />
+              </Box>
+            }
+          />
+          <Tab
+            icon={<SecurityIcon fontSize="small" />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <span>ยศและสิทธิ์การใช้งาน</span>
+                <Chip label={roles.length} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700 }} />
+              </Box>
+            }
+          />
+        </Tabs>
+      </Paper>
 
-        <button
-          onClick={() => setActiveTab("roles")}
-          className={clsx(
-            "flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 select-none whitespace-nowrap",
-            activeTab === "roles"
-              ? "bg-white text-blue-600 shadow-sm shadow-slate-300/60"
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/40"
-          )}
-        >
-          <Shield className="h-4 w-4 flex-shrink-0" />
-          <span>ยศและสิทธิ์การใช้งาน</span>
-          <span
-            className={clsx(
-              "px-2 py-0.5 text-xs font-black rounded-md",
-              activeTab === "roles" ? "bg-blue-50 text-blue-700" : "bg-slate-300/70 text-slate-700"
-            )}
-          >
-            {roles.length}
-          </span>
-        </button>
-      </div>
-
-      {/* ================= TAB 1: USERS LIST ================= */}
-      {activeTab === "users" && (
-        <div className="space-y-6">
+      {/* ================= TAB 0: USERS LIST ================= */}
+      {activeTab === 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           {/* Filter and Search Bar */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm">
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-              {/* Search */}
-              <div className="relative w-full sm:w-96">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="ค้นหาชื่อ, อีเมล, เบอร์โทร..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
-                />
-              </div>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+            }}
+          >
+            <TextField
+              size="small"
+              placeholder="ค้นหาชื่อ อีเมล หรือเบอร์โทรศัพท์"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ width: { xs: "100%", sm: 360 } }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
 
-              {/* Role Filter */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label className="text-xs font-bold text-slate-400 whitespace-nowrap">ยศ:</label>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full sm:w-auto px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none"
-                >
-                  <option value="ALL">ทุกลำดับยศ (ทั้งหมด)</option>
-                  <option value="ROOT">ROOT (Super Admin)</option>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: { xs: "100%", sm: "auto" } }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", whiteSpace: "nowrap" }}>
+                ยศ
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 200, width: { xs: "100%", sm: "auto" } }}>
+                <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                  <MenuItem value="ALL">ทุกลำดับยศ (ทั้งหมด)</MenuItem>
+                  <MenuItem value="ROOT">ROOT (Super Admin)</MenuItem>
                   {roles.map((r) => (
-                    <option key={r.id} value={r.code}>
+                    <MenuItem key={r.id} value={r.code}>
                       {r.title}
-                    </option>
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
-            </div>
-          </div>
+                </Select>
+              </FormControl>
+            </Box>
+          </Paper>
 
           {/* Users Table */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white overflow-hidden shadow-sm">
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
             {loading ? (
-              <div className="p-16 flex flex-col items-center justify-center text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-                <span className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งาน...</span>
-              </div>
+              <Box sx={{ p: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
+                <CircularProgress size={32} />
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  กำลังโหลดข้อมูลผู้ใช้งาน
+                </Typography>
+              </Box>
             ) : filteredUsers.length === 0 ? (
-              <div className="p-16 flex flex-col items-center justify-center text-slate-400 text-center">
-                <Users className="h-10 w-10 text-slate-300 mb-2" />
-                <p className="font-bold text-slate-700">ไม่พบผู้ใช้งาน</p>
-                <p className="text-xs text-slate-400 mt-1">ลองเปลี่ยนคำค้นหาหรือตัวกรองยศ</p>
-              </div>
+              <Box sx={{ p: 6, textAlign: "center", color: "text.secondary" }}>
+                <GroupIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }}>
+                  ไม่พบผู้ใช้งาน
+                </Typography>
+                <Typography variant="caption">ลองเปลี่ยนคำค้นหาหรือตัวกรองยศ</Typography>
+              </Box>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <tr>
-                      <th className="p-4 sm:p-5">ผู้ใช้งาน</th>
-                      <th className="p-4 sm:p-5">ยศ / สิทธิ์</th>
-                      <th className="p-4 sm:p-5">ตำแหน่ง / ข้อมูล</th>
-                      <th className="p-4 sm:p-5 text-center">สถานะ</th>
-                      <th className="p-4 sm:p-5 text-right">การจัดการ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredUsers.map((user) => {
-                      const userInitial = user.name ? user.name.charAt(0) : "U";
-                      const isRootUser = user.roleCode === "ROOT";
-                      const userAge = calculateAge(user.birthDate);
+              <Table size="medium">
+                <TableHead sx={{ bgcolor: "grey.50" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                      ผู้ใช้งาน
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                      ยศหรือสิทธิ์
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                      ตำแหน่งและข้อมูล
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                      สถานะ
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                      การจัดการ
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => {
+                    const isRootUser = user.roleCode === "ROOT";
+                    const userAge = calculateAge(user.birthDate);
+                    const userInitial = user.name ? user.name.charAt(0) : "U";
 
-                      return (
-                        <tr key={user.id} className="hover:bg-slate-50/70 transition">
-                          {/* User Avatar & Name */}
-                          <td className="p-4 sm:p-5">
-                            <div className="flex items-center gap-3">
-                              {user.avatarUrl ? (
-                                <img
-                                  src={user.avatarUrl}
-                                  alt={user.name}
-                                  onError={(e) => {
-                                    const target = e.currentTarget;
-                                    target.style.display = "none";
-                                    if (target.nextElementSibling) {
-                                      (target.nextElementSibling as HTMLElement).style.display = "flex";
-                                    }
-                                  }}
-                                  className="h-10 w-10 rounded-2xl object-cover border border-slate-200 shadow-2xs flex-shrink-0"
-                                />
-                              ) : null}
-                              <div
-                                style={{ display: user.avatarUrl ? "none" : "flex" }}
-                                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm shadow-2xs flex-shrink-0"
-                              >
-                                {userInitial}
-                              </div>
-
-                              <div className="min-w-0">
-                                <div className="font-bold text-slate-900 truncate">{user.name}</div>
-                                <div className="text-xs text-slate-400 truncate">{user.email}</div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Role Badge */}
-                          <td className="p-4 sm:p-5">
-                            <span
-                              className={clsx(
-                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs",
-                                getBadgeStyle(user.roleDefinition?.color || (isRootUser ? "rose" : "blue"))
-                              )}
+                    return (
+                      <TableRow key={user.id} hover>
+                        {/* User Avatar & Name */}
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Avatar
+                              src={user.avatarUrl || undefined}
+                              alt={user.name}
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: "primary.main",
+                                fontWeight: 700,
+                                fontSize: "0.875rem",
+                              }}
                             >
-                              <ShieldCheck className="h-3.5 w-3.5" />
-                              {user.roleDefinition?.title || (isRootUser ? "ROOT" : user.roleCode)}
-                            </span>
-                          </td>
+                              {userInitial}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: "text.primary" }}>
+                                {user.name}
+                              </Typography>
+                              <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>
+                                {user.email}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
 
-                          {/* Position & Info */}
-                          <td className="p-4 sm:p-5 text-slate-600 text-xs space-y-1">
-                            <div className="font-bold text-slate-800 flex items-center gap-1">
-                              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                              {user.position || "บุคลากร"}
-                            </div>
-                            <div className="text-slate-400 flex items-center gap-2 text-[11px]">
+                        {/* Role Chip */}
+                        <TableCell>
+                          <Chip
+                            icon={<VerifiedUserIcon sx={{ fontSize: "1rem !important" }} />}
+                            label={user.roleDefinition?.title || (isRootUser ? "ROOT" : user.roleCode)}
+                            size="small"
+                            color={isRootUser ? "error" : "primary"}
+                            variant="outlined"
+                            sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+                          />
+                        </TableCell>
+
+                        {/* Position & Info */}
+                        <TableCell>
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <WorkIcon sx={{ fontSize: "0.875rem", color: "text.secondary" }} />
+                              <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
+                                {user.position || "บุคลากร"}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               {user.phone && (
-                                <span className="flex items-center gap-1">
-                                  <Phone className="h-3 w-3" /> {user.phone}
-                                </span>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                  <PhoneIcon sx={{ fontSize: "0.75rem", color: "text.secondary" }} />
+                                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                    {user.phone}
+                                  </Typography>
+                                </Box>
                               )}
                               {userAge !== null && (
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" /> อายุ {userAge} ปี
-                                </span>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                  <CalendarTodayIcon sx={{ fontSize: "0.75rem", color: "text.secondary" }} />
+                                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                    อายุ {userAge} ปี
+                                  </Typography>
+                                </Box>
                               )}
-                            </div>
-                          </td>
+                            </Box>
+                          </Box>
+                        </TableCell>
 
-                          {/* Status */}
-                          <td className="p-4 sm:p-5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleStatus(user)}
-                              disabled={isRootUser}
-                              className={clsx(
-                                "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition",
-                                user.isActive
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-rose-50 text-rose-700 border border-rose-200",
-                                isRootUser ? "cursor-default" : "hover:opacity-80 active:scale-95"
-                              )}
-                            >
-                              {user.isActive ? (
-                                <>
-                                  <CheckCircle2 className="h-3.5 w-3.5" /> ใช้งาน
-                                </>
+                        {/* Status Toggle */}
+                        <TableCell align="center">
+                          <Chip
+                            label={user.isActive ? "ใช้งาน" : "ระงับ"}
+                            size="small"
+                            color={user.isActive ? "success" : "default"}
+                            icon={
+                              user.isActive ? (
+                                <CheckCircleIcon sx={{ fontSize: "1rem !important" }} />
                               ) : (
-                                <>
-                                  <XCircle className="h-3.5 w-3.5" /> ระงับ
-                                </>
-                              )}
-                            </button>
-                          </td>
+                                <CancelIcon sx={{ fontSize: "1rem !important" }} />
+                              )
+                            }
+                            onClick={isRootUser ? undefined : () => handleToggleStatus(user)}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: "0.75rem",
+                              cursor: isRootUser ? "default" : "pointer",
+                            }}
+                          />
+                        </TableCell>
 
-                          {/* Actions */}
-                          <td className="p-4 sm:p-5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {/* Social Profile View Link */}
-                              <Link
+                        {/* Actions */}
+                        <TableCell align="right">
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+                            <Tooltip title="ดูโปรไฟล์">
+                              <IconButton
+                                component={Link}
                                 href={`/profile/${user.id}`}
-                                className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition shadow-2xs"
-                                title="ดูโปรไฟล์"
+                                size="small"
+                                sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
                               >
-                                <Eye className="h-4 w-4" />
-                              </Link>
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
 
-                              <button
-                                type="button"
+                            <Tooltip title="แก้ไขข้อมูล">
+                              <IconButton
+                                size="small"
                                 onClick={() => openEditUserModal(user)}
-                                className="p-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-2xs"
-                                title="แก้ไขผู้ใช้งาน"
+                                sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
                               >
-                                <Edit2 className="h-4 w-4 text-blue-600" />
-                              </button>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
 
-                              {!isRootUser && (
-                                <button
-                                  type="button"
+                            {!isRootUser && (
+                              <Tooltip title="ลบผู้ใช้">
+                                <IconButton
+                                  size="small"
                                   onClick={() => handleDeleteUser(user)}
-                                  className="p-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition shadow-2xs"
-                                  title="ลบผู้ใช้งาน"
+                                  sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
-          </div>
-        </div>
+          </TableContainer>
+        </Box>
       )}
 
-      {/* ================= TAB 2: ROLES & PERMISSIONS ================= */}
-      {activeTab === "roles" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {roles.map((role) => (
-              <div
-                key={role.id}
-                className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between"
+      {/* ================= TAB 1: ROLES & PERMISSIONS ================= */}
+      {activeTab === 1 && (
+        <Grid container spacing={2.5}>
+          {roles.map((role) => (
+            <Grid key={role.id} size={{ xs: 12, md: 6, lg: 4 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
               >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-900 text-base">{role.title}</h3>
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, mb: 1.5 }}>
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary" }}>
+                          {role.title}
+                        </Typography>
                         {role.isSystem && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-600 border border-slate-200">
-                            ระบบ
-                          </span>
+                          <Chip label="ระบบ" size="small" sx={{ height: 20, fontSize: "0.7rem", fontWeight: 700 }} />
                         )}
-                      </div>
-                      <span className="font-mono text-xs text-slate-400 block mt-0.5">
-                        Code: {role.code}
-                      </span>
-                    </div>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
+                        รหัส {role.code}
+                      </Typography>
+                    </Box>
 
-                    <span
-                      className={clsx(
-                        "px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs",
-                        getBadgeStyle(role.color)
-                      )}
-                    >
-                      {role.code}
-                    </span>
-                  </div>
+                    <Chip
+                      label={role.code}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+                    />
+                  </Box>
 
                   {role.description && (
-                    <p className="text-xs text-slate-500 leading-relaxed">{role.description}</p>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, fontSize: "0.8125rem" }}>
+                      {role.description}
+                    </Typography>
                   )}
 
-                  <div className="pt-2 border-t border-slate-100">
-                    <span className="text-xs font-bold text-slate-700 block mb-2">
-                      สิทธิ์การเข้าถึง ({role.permissions?.length || 0} รายการ):
-                    </span>
-                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                  <Box sx={{ pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary", display: "block", mb: 1 }}>
+                      สิทธิ์การเข้าถึง ({role.permissions?.length || 0} รายการ)
+                    </Typography>
+                    <Box sx={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0.75 }}>
                       {ALL_PERMISSIONS.map((perm) => {
-                        const hasAccess =
-                          role.code === "ROOT" || role.permissions?.includes(perm.key);
-
+                        const hasAccess = role.code === "ROOT" || role.permissions?.includes(perm.key);
                         return (
-                          <div
+                          <Box
                             key={perm.key}
-                            className={clsx(
-                              "flex items-center justify-between text-[11px] p-2 rounded-xl border",
-                              hasAccess
-                                ? "bg-emerald-50/60 text-emerald-900 border-emerald-200 font-bold"
-                                : "bg-slate-50 text-slate-400 border-slate-200"
-                            )}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              p: 1,
+                              borderRadius: 1,
+                              border: "1px solid",
+                              borderColor: hasAccess ? "success.200" : "divider",
+                              bgcolor: hasAccess ? "success.50" : "grey.50",
+                            }}
                           >
-                            <span className="truncate flex-1">{perm.title}</span>
+                            <Typography
+                              variant="caption"
+                              noWrap
+                              sx={{
+                                fontWeight: hasAccess ? 700 : 400,
+                                color: hasAccess ? "success.900" : "text.secondary",
+                              }}
+                            >
+                              {perm.title}
+                            </Typography>
                             {hasAccess ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                              <CheckCircleIcon sx={{ fontSize: "1rem", color: "success.main", flexShrink: 0 }} />
                             ) : (
-                              <XCircle className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                              <CancelIcon sx={{ fontSize: "1rem", color: "text.disabled", flexShrink: 0 }} />
                             )}
-                          </div>
+                          </Box>
                         );
                       })}
-                    </div>
-                  </div>
-                </div>
+                    </Box>
+                  </Box>
+                </Box>
 
-                {/* Role Actions */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
+                <Box
+                  sx={{
+                    pt: 2,
+                    mt: 2,
+                    borderTop: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    gap: 1,
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<EditIcon fontSize="small" />}
                     onClick={() => openEditRoleModal(role)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    sx={{ fontWeight: 700 }}
                   >
-                    <Edit2 className="h-3.5 w-3.5 text-blue-600" />
                     แก้ไขสิทธิ์
-                  </button>
+                  </Button>
 
                   {!role.isSystem && role.code !== "ROOT" && (
-                    <button
-                      type="button"
+                    <IconButton
+                      size="small"
+                      color="error"
                       onClick={() => handleDeleteRole(role)}
-                      className="p-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
-                      title="ลบยศนี้"
+                      sx={{ border: "1px solid", borderColor: "error.200" }}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       {/* ================= MODAL: CREATE / EDIT USER ================= */}
-      {showUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-black text-slate-900">
-                {userModalMode === "create" ? "เพิ่มผู้ใช้งานใหม่" : "แก้ไขข้อมูลผู้ใช้งาน"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowUserModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <Dialog
+        open={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        fullWidth
+        maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+            {userModalMode === "create" ? "เพิ่มผู้ใช้งานใหม่" : "แก้ไขข้อมูลผู้ใช้งาน"}
+          </Typography>
+          <IconButton size="small" onClick={() => setShowUserModal(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
 
-            <form onSubmit={handleUserFormSubmit} className="space-y-3.5 text-xs">
-              <div className="flex justify-center pb-2">
-                <ImageUpload
-                  value={userFormData.avatarUrl}
-                  onChange={(url) => setUserFormData((prev) => ({ ...prev, avatarUrl: url || "" }))}
-                />
-              </div>
+        <form onSubmit={handleUserFormSubmit}>
+          <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", pb: 1 }}>
+              <ImageUpload
+                value={userFormData.avatarUrl}
+                onChange={(url) => setUserFormData((prev) => ({ ...prev, avatarUrl: url || "" }))}
+              />
+            </Box>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">ชื่อ-นามสกุล *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น สมชาย ใจดี"
-                  value={userFormData.name}
-                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
+            <TextField
+              label="ชื่อ นามสกุล"
+              required
+              fullWidth
+              size="small"
+              placeholder="เช่น สมชาย ใจดี"
+              value={userFormData.name}
+              onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+            />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">อีเมล (ใช้เข้าสู่ระบบ) *</label>
-                <input
-                  type="email"
-                  required
-                  disabled={userModalMode === "edit"}
-                  placeholder="user@techniccom.ac.th"
-                  value={userFormData.email}
-                  onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none disabled:opacity-60"
-                />
-              </div>
+            <TextField
+              label="อีเมลสำหรับเข้าสู่ระบบ"
+              type="email"
+              required
+              fullWidth
+              size="small"
+              disabled={userModalMode === "edit"}
+              placeholder="user@techniccom.ac.th"
+              value={userFormData.email}
+              onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+            />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">
-                  {userModalMode === "create" ? "รหัสผ่าน *" : "รหัสผ่านใหม่ (เว้นว่างไว้ถ้าไม่เปลี่ยน)"}
-                </label>
-                <input
-                  type="password"
-                  required={userModalMode === "create"}
-                  placeholder="••••••••"
-                  value={userFormData.password}
-                  onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                />
-              </div>
+            <TextField
+              label={userModalMode === "create" ? "รหัสผ่าน" : "รหัสผ่านใหม่ (เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน)"}
+              type="password"
+              required={userModalMode === "create"}
+              fullWidth
+              size="small"
+              placeholder="••••••••"
+              value={userFormData.password}
+              onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">ยศ / สิทธิ์การใช้งาน *</label>
-                  <select
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="role-select-label">ยศหรือสิทธิ์การใช้งาน</InputLabel>
+                  <Select
+                    labelId="role-select-label"
+                    label="ยศหรือสิทธิ์การใช้งาน"
                     value={userFormData.roleCode}
                     onChange={(e) => setUserFormData({ ...userFormData, roleCode: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
                   >
                     {roles.map((r) => (
-                      <option key={r.id} value={r.code}>
+                      <MenuItem key={r.id} value={r.code}>
                         {r.title} ({r.code})
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
+                  </Select>
+                </FormControl>
+              </Grid>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">ตำแหน่งงาน</label>
-                  <input
-                    type="text"
-                    placeholder="เช่น ครูผู้เชี่ยวชาญ"
-                    value={userFormData.position}
-                    onChange={(e) => setUserFormData({ ...userFormData, position: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="ตำแหน่งงาน"
+                  fullWidth
+                  size="small"
+                  placeholder="เช่น ครูผู้เชี่ยวชาญ"
+                  value={userFormData.position}
+                  onChange={(e) => setUserFormData({ ...userFormData, position: e.target.value })}
+                />
+              </Grid>
+            </Grid>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">เบอร์โทรศัพท์</label>
-                  <input
-                    type="tel"
-                    placeholder="081-234-5678"
-                    value={userFormData.phone}
-                    onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="เบอร์โทรศัพท์"
+                  type="tel"
+                  fullWidth
+                  size="small"
+                  placeholder="0812345678"
+                  value={userFormData.phone}
+                  onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
+                />
+              </Grid>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">วัน/เดือน/ปีเกิด</label>
-                  <input
-                    type="date"
-                    value={userFormData.birthDate}
-                    onChange={(e) => setUserFormData({ ...userFormData, birthDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="วันเกิด"
+                  type="date"
+                  fullWidth
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={userFormData.birthDate}
+                  onChange={(e) => setUserFormData({ ...userFormData, birthDate: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
 
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowUserModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={userFormSubmitting}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 disabled:opacity-50"
-                >
-                  {userFormSubmitting ? "กำลังบันทึก..." : "บันทึกผู้ใช้"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setShowUserModal(false)} color="inherit">
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="contained" disabled={userFormSubmitting}>
+              {userFormSubmitting ? "กำลังบันทึก..." : "บันทึกผู้ใช้"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* ================= MODAL: CREATE / EDIT ROLE ================= */}
-      {showRoleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-black text-slate-900">
-                {roleModalMode === "create" ? "สร้างยศ/สิทธิ์ใหม่" : "แก้ไขยศและสิทธิ์"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowRoleModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <Dialog
+        open={showRoleModal}
+        onClose={() => setShowRoleModal(false)}
+        fullWidth
+        maxWidth="md"
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+            {roleModalMode === "create" ? "สร้างยศหรือสิทธิ์ใหม่" : "แก้ไขยศและสิทธิ์"}
+          </Typography>
+          <IconButton size="small" onClick={() => setShowRoleModal(false)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
 
-            <form onSubmit={handleRoleFormSubmit} className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">ชื่อยศ (Title) *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="เช่น อาจารย์ผู้ประเมิน"
-                    value={roleFormData.title}
-                    onChange={(e) => setRoleFormData({ ...roleFormData, title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">รหัสยศ (Code) *</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={roleModalMode === "edit"}
-                    placeholder="เช่น EVALUATOR"
-                    value={roleFormData.code}
-                    onChange={(e) =>
-                      setRoleFormData({
-                        ...roleFormData,
-                        code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-xs focus:bg-white focus:outline-none disabled:opacity-60"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">คำอธิบาย</label>
-                <input
-                  type="text"
-                  placeholder="คำอธิบายหน้าที่และความรับผิดชอบของยศนี้..."
-                  value={roleFormData.description}
-                  onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
+        <form onSubmit={handleRoleFormSubmit}>
+          <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="ชื่อยศ"
+                  required
+                  fullWidth
+                  size="small"
+                  placeholder="เช่น อาจารย์ผู้ประเมิน"
+                  value={roleFormData.title}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, title: e.target.value })}
                 />
-              </div>
+              </Grid>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">โทนสี Badge</label>
-                <select
-                  value={roleFormData.color}
-                  onChange={(e) => setRoleFormData({ ...roleFormData, color: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                >
-                  {COLOR_OPTIONS.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="รหัสยศ"
+                  required
+                  fullWidth
+                  size="small"
+                  disabled={roleModalMode === "edit"}
+                  placeholder="เช่น EVALUATOR"
+                  value={roleFormData.code}
+                  onChange={(e) =>
+                    setRoleFormData({
+                      ...roleFormData,
+                      code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
+                    })
+                  }
+                />
+              </Grid>
+            </Grid>
 
-              {/* Permissions Checklist */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <label className="font-bold text-slate-900 block">กำหนดสิทธิ์การเข้าถึง (Permissions):</label>
-                {AVAILABLE_PERMISSION_GROUPS.map((group) => (
-                  <div key={group.category} className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-500">{group.category}</span>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const checked = roleFormData.permissions.includes(item.key);
-                        return (
-                          <label
-                            key={item.key}
-                            className={clsx(
-                              "flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition",
-                              checked
-                                ? "bg-blue-50/60 border-blue-200 text-blue-950 font-bold"
-                                : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100/70"
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => togglePermission(item.key)}
-                              className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <div className="min-w-0">
-                              <div className="text-xs">{item.title}</div>
-                              <div className="text-[11px] font-normal text-slate-400">{item.description}</div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+            <TextField
+              label="คำอธิบายหน้าที่และความรับผิดชอบ"
+              fullWidth
+              size="small"
+              placeholder="คำอธิบายหน้าที่ของยศนี้"
+              value={roleFormData.description}
+              onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
+            />
+
+            <FormControl fullWidth size="small">
+              <InputLabel id="role-color-label">โทนสีแสดงผล</InputLabel>
+              <Select
+                labelId="role-color-label"
+                label="โทนสีแสดงผล"
+                value={roleFormData.color}
+                onChange={(e) => setRoleFormData({ ...roleFormData, color: e.target.value })}
+              >
+                {COLOR_OPTIONS.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
                 ))}
-              </div>
+              </Select>
+            </FormControl>
 
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRoleModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={roleFormSubmitting}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 disabled:opacity-50"
-                >
-                  {roleFormSubmitting ? "กำลังบันทึก..." : "บันทึกยศ"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+            {/* Permissions Checklist */}
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
+                กำหนดสิทธิ์การเข้าถึง
+              </Typography>
+              {AVAILABLE_PERMISSION_GROUPS.map((group) => (
+                <Box key={group.category} sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.5 }}>
+                    {group.category}
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {group.items.map((item) => {
+                      const checked = roleFormData.permissions.includes(item.key);
+                      return (
+                        <Paper
+                          key={item.key}
+                          variant="outlined"
+                          onClick={() => togglePermission(item.key)}
+                          sx={{
+                            p: 1.25,
+                            cursor: "pointer",
+                            borderColor: checked ? "primary.main" : "divider",
+                            bgcolor: checked ? "primary.50" : "background.paper",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1.5,
+                          }}
+                        >
+                          <Checkbox checked={checked} size="small" sx={{ p: 0, mt: 0.25 }} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: checked ? 700 : 500 }}>
+                              {item.title}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {item.description}
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </DialogContent>
+
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setShowRoleModal(false)} color="inherit">
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="contained" disabled={roleFormSubmitting}>
+              {roleFormSubmitting ? "กำลังบันทึก..." : "บันทึกยศ"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{confirmDialog.content}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))} color="inherit">
+            ยกเลิก
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              setConfirmDialog((prev) => ({ ...prev, open: false }));
+              await confirmDialog.onConfirm();
+            }}
+          >
+            ยืนยัน
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Feedback Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%", boxShadow: 3 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

@@ -2,77 +2,124 @@
 
 import React from "react";
 import Link from "next/link";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AddIcon from "@mui/icons-material/Add";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
-import {
-  ArrowLeft,
-  Calendar,
-  Sparkles,
-  BookOpen,
-  Award,
-  Lightbulb,
-  CheckCircle2,
-  Plus,
-  FileText,
-  Clock,
-} from "lucide-react";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
-export default function Page() {
+export default function LessonPlansPage() {
   const { termLabel } = useAcademicYear();
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Top Navigation with Back Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 text-xs font-bold transition shadow-2xs group"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>← กลับหน้าหลัก (ภาพรวมงานครู)</span>
-        </Link>
+    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            แผนการจัดการเรียนรู้ และ บันทึกหลังสอน
+          </Typography>
+          <Tooltip title="ระบบจัดเก็บแผนการสอนมุ่งเน้นสมรรถนะอาชีพ บันทึกผลการจัดการเรียนรู้ และร่องรอยการประเมินผู้เรียน">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip size="small" label="มาตรฐานที่ 2 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+        </Box>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-xs text-blue-800 font-bold">
-          <Calendar className="h-3.5 w-3.5 text-blue-600" />
-          <span>รอบข้อมูล: {termLabel}</span>
-        </div>
-      </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Chip
+            icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
+            label={`รอบข้อมูล ${termLabel}`}
+            variant="outlined"
+            size="small"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+          <Tooltip title="กลับภาพรวมงานครู">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Button
+            component={Link}
+            href="/quick-upload"
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: 15 }} />}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
+          >
+            เพิ่มแผนการสอน
+          </Button>
+        </Box>
+      </Box>
 
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">
-          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-          มาตรฐานที่ 2 การจัดการอาชีวศึกษา (ด้านหลักสูตรและการจัดการเรียนรู้)
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              แผนการจัดการเรียนรู้ & บันทึกหลังสอน
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mt-1 leading-relaxed">
-              ระบบจัดเก็บแผนการสอนมุ่งเน้นสมรรถนะอาชีพ บันทึกผลการจัดการเรียนรู้ และร่องรอยการประเมินผู้เรียนตามสภาพจริง
-            </p>
-          </div>
-          <Link href="/quick-upload" className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"><Plus className="h-4 w-4" /><span>+ เพิ่มแผนการจัดการเรียนรู้</span></Link>
-        </div>
-      </div>
+      {/* 2. Compact KPI Summary Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+          gap: 1.5,
+        }}
+      >
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            แผนการสอนที่ส่งแล้ว
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              12 แผน
+            </Typography>
+            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              ครบ 100% ตามรายวิชาสอน
+            </Typography>
+          </Box>
+        </Paper>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">แผนการสอนที่ส่งแล้ว</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">12 แผน</div>
-          <div className="text-xs font-semibold text-emerald-600 mt-1">ครบ 100% ตามรายวิชาสอน</div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">บันทึกหลังสอนสมบูรณ์</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">96.5%</div>
-          <div className="text-xs font-semibold text-blue-600 mt-1">สอดคล้องกับตัวชี้วัด SAR</div>
-        </div>
-      </div>
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            บันทึกหลังสอนสมบูรณ์
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              96.5%
+            </Typography>
+            <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              สอดคล้องกับตัวชี้วัด SAR
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
 
-      {/* Live Uploaded Evidence Files */}
-      <LiveEvidenceSection category="lesson_plan" sectionTitle="ไฟล์แผนการจัดการเรียนรู้ที่อัปโหลดในระบบ (Live Lesson Plans)" emptyNotice="ยังไม่มีไฟล์แผนการสอนที่อัปโหลดในรอบปีการศึกษานี้" />
-    </div>
+      {/* 3. Live Uploaded Evidence Files */}
+      <LiveEvidenceSection
+        category="lesson_plan"
+        sectionTitle="ไฟล์แผนการจัดการเรียนรู้ที่จัดเก็บในระบบ"
+        emptyNotice="ยังไม่มีไฟล์แผนการสอนที่จัดเก็บในรอบปีการศึกษานี้"
+      />
+    </Box>
   );
 }

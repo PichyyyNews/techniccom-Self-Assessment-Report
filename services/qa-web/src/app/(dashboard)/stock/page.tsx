@@ -3,152 +3,153 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import {
-  FolderArchive,
-  Search,
-  Filter,
-  Download,
-  Trash2,
-  Eye,
-  FileText,
-  Image as ImageIcon,
-  Video,
-  FileCheck,
-  Calendar,
-  User,
-  ArrowLeft,
-  Zap,
-  Grid,
-  List,
-  RefreshCw,
-  Sparkles,
-  ExternalLink,
-  MapPin,
-  Building2,
-  X,
-  AlertTriangle,
-  Loader2,
-  Plus,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Avatar from "@mui/material/Avatar";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import InputAdornment from "@mui/material/InputAdornment";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
+import SearchIcon from "@mui/icons-material/Search";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import BoltIcon from "@mui/icons-material/Bolt";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import CloseIcon from "@mui/icons-material/Close";
+import WarningIcon from "@mui/icons-material/Warning";
+import GridViewIcon from "@mui/icons-material/GridView";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import PersonIcon from "@mui/icons-material/Person";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
-
-interface EvidenceFileItem {
-  id: string;
-  userId: string;
-  title: string;
-  description?: string | null;
-  category: string;
-  fileKey: string;
-  fileUrl: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  academicYear: string;
-  semester: string;
-  metadata?: {
-    location?: string;
-    organization?: string;
-    eventDate?: string;
-    subjectCode?: string;
-    gradeLevel?: string;
-    externalVideoUrl?: string;
-  } | null;
-  createdAt: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl?: string | null;
-    position?: string | null;
-    roleCode: string;
-  } | null;
-}
+import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
+import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
 
 const CATEGORY_MAP: Record<
   string,
-  { label: string; color: string; badgeColor: string }
+  { label: string; color: "primary" | "secondary" | "success" | "warning" | "error" | "info" | "default" }
 > = {
-  lesson_plan: {
-    label: "แผนการจัดการเรียนรู้",
-    color: "text-blue-600 bg-blue-50 border-blue-200",
-    badgeColor: "bg-blue-100 text-blue-700",
-  },
-  training_cert: {
-    label: "วุฒิบัตร / เกียรติบัตร",
-    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    badgeColor: "bg-emerald-100 text-emerald-700",
-  },
-  training_photo: {
-    label: "ภาพกิจกรรมอบรม/ดูงาน",
-    color: "text-cyan-600 bg-cyan-50 border-cyan-200",
-    badgeColor: "bg-cyan-100 text-cyan-700",
-  },
-  speaker_activity: {
-    label: "การเป็นวิทยากร & บรรยาย",
-    color: "text-purple-600 bg-purple-50 border-purple-200",
-    badgeColor: "bg-purple-100 text-purple-700",
-  },
-  research: {
-    label: "งานวิจัย & สิ่งประดิษฐ์",
-    color: "text-amber-600 bg-amber-50 border-amber-200",
-    badgeColor: "bg-amber-100 text-amber-700",
-  },
-  student_work: {
-    label: "ชิ้นงาน & ผลงานนักศึกษา",
-    color: "text-rose-600 bg-rose-50 border-rose-200",
-    badgeColor: "bg-rose-100 text-rose-700",
-  },
-  license: {
-    label: "ใบประกอบวิชาชีพ / คุณวุฒิ",
-    color: "text-teal-600 bg-teal-50 border-teal-200",
-    badgeColor: "bg-teal-100 text-teal-700",
-  },
-  other: {
-    label: "เอกสาร SAR / โครงการ",
-    color: "text-slate-600 bg-slate-50 border-slate-200",
-    badgeColor: "bg-slate-100 text-slate-700",
-  },
+  lesson_plan: { label: "แผนการจัดการเรียนรู้", color: "primary" },
+  training_cert: { label: "วุฒิบัตรและเกียรติบัตร", color: "success" },
+  training_photo: { label: "ภาพกิจกรรมอบรมและดูงาน", color: "info" },
+  speaker_activity: { label: "การเป็นวิทยากรและบรรยาย", color: "secondary" },
+  research: { label: "งานวิจัยและสิ่งประดิษฐ์", color: "warning" },
+  student_work: { label: "ชิ้นงานและผลงานนักศึกษา", color: "error" },
+  license: { label: "ใบอนุญาตและคุณวุฒิ", color: "primary" },
+  other: { label: "เอกสารและโครงการทั่วไป", color: "default" },
 };
 
-export default function FileStockPage() {
+function stringToColor(string: string) {
+  let hash = 0;
+  for (let i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    "#2563eb",
+    "#7c3aed",
+    "#059669",
+    "#d97706",
+    "#dc2626",
+    "#0891b2",
+    "#4f46e5",
+    "#db2777",
+    "#0d9488",
+  ];
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function formatThaiDateTime(dateString: string) {
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    const months = [
+      "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+      "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+    ];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear() + 543;
+    const hours = d.getHours().toString().padStart(2, "0");
+    const minutes = d.getMinutes().toString().padStart(2, "0");
+    return `${day} ${month} ${year} ${hours}:${minutes} น.`;
+  } catch {
+    return dateString;
+  }
+}
+
+export default function StockPage() {
   const { data: session } = useSession();
-  const { selectedYear, selectedSemester, termLabel, availableYears, availableSemesters } =
+  const currentUserId = (session?.user as any)?.id;
+  const { selectedYear, selectedSemester, availableYears, availableSemesters } =
     useAcademicYear();
 
-  const [scope, setScope] = useState<"all" | "my">("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [files, setFiles] = useState<EvidenceFileDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [scope, setScope] = useState<"all" | "my" | "starred">("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterYear, setFilterYear] = useState<string>(selectedYear);
-  const [filterSemester, setFilterSemester] = useState<string>("all");
+  const [filterSemester, setFilterSemester] = useState<string>(selectedSemester);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [files, setFiles] = useState<EvidenceFileItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [previewFile, setPreviewFile] = useState<EvidenceFileItem | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<EvidenceFileItem | null>(null);
+  const [detailsFile, setDetailsFile] = useState<EvidenceFileDetails | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<EvidenceFileDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
   const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("scope", scope);
-      if (selectedCategory !== "all") params.set("category", selectedCategory);
+      if (scope === "starred") {
+        params.set("starred", "true");
+      } else {
+        params.set("scope", scope);
+      }
+      if (filterCategory !== "all") params.set("category", filterCategory);
       if (filterYear !== "all") params.set("academicYear", filterYear);
       if (filterSemester !== "all") params.set("semester", filterSemester);
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      params.set("_t", String(Date.now()));
 
       const res = await fetch(`/api/evidence?${params.toString()}`);
       const data = await res.json();
-      if (res.ok) {
-        setFiles(data.files || []);
+      if (res.ok && data.files) {
+        setFiles(data.files);
       }
     } catch (err) {
       console.error("Failed to load evidence files:", err);
     } finally {
       setLoading(false);
     }
-  }, [scope, selectedCategory, filterYear, filterSemester, searchQuery]);
+  }, [scope, filterCategory, filterYear, filterSemester, searchQuery]);
 
   useEffect(() => {
     fetchFiles();
@@ -161,618 +162,435 @@ export default function FileStockPage() {
       const res = await fetch(`/api/evidence/${deleteTarget.id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        setFiles((prev) => prev.filter((f) => f.id !== deleteTarget.id));
-        setDeleteTarget(null);
-      } else {
-        const d = await res.json();
-        alert(d.error || "ไม่สามารถลบไฟล์ได้");
-      }
-    } catch (err) {
-      alert("เกิดข้อผิดพลาดในการลบไฟล์");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการลบไฟล์");
+      setFiles((prev) => prev.filter((f) => f.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setSnackbarMessage("ลบไฟล์หลักฐานเรียบร้อยแล้ว");
+    } catch (err: any) {
+      setSnackbarMessage(err.message || "เกิดข้อผิดพลาดในการลบไฟล์");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const isOwnerOrRoot = (file: EvidenceFileItem) => {
-    if (!session?.user) return false;
-    return session.user.role === "ROOT" || file.userId === session.user.id;
+  const handleToggleStar = async (file: EvidenceFileDetails, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/evidence/${file.id}/star`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id
+              ? { ...f, metadata: { ...f.metadata, starredBy: data.starredBy } }
+              : f
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Star toggle error:", err);
+    }
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith("image/")) return <ImageIcon className="h-5 w-5 text-cyan-600" />;
-    if (fileType.includes("pdf")) return <FileText className="h-5 w-5 text-rose-600" />;
-    if (fileType.startsWith("video/")) return <Video className="h-5 w-5 text-indigo-600" />;
-    return <FileCheck className="h-5 w-5 text-blue-600" />;
+  const handleFileUpdated = (updated: EvidenceFileDetails) => {
+    setFiles((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+  };
+
+  const isOwnerOrRoot = (file: EvidenceFileDetails) => {
+    if (!session?.user) return false;
+    if ((session.user as any).role === "ROOT") return true;
+    return (file as any).userId === (session.user as any).id;
   };
 
   const totalSizeMB = files.reduce((acc, f) => acc + f.fileSize, 0) / (1024 * 1024);
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      {/* 1. Top Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 text-xs font-bold transition shadow-2xs group"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>← กลับหน้าหลัก (Dashboard)</span>
-        </Link>
+    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Page Header */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, pb: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            คลังไฟล์และร่องรอยหลักฐาน
+          </Typography>
+          <Tooltip title="ศูนย์รวมไฟล์เอกสาร วุฒิบัตร ภาพกิจกรรม และหลักฐานเพื่อจัดทำรายงานประเมินตนเอง SAR">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip
+            size="small"
+            label={`${files.length} รายการ (${totalSizeMB.toFixed(1)} MB)`}
+            color="primary"
+            variant="outlined"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+        </Box>
 
-        <div className="flex items-center gap-3">
-          <Link
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Button
+            component={Link}
             href="/quick-upload"
-            className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-200 transition active:scale-95"
+            variant="contained"
+            size="small"
+            startIcon={<BoltIcon sx={{ fontSize: 16 }} />}
+            sx={{ px: 1.5, py: 0.4, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Zap className="h-4 w-4 text-amber-300" />
-            <span>+ ทางลัดอัปโหลดด่วน (Quick Upload)</span>
-          </Link>
-        </div>
-      </div>
+            อัปโหลดด่วน
+          </Button>
+        </Box>
+      </Box>
 
-      {/* 2. Header Title Banner */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-1 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200 mb-1">
-              <FolderArchive className="h-3.5 w-3.5 text-blue-600" />
-              คลังหลักฐานดิจิทัลกลาง (Central Evidence Repository)
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              คลังไฟล์และร่องรอยหลักฐาน (File Stock)
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              ศูนย์รวมไฟล์เอกสาร, วุฒิบัตร, ภาพกิจกรรมการอบรม, งานวิจัย และชิ้นงานนักเรียน สไตล์ Google Drive
-              เชื่อมโยงข้อมูลสู่เล่มรายงานการประเมินตนเอง (SAR)
-            </p>
-          </div>
+      {/* 2. Compact Filter Toolbar */}
+      <Paper sx={{ p: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, alignItems: { xs: "stretch", lg: "center" }, justifyContent: "space-between", gap: 1 }}>
+          <Tabs
+            value={scope}
+            onChange={(_, val) => setScope(val)}
+            textColor="primary"
+            indicatorColor="primary"
+            sx={{ minHeight: 32, "& .MuiTab-root": { minHeight: 32, py: 0.25, px: 1.25, fontSize: "0.8rem" } }}
+          >
+            <Tab label="ไฟล์ทั้งหมดในวิทยาลัย" value="all" />
+            <Tab label="เฉพาะไฟล์ของฉัน" value="my" />
+            <Tab label="ที่ติดดาวไว้" value="starred" icon={<StarIcon sx={{ fontSize: 14 }} />} iconPosition="start" />
+          </Tabs>
 
-          {/* Mini Stats Box */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex-shrink-0">
-            <div>
-              <div className="text-[11px] font-bold text-slate-400 uppercase">จำนวนไฟล์ในคลัง</div>
-              <div className="text-xl font-black text-slate-900">{files.length} รายการ</div>
-            </div>
-            <div className="h-8 w-px bg-slate-200" />
-            <div>
-              <div className="text-[11px] font-bold text-slate-400 uppercase">พื้นที่จัดเก็บ</div>
-              <div className="text-xl font-black text-blue-600">{totalSizeMB.toFixed(1)} MB</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Filter Bar & Scope Switcher */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-        {/* Top Controls: Scope Toggle + Search + View Mode */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Scope Toggle: My Files vs All College Files */}
-          <div className="inline-flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80 select-none flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setScope("all")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
-                scope === "all"
-                  ? "bg-white text-blue-700 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>🌐 ไฟล์ทุกคนในวิทยาลัย</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setScope("my")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
-                scope === "my"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <User className="h-3.5 w-3.5" />
-              <span>📂 เฉพาะไฟล์ของฉัน</span>
-            </button>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+            <TextField
+              size="small"
+              placeholder="ค้นหาชื่อไฟล์ หัวข้อ หรือแท็ก..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาชื่อไฟล์, หัวข้อ, หรือผู้เผยแพร่..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: "text.secondary" }} /></InputAdornment>,
+                  endAdornment: searchQuery ? <InputAdornment position="end"><IconButton size="small" onClick={() => setSearchQuery("")}><CloseIcon fontSize="small" /></IconButton></InputAdornment> : null,
+                  sx: { height: 32, fontSize: "0.8125rem" }
+                }
+              }}
+              sx={{ width: { xs: "100%", sm: 220, md: 240 } }}
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>หมวดหมู่หลักฐาน</InputLabel>
+              <Select
+                value={filterCategory}
+                label="หมวดหมู่หลักฐาน"
+                onChange={(e) => setFilterCategory(e.target.value)}
+                sx={{ height: 32, fontSize: "0.8125rem" }}
               >
-                ✕
-              </button>
-            )}
-          </div>
+                <MenuItem value="all" sx={{ fontSize: "0.8125rem" }}>ทุกหมวดหมู่ ({files.length})</MenuItem>
+                {Object.entries(CATEGORY_MAP).map(([catKey, catMeta]) => (
+                  <MenuItem key={catKey} value={catKey} sx={{ fontSize: "0.8125rem" }}>
+                    {catMeta.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          {/* Year & Semester Selectors + View Mode */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Year Selector */}
-            <select
-              value={filterYear}
-              onChange={(e) => setFilterYear(e.target.value)}
-              className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="all">ทุกปีการศึกษา</option>
-              {availableYears.map((y) => (
-                <option key={y} value={y}>
-                  ปี {y}
-                </option>
-              ))}
-            </select>
-
-            {/* Semester Selector */}
-            <select
-              value={filterSemester}
-              onChange={(e) => setFilterSemester(e.target.value)}
-              className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="all">ทุกภาคเรียน</option>
-              {availableSemesters.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.shortLabel}
-                </option>
-              ))}
-            </select>
-
-            {/* Grid / List View Toggle */}
-            <div className="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-50">
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-lg transition ${
-                  viewMode === "grid"
-                    ? "bg-white text-blue-600 shadow-2xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-                title="แสดงผลแบบ Card Grid"
+            <FormControl size="small" sx={{ minWidth: 105 }}>
+              <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>ปีการศึกษา</InputLabel>
+              <Select
+                value={filterYear}
+                label="ปีการศึกษา"
+                onChange={(e) => setFilterYear(e.target.value)}
+                sx={{ height: 32, fontSize: "0.8125rem" }}
               >
-                <Grid className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg transition ${
-                  viewMode === "list"
-                    ? "bg-white text-blue-600 shadow-2xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-                title="แสดงผลแบบ Table List"
+                {availableYears.map((y) => (
+                  <MenuItem key={y} value={y} sx={{ fontSize: "0.8125rem" }}>ปี {y}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 95 }}>
+              <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>ภาคเรียน</InputLabel>
+              <Select
+                value={filterSemester}
+                label="ภาคเรียน"
+                onChange={(e) => setFilterSemester(e.target.value)}
+                sx={{ height: 32, fontSize: "0.8125rem" }}
               >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+                {availableSemesters.map((s) => (
+                  <MenuItem key={s.value} value={s.value} sx={{ fontSize: "0.8125rem" }}>{s.shortLabel}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        {/* Category Filter Pills (Horizontal Scrollable) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("all")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-              selectedCategory === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            ทั้งหมด ({files.length})
-          </button>
+            <Box sx={{ display: "flex", border: "1px solid", borderColor: "divider", borderRadius: 1, p: 0.2 }}>
+              <IconButton size="small" onClick={() => setViewMode("list")} color={viewMode === "list" ? "primary" : "default"} sx={{ p: 0.35 }}>
+                <ViewListIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton size="small" onClick={() => setViewMode("grid")} color={viewMode === "grid" ? "primary" : "default"} sx={{ p: 0.35 }}>
+                <GridViewIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
 
-          {Object.entries(CATEGORY_MAP).map(([key, val]) => {
-            const isSelected = selectedCategory === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSelectedCategory(key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
-                  isSelected
-                    ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                    : "bg-white text-slate-700 hover:bg-slate-50 border-slate-200"
-                }`}
-              >
-                {val.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+            <Tooltip title="รีเฟรชข้อมูล">
+              <IconButton size="small" onClick={fetchFiles} sx={{ p: 0.4 }}>
+                <RefreshIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Paper>
 
-      {/* 4. Files List / Grid View */}
       {loading ? (
-        <div className="py-16 text-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-          <p className="text-xs text-slate-400 font-medium">กำลังโหลดคลังไฟล์หลักฐาน...</p>
-        </div>
+        <Box sx={{ py: 8, textAlign: "center" }}><CircularProgress size={36} sx={{ mb: 1.5 }} /><Typography variant="body2" sx={{ color: "text.secondary" }}>กำลังโหลดรายการไฟล์หลักฐาน</Typography></Box>
       ) : files.length === 0 ? (
-        <div className="py-16 text-center rounded-3xl border border-slate-200 bg-white p-8 space-y-4 shadow-xs">
-          <div className="h-16 w-16 mx-auto rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-            <FolderArchive className="h-8 w-8" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-800">ยังไม่พบไฟล์หลักฐานในหมวดหมู่นี้</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-              คุณสามารถอัปโหลดไฟล์หลักฐานแรกผ่านทางลัด Quick Upload
-              หรือปรับตัวกรองปีการศึกษาเพื่อค้นหา
-            </p>
-          </div>
-          <Link
-            href="/quick-upload"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
-          >
-            <Plus className="h-4 w-4" />
-            <span>ไปที่หน้า Quick Upload</span>
-          </Link>
-        </div>
-      ) : viewMode === "grid" ? (
-        /* Card Grid View */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {files.map((file) => {
-            const cat = CATEGORY_MAP[file.category] || {
-              label: file.category,
-              badgeColor: "bg-slate-100 text-slate-700",
-            };
-            const isOwner = isOwnerOrRoot(file);
-            const isImage = file.fileType.startsWith("image/");
-
-            return (
-              <div
-                key={file.id}
-                className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Thumbnail / Header Preview */}
-                  <div className="relative h-36 bg-slate-100 overflow-hidden flex items-center justify-center border-b border-slate-100">
-                    {isImage ? (
-                      <img
-                        src={file.fileUrl}
-                        alt={file.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-slate-400">
-                        {getFileIcon(file.fileType)}
-                        <span className="text-[11px] font-bold uppercase">
-                          {file.fileType.split("/")[1] || "FILE"}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Category Badge */}
-                    <div className="absolute top-2.5 left-2.5">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black shadow-xs ${cat.badgeColor}`}
-                      >
-                        {cat.label}
-                      </span>
-                    </div>
-
-                    {/* Academic Term Tag */}
-                    <div className="absolute top-2.5 right-2.5">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 backdrop-blur text-white shadow-xs">
-                        ปี {file.academicYear}/{file.semester === "all" ? "ทั้งปี" : `เทอม ${file.semester}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="p-4 space-y-2">
-                    <h3
-                      className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-blue-600 transition"
-                      title={file.title}
-                    >
-                      {file.title}
-                    </h3>
-                    {file.description && (
-                      <p className="text-[11px] text-slate-500 line-clamp-2">
-                        {file.description}
-                      </p>
-                    )}
-
-                    {/* Location / Event Date metadata */}
-                    {file.metadata?.location && (
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400 truncate">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{file.metadata.location}</span>
-                      </div>
-                    )}
-
-                    {/* Uploader info */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 truncate">
-                        {file.user?.avatarUrl ? (
-                          <img
-                            src={file.user.avatarUrl}
-                            alt={file.user.name}
-                            className="h-5 w-5 rounded-full object-cover flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="h-5 w-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center flex-shrink-0">
-                            {file.user?.name?.charAt(0) || "U"}
-                          </div>
-                        )}
-                        <span className="text-slate-600 truncate font-semibold">
-                          {file.user?.name || "บุคลากร"}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 flex-shrink-0">
-                        {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Actions Footer */}
-                <div className="p-3 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewFile(file)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-white transition"
-                      title="ดูตัวอย่างไฟล์ (Preview)"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-
-                    <a
-                      href={file.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={file.fileName}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-white transition"
-                      title="ดาวน์โหลดไฟล์"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
-                  </div>
-
-                  {isOwner && (
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(file)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-white transition"
-                      title="ลบไฟล์"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Table List View */
-        <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-100">
-                <tr>
-                  <th className="py-3.5 px-4 font-bold text-slate-500">ชื่อเอกสาร / ไฟล์</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-500">หมวดหมู่</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-500">ปี/เทอม</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-500">ผู้เผยแพร่</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-500">ขนาด</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-500 text-right">การจัดการ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+        <Paper sx={{ py: 8, px: 3, textAlign: "center" }}><FolderSpecialIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} /><Typography variant="h4" sx={{ color: "text.primary", mb: 0.5 }}>ไม่พบไฟล์หลักฐานตามเงื่อนไขที่เลือก</Typography></Paper>
+      ) : viewMode === "list" ? (
+        <Paper sx={{ overflow: "hidden" }}>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 50 }}></TableCell>
+                  <TableCell>ชื่อเอกสาร</TableCell>
+                  <TableCell>หมวดหมู่</TableCell>
+                  <TableCell>ผู้จัดเก็บ</TableCell>
+                  <TableCell>วันเวลาที่อัปโหลด</TableCell>
+                  <TableCell>ขนาด</TableCell>
+                  <TableCell align="right">การจัดการ</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {files.map((file) => {
-                  const cat = CATEGORY_MAP[file.category] || {
-                    label: file.category,
-                    badgeColor: "bg-slate-100 text-slate-700",
-                  };
+                  const cat = CATEGORY_MAP[file.category] || { label: file.category, color: "default" };
                   const isOwner = isOwnerOrRoot(file);
-
+                  const meta = file.metadata || {};
+                  const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
+                  const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
+                  const tags = Array.isArray(meta.tags) ? meta.tags : [];
                   return (
-                    <tr key={file.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2.5">
-                          {getFileIcon(file.fileType)}
-                          <div className="min-w-0">
-                            <div className="font-bold text-slate-900 truncate max-w-xs sm:max-w-sm">
-                              {file.title}
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate">
-                              {file.fileName}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${cat.badgeColor}`}
-                        >
-                          {cat.label}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-bold text-slate-700">
-                        {file.academicYear}/{file.semester}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
-                        {file.user?.name || "-"}
-                      </td>
-                      <td className="py-3 px-4 text-slate-400">
-                        {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewFile(file)}
-                            className="p-1 rounded-lg text-slate-500 hover:text-blue-600 transition"
-                            title="ดูตัวอย่าง"
+                    <TableRow key={file.id} hover sx={{ cursor: "pointer" }} onClick={() => setDetailsFile(file)}>
+                      <TableCell sx={{ pr: 0 }}><EvidenceThumbnail fileUrl={file.fileUrl} fileType={file.fileType} fileName={file.fileName} title={file.title} variant="table" /></TableCell>
+                      <TableCell>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: { xs: 180, sm: 280 } }}>{file.title}</Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: { xs: 180, sm: 280 } }}>{file.fileName}</Typography>
+                          {tags.length > 0 && (<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{tags.slice(0, 3).map((t, idx) => <Chip key={idx} size="small" label={`#${t}`} variant="outlined" sx={{ height: 18, fontSize: 10 }} />)}</Box>)}
+                        </Box>
+                      </TableCell>
+                      <TableCell><Chip size="small" label={cat.label} color={cat.color} variant="outlined" /></TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Avatar
+                            src={file.user?.avatarUrl || undefined}
+                            alt={file.user?.name}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              bgcolor: stringToColor(file.user?.name || "User"),
+                              color: "#ffffff",
+                            }}
                           >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <a
-                            href={file.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 rounded-lg text-slate-500 hover:text-emerald-600 transition"
-                            title="ดาวน์โหลด"
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                          {isOwner && (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTarget(file)}
-                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 transition"
-                              title="ลบไฟล์"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                            {file.user?.name ? file.user.name.charAt(0) : <PersonIcon sx={{ fontSize: 16 }} />}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{file.user?.name || "บุคลากร"}</Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{file.user?.position || file.user?.roleCode || "ผู้บันทึก"}</Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell><Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><AccessTimeIcon sx={{ fontSize: 13, color: "text.secondary" }} /><Typography variant="caption" sx={{ color: "text.secondary" }}>{formatThaiDateTime(file.createdAt)}</Typography></Box></TableCell>
+                      <TableCell><Typography variant="caption" sx={{ color: "text.secondary" }}>{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</Typography></TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+                          <Tooltip title={isStarred ? "เลิกติดดาว" : "ติดดาว"}><IconButton size="small" color={isStarred ? "warning" : "default"} onClick={(e) => handleToggleStar(file, e)}>{isStarred ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}</IconButton></Tooltip>
+                          <Tooltip title="ดูรายละเอียดและพรีวิว"><IconButton size="small" onClick={() => setDetailsFile(file)}><VisibilityIcon fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="ดาวน์โหลด"><IconButton size="small" component="a" href={file.fileUrl} download={file.fileName} target="_blank" rel="noopener noreferrer"><FileDownloadIcon fontSize="small" /></IconButton></Tooltip>
+                          {isOwner && <Tooltip title="ลบไฟล์"><IconButton size="small" color="error" onClick={() => setDeleteTarget(file)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Preview Modal */}
-      {previewFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-2.5 truncate">
-                {getFileIcon(previewFile.fileType)}
-                <div className="truncate">
-                  <h3 className="text-sm font-black text-slate-900 truncate">
-                    {previewFile.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 truncate">
-                    {previewFile.fileName} • {(previewFile.fileSize / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <a
-                  href={previewFile.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  <span>เปิดแท็บใหม่</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewFile(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Media Body */}
-            <div className="flex-1 overflow-auto p-4 bg-slate-100/60 flex items-center justify-center min-h-[400px]">
-              {previewFile.fileType.startsWith("image/") ? (
-                <img
-                  src={previewFile.fileUrl}
-                  alt={previewFile.title}
-                  className="max-h-[70vh] max-w-full object-contain rounded-xl shadow-md"
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      ) : (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2 }}>
+          {files.map((file) => {
+            const cat = CATEGORY_MAP[file.category] || { label: file.category, color: "default" };
+            const isOwner = isOwnerOrRoot(file);
+            const meta = file.metadata || {};
+            const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
+            const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
+            const tags = Array.isArray(meta.tags) ? meta.tags : [];
+            return (
+              <Paper
+                key={file.id}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                    transform: "translateY(-2px)",
+                  },
+                }}
+                onClick={() => setDetailsFile(file)}
+              >
+                <EvidenceThumbnail
+                  fileUrl={file.fileUrl}
+                  fileType={file.fileType}
+                  fileName={file.fileName}
+                  title={file.title}
+                  variant="card"
+                  height={150}
                 />
-              ) : previewFile.fileType.includes("pdf") ? (
-                <iframe
-                  src={previewFile.fileUrl}
-                  title={previewFile.title}
-                  className="w-full h-[70vh] rounded-xl border border-slate-200 bg-white"
-                />
-              ) : previewFile.fileType.startsWith("video/") ? (
-                <video
-                  src={previewFile.fileUrl}
-                  controls
-                  className="max-h-[70vh] max-w-full rounded-xl shadow-md"
-                />
-              ) : (
-                <div className="text-center space-y-3 p-8 bg-white rounded-2xl border border-slate-200 shadow-xs">
-                  <FileText className="h-12 w-12 mx-auto text-blue-600" />
-                  <p className="text-xs font-bold text-slate-700">
-                    ไฟล์ประเภทนี้ไม่รองรับการแสดงผลพรีวิวในหน้าจอโดยตรง
-                  </p>
-                  <a
-                    href={previewFile.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
+                <Box sx={{ p: 1.75, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+                  <Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
+                      <Chip size="small" label={cat.label} color={cat.color} variant="outlined" sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 600 }} />
+                      <IconButton
+                        size="small"
+                        color={isStarred ? "warning" : "default"}
+                        onClick={(e) => handleToggleStar(file, e)}
+                        title={isStarred ? "เลิกติดดาว" : "ติดดาว"}
+                        sx={{ p: 0.35 }}
+                      >
+                        {isStarred ? <StarIcon sx={{ fontSize: 18 }} /> : <StarBorderIcon sx={{ fontSize: 18 }} />}
+                      </IconButton>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mb: 0.25, color: "text.primary" }}>
+                      {file.title}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mb: 0.75, fontSize: "0.725rem" }}>
+                      {file.fileName}
+                    </Typography>
+                    {tags.length > 0 && (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.75 }}>
+                        {tags.slice(0, 2).map((t, idx) => (
+                          <Chip key={idx} size="small" label={`#${t}`} variant="filled" sx={{ height: 18, fontSize: "0.625rem" }} />
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Prominent Uploader Footer with Avatar */}
+                  <Box
+                    sx={{
+                      pt: 1.25,
+                      mt: 1,
+                      borderTop: "1px solid",
+                      borderColor: "divider",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 1,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Download className="h-4 w-4" />
-                    <span>ดาวน์โหลดเพื่อเปิดดู</span>
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, mr: 0.5 }}>
+                      <Tooltip title={`อัปโหลดโดย ${file.user?.name || "บุคลากร"}${file.user?.position || file.user?.roleCode ? ` (${file.user.position || file.user.roleCode})` : ""}`}>
+                        <Avatar
+                          src={file.user?.avatarUrl || undefined}
+                          alt={file.user?.name}
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            fontSize: "0.875rem",
+                            fontWeight: 700,
+                            bgcolor: stringToColor(file.user?.name || "User"),
+                            color: "#ffffff",
+                            border: "2px solid",
+                            borderColor: "background.paper",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                            flexShrink: 0,
+                            transition: "transform 0.15s ease",
+                            "&:hover": { transform: "scale(1.08)" },
+                          }}
+                        >
+                          {file.user?.name ? file.user.name.charAt(0) : <PersonIcon sx={{ fontSize: 18 }} />}
+                        </Avatar>
+                      </Tooltip>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 700,
+                            color: "text.primary",
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontSize: "0.775rem",
+                            lineHeight: 1.25,
+                          }}
+                          title={file.user?.name || "บุคลากร"}
+                        >
+                          {file.user?.name || "บุคลากร"}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontSize: "0.6875rem",
+                            display: "block",
+                            lineHeight: 1.2,
+                            mt: 0.25,
+                          }}
+                        >
+                          {formatThaiDateTime(file.createdAt)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
+                      <Tooltip title="ดูรายละเอียด">
+                        <IconButton size="small" onClick={() => setDetailsFile(file)} sx={{ p: 0.5 }}>
+                          <VisibilityIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="ดาวน์โหลด">
+                        <IconButton size="small" component="a" href={file.fileUrl} download={file.fileName} target="_blank" rel="noopener noreferrer" sx={{ p: 0.5 }}>
+                          <FileDownloadIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      {isOwner && (
+                        <Tooltip title="ลบไฟล์">
+                          <IconButton size="small" color="error" onClick={() => setDeleteTarget(file)} sx={{ p: 0.5 }}>
+                            <DeleteIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
       )}
 
-      {/* 6. Delete Confirmation Dialog */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-slate-900">
-                ยืนยันการลบไฟล์หลักฐาน?
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์ &ldquo;{deleteTarget.title}&rdquo;?
-                การกระทำนี้จะลบไฟล์ออกจาก MinIO S3 และฐานข้อมูลอย่างถาวร
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>กำลังลบ...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" />
-                    <span>ลบไฟล์ถาวร</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <FileDetailsDialog open={Boolean(detailsFile)} file={detailsFile} onClose={() => setDetailsFile(null)} onFileUpdated={handleFileUpdated} />
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        {deleteTarget && (
+          <>
+            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, color: "error.main" }}><WarningIcon color="error" /><Typography variant="h4" sx={{ color: "error.main" }}>ยืนยันการลบไฟล์หลักฐาน</Typography></DialogTitle>
+            <DialogContent dividers><Typography variant="body2" sx={{ color: "text.primary" }}>ท่านต้องการลบไฟล์ &ldquo;{deleteTarget.title}&rdquo; หรือไม่</Typography><Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>การดำเนินการนี้จะลบไฟล์ออกจากคลังหลักฐานอย่างถาวร</Typography></DialogContent>
+            <DialogActions sx={{ px: 3, py: 1.5 }}><Button onClick={() => setDeleteTarget(null)} color="secondary" disabled={isDeleting}>ยกเลิก</Button><Button onClick={handleDelete} color="error" variant="contained" disabled={isDeleting}>{isDeleting ? "กำลังลบ" : "ลบไฟล์ข้อมูล"}</Button></DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      <Snackbar open={Boolean(snackbarMessage)} autoHideDuration={3000} onClose={() => setSnackbarMessage(null)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <Alert onClose={() => setSnackbarMessage(null)} severity="success" sx={{ width: "100%" }}>{snackbarMessage}</Alert>
+      </Snackbar>
+    </Box>
   );
 }

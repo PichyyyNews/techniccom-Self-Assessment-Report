@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/evidence - Fetch evidence files with filters & scope
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// GET /api/evidence - Fetch evidence files with filters, scope, and no-cache headers
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +19,9 @@ export async function GET(req: Request) {
     const category = searchParams.get("category");
     const academicYear = searchParams.get("academicYear");
     const semester = searchParams.get("semester");
-    const search = searchParams.get("search")?.trim();
+    const search = (searchParams.get("search") || searchParams.get("q"))?.trim();
+    const tag = searchParams.get("tag")?.trim();
+    const starredOnly = searchParams.get("starred") === "true";
     const limit = parseInt(searchParams.get("limit") || "100", 10);
 
     const where: any = {};
@@ -26,9 +31,17 @@ export async function GET(req: Request) {
       where.userId = session.user.id;
     }
 
-    // Category filter
+    // Category filter: supports single category or comma-separated list
     if (category && category !== "all") {
-      where.category = category;
+      const cats = category
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (cats.length > 1) {
+        where.category = { in: cats };
+      } else if (cats.length === 1) {
+        where.category = cats[0];
+      }
     }
 
     // Academic Year filter
@@ -36,9 +49,9 @@ export async function GET(req: Request) {
       where.academicYear = academicYear;
     }
 
-    // Semester filter
+    // Semester filter: an item tagged for "all" (ตลอดปีการศึกษา) should appear in semester 1 and 2
     if (semester && semester !== "all") {
-      where.semester = semester;
+      where.semester = { in: [semester, "all"] };
     }
 
     // Search query
@@ -49,6 +62,22 @@ export async function GET(req: Request) {
         { fileName: { contains: search, mode: "insensitive" } },
         { user: { name: { contains: search, mode: "insensitive" } } },
       ];
+    }
+
+    // Starred filter using Postgres JSON path
+    if (starredOnly) {
+      where.metadata = {
+        path: ["starredBy"],
+        array_contains: session.user.id,
+      };
+    }
+
+    // Tag filter
+    if (tag) {
+      where.metadata = {
+        path: ["tags"],
+        array_contains: tag,
+      };
     }
 
     const [files, totalCount] = await Promise.all([
@@ -72,16 +101,31 @@ export async function GET(req: Request) {
       prisma.evidenceFile.count({ where }),
     ]);
 
-    return NextResponse.json({
-      success: true,
-      files,
-      totalCount,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        files,
+        totalCount,
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("GET /api/evidence error:", error);
     return NextResponse.json(
       { error: "เกิดข้อผิดพลาดในการโหลดรายการหลักฐาน" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 }

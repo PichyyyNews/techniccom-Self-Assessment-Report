@@ -3,8 +3,19 @@
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Shield, Lock, Mail, AlertCircle, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import MailIcon from "@mui/icons-material/Mail";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,110 +51,101 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md px-4 sm:px-0">
+    <Box sx={{ width: "100%", maxWidth: 420, mx: "auto", px: 2 }}>
       {/* Header & Logo */}
-      <div className="mb-8 text-center">
-        <img
+      <Box sx={{ mb: 4, textAlign: "center" }}>
+        <Box
+          component="img"
           src="/logo.svg"
           alt="TechSAR Logo"
-          className="mx-auto h-20 w-20 object-contain drop-shadow-sm"
+          sx={{ mx: "auto", height: 72, width: 72, objectFit: "contain" }}
         />
-        <h1 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+        <Typography variant="h1" sx={{ mt: 2, color: "text.primary" }}>
           เข้าสู่ระบบ TechSAR
-        </h1>
-        <p className="mt-1.5 text-xs sm:text-sm text-slate-500">
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
           ระบบรายงานการประเมินตนเองและประกันคุณภาพการศึกษา
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Main Login Card */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-xl shadow-slate-200/60 backdrop-blur-sm">
-        <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900">ลงชื่อเข้าใช้งาน</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+      <Paper sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <Box>
+          <Typography variant="h3">ลงชื่อเข้าใช้งาน</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
             กรุณาระบุอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบงาน
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         {error && (
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 animate-in fade-in duration-150">
-            <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span className="leading-relaxed font-medium">{error}</span>
-          </div>
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              อีเมลผู้ใช้งาน (Email)
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@technic.ac.th"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-              />
-            </div>
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <TextField
+            label="อีเมลผู้ใช้งาน"
+            type="email"
+            required
+            fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@technic.ac.th"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MailIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              รหัสผ่าน (Password)
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
+          <TextField
+            label="รหัสผ่าน"
+            type={showPassword ? "text" : "password"}
+            required
+            fullWidth
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      aria-label="สลับการแสดงรหัสผ่าน"
+                    >
+                      {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
 
-          <button
+          <Button
             type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
             disabled={loading}
-            className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-70"
+            endIcon={<ArrowForwardIcon />}
+            sx={{ mt: 1, py: 1.25 }}
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                กำลังตรวจสอบสิทธิ์...
-              </>
-            ) : (
-              <>
-                เข้าสู่ระบบ
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-
-      <div className="mt-8 text-center text-xs text-slate-400">
-        <Link href="/" className="hover:text-slate-600 transition font-medium">
-          ← กลับหน้าแรก (Home)
-        </Link>
-      </div>
-    </div>
+            {loading ? "กำลังตรวจสอบข้อมูล" : "เข้าสู่ระบบงาน"}
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 }

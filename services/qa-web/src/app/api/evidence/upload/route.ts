@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
@@ -20,7 +21,7 @@ async function ensureBucketExists() {
   }
 }
 
-// POST /api/evidence/upload
+// POST /api/evidence/upload - Multi-file & single file upload with tags & cache revalidation
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -29,7 +30,21 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    
+    // Support multiple files from formData (either multiple "files" or "file" or both)
+    const rawFiles: File[] = [];
+    const filesEntries = formData.getAll("files");
+    const singleFile = formData.get("file");
+
+    if (filesEntries && filesEntries.length > 0) {
+      for (const f of filesEntries) {
+        if (f instanceof File && f.size > 0) rawFiles.push(f);
+      }
+    }
+    if (singleFile instanceof File && singleFile.size > 0) {
+      if (!rawFiles.includes(singleFile)) rawFiles.push(singleFile);
+    }
+
     const title = (formData.get("title") as string)?.trim();
     const description = (formData.get("description") as string)?.trim() || null;
     const category = (formData.get("category") as string)?.trim() || "other";
@@ -44,96 +59,181 @@ export async function POST(req: Request) {
     const gradeLevel = (formData.get("gradeLevel") as string)?.trim() || null;
     const externalVideoUrl = (formData.get("externalVideoUrl") as string)?.trim() || null;
 
+    // Tags field: parses JSON array string or comma-separated string
+    const tagsRaw = formData.get("tags") as string | null;
+    let tags: string[] = [];
+    if (tagsRaw) {
+      try {
+        const parsed = JSON.parse(tagsRaw);
+        if (Array.isArray(parsed)) {
+          tags = parsed.map((t) => String(t).trim()).filter(Boolean);
+        }
+      } catch {
+        tags = tagsRaw
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+      }
+    }
+
     if (!title) {
       return NextResponse.json({ error: "กรุณาระบุชื่อเอกสารหรือหัวข้อหลักฐาน" }, { status: 400 });
     }
 
-    let fileKey = "";
-    let fileUrl = "";
-    let fileName = "";
-    let fileType = "application/octet-stream";
-    let fileSize = 0;
-
-    if (file && file.size > 0) {
-      // Validate file size: limit to 50MB
-      if (file.size > 50 * 1024 * 1024) {
-        return NextResponse.json({ error: "ขนาดไฟล์ต้องไม่เกิน 50MB" }, { status: 400 });
-      }
-
-      await ensureBucketExists();
-
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      // Clean filename and generate S3 Key
-      const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(2, 7);
-      fileKey = `evidences/${academicYear}/${semester}/${category}/${timestamp}-${randomStr}-${originalName}`;
-      fileName = file.name;
-      fileType = file.type || "application/octet-stream";
-      fileSize = file.size;
-
-      // Upload to MinIO S3
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: fileKey,
-          Body: buffer,
-          ContentType: fileType,
-        })
-      );
-
-      fileUrl = `/api/files/${fileKey}`;
-    } else if (externalVideoUrl) {
-      // Allow video link without direct file upload
-      fileKey = `external-links/${Date.now()}`;
-      fileUrl = externalVideoUrl;
-      fileName = "External Link / Video Clip";
-      fileType = "video/external-link";
-      fileSize = 0;
-    } else {
+    if (rawFiles.length === 0 && !externalVideoUrl) {
       return NextResponse.json({ error: "กรุณาแนบไฟล์เอกสารหรือระบุลิงก์วิดีโอ" }, { status: 400 });
     }
 
-    const metadata = {
-      location,
-      organization,
-      eventDate,
-      subjectCode,
-      gradeLevel,
-      externalVideoUrl,
-    };
+    const createdRecords: any[] = [];
+    await ensureBucketExists();
 
-    // Create EvidenceFile in PostgreSQL
-    const evidence = await prisma.evidenceFile.create({
-      data: {
-        userId: session.user.id,
-        title,
-        description,
-        category,
-        fileKey,
-        fileUrl,
-        fileName,
-        fileType,
-        fileSize,
-        academicYear,
-        semester,
-        metadata,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            position: true,
-            roleCode: true,
+    if (rawFiles.length > 0) {
+      // Process each file in batch
+      for (let i = 0; i < rawFiles.length; i++) {
+        const file = rawFiles[i];
+        if (file.size > 50 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: `ไฟล์ "${file.name}" มีขนาดเกิน 50MB` },
+            { status: 400 }
+          );
+        }
+
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(2, 7);
+        const fileKey = `evidences/${academicYear}/${semester}/${category}/${timestamp}-${randomStr}-${originalName}`;
+        const fileName = file.name;
+        const fileType = file.type || "application/octet-stream";
+        const fileSize = file.size;
+
+        // Upload to MinIO S3
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: fileKey,
+            Body: buffer,
+            ContentType: fileType,
+          })
+        );
+
+        const fileUrl = `/api/files/${fileKey}`;
+
+        // Compute title for multi-file batches
+        const fileTitle =
+          rawFiles.length > 1
+            ? `${title} (${i + 1}/${rawFiles.length} - ${file.name.replace(/\.[^/.]+$/, "")})`
+            : title;
+
+        const metadata = {
+          location,
+          organization,
+          eventDate,
+          subjectCode,
+          gradeLevel,
+          externalVideoUrl,
+          tags,
+          starredBy: [],
+          comments: [],
+        };
+
+        const evidence = await prisma.evidenceFile.create({
+          data: {
+            userId: session.user.id,
+            title: fileTitle,
+            description,
+            category,
+            fileKey,
+            fileUrl,
+            fileName,
+            fileType,
+            fileSize,
+            academicYear,
+            semester,
+            metadata,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+                position: true,
+                roleCode: true,
+              },
+            },
+          },
+        });
+
+        createdRecords.push(evidence);
+      }
+    } else if (externalVideoUrl) {
+      // External video link item
+      const fileKey = `external-links/${Date.now()}`;
+      const fileUrl = externalVideoUrl;
+      const fileName = "External Link / Video Clip";
+      const fileType = "video/external-link";
+      const fileSize = 0;
+
+      const metadata = {
+        location,
+        organization,
+        eventDate,
+        subjectCode,
+        gradeLevel,
+        externalVideoUrl,
+        tags,
+        starredBy: [],
+        comments: [],
+      };
+
+      const evidence = await prisma.evidenceFile.create({
+        data: {
+          userId: session.user.id,
+          title,
+          description,
+          category,
+          fileKey,
+          fileUrl,
+          fileName,
+          fileType,
+          fileSize,
+          academicYear,
+          semester,
+          metadata,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              position: true,
+              roleCode: true,
+            },
           },
         },
-      },
-    });
+      });
+
+      createdRecords.push(evidence);
+    }
+
+    // Invalidate Next.js cache across all evidence-consuming views
+    try {
+      revalidatePath("/stock");
+      revalidatePath("/quick-upload");
+      revalidatePath("/dashboard");
+      revalidatePath("/teachers/lesson-plans");
+      revalidatePath("/teachers/researches");
+      revalidatePath("/teachers/trainings");
+      revalidatePath("/students");
+    } catch (cacheErr) {
+      console.warn("revalidatePath warning:", cacheErr);
+    }
 
     // Log Activity
     try {
@@ -141,13 +241,13 @@ export async function POST(req: Request) {
         data: {
           userId: session.user.id,
           action: "UPLOAD_EVIDENCE",
-          title: `อัปโหลดหลักฐาน: ${title}`,
+          title: `อัปโหลดหลักฐาน: ${title} (${createdRecords.length} ไฟล์)`,
           metadata: {
-            evidenceId: evidence.id,
             category,
             academicYear,
             semester,
-            fileName,
+            count: createdRecords.length,
+            ids: createdRecords.map((r) => r.id),
           },
         },
       });
@@ -157,8 +257,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "อัปโหลดและจัดหมวดหมู่หลักฐานสำเร็จ",
-      data: evidence,
+      message: `อัปโหลดและจัดหมวดหมู่หลักฐานสำเร็จ (${createdRecords.length} รายการ)`,
+      data: createdRecords[0] || null,
+      files: createdRecords,
+      count: createdRecords.length,
     });
   } catch (error: any) {
     console.error("POST /api/evidence/upload error:", error);

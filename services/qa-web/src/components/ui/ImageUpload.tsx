@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import {
-  UploadCloud,
-  Image as ImageIcon,
-  X,
-  Loader2,
-  Camera,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
-import { clsx } from "clsx";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Alert from "@mui/material/Alert";
+import Avatar from "@mui/material/Avatar";
+import CircularProgress from "@mui/material/CircularProgress";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface ImageUploadProps {
   value?: string | null;
@@ -33,7 +33,6 @@ export function ImageUpload({
   const handleUploadFile = async (file: File) => {
     if (!file) return;
 
-    // Validate type
     const validMimes = [
       "image/jpeg",
       "image/png",
@@ -42,11 +41,10 @@ export function ImageUpload({
       "image/svg+xml",
     ];
     if (!validMimes.includes(file.type)) {
-      setError("กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, WEBP, GIF, SVG)");
+      setError("กรุณาเลือกไฟล์รูปภาพ JPG PNG WEBP GIF SVG");
       return;
     }
 
-    // Validate size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError("ขนาดไฟล์ต้องไม่เกิน 5MB");
       return;
@@ -112,100 +110,124 @@ export function ImageUpload({
   };
 
   return (
-    <div className={clsx("space-y-2", className)}>
-      <label className="block text-xs font-bold text-slate-700">
-        รูปประจำตัว (Profile Photo)
-      </label>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }} className={className}>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+        รูปประจำตัว
+      </Typography>
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
-          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
+        <Alert severity="error" onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
       {value ? (
-        /* Preview Card */
-        <div className="relative flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 transition">
-          <img
+        <Paper
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            p: 2,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Avatar
             src={value}
             alt="รูปประจำตัว"
-            className="h-16 w-16 rounded-2xl object-cover border border-slate-200 shadow-xs flex-shrink-0 bg-white"
+            sx={{ width: 56, height: 56, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
           />
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 text-xs font-bold text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              อัปโหลดรูปประจำตัวแล้ว
-            </div>
-            <p className="text-[11px] text-slate-400 truncate mt-0.5">{value}</p>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <CheckCircleIcon sx={{ fontSize: 16, color: "success.main" }} />
+              <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
+                อัปโหลดรูปประจำตัวแล้ว
+              </Typography>
+            </Box>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {value}
+            </Typography>
 
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
               >
-                {uploading ? "กำลังอัปโหลด..." : "เปลี่ยนรูปภาพ"}
-              </button>
+                {uploading ? "กำลังอัปโหลด" : "เปลี่ยนรูปภาพ"}
+              </Button>
 
-              <button
-                type="button"
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
                 onClick={handleRemove}
                 disabled={uploading}
-                className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
               >
                 ลบรูปภาพ
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
       ) : (
-        /* Dropzone / Upload Area */
-        <div
+        <Paper
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={clsx(
-            "relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-150 select-none",
-            isDragging
-              ? "border-blue-500 bg-blue-50/60 scale-[1.01]"
-              : "border-slate-200 bg-slate-50/50 hover:border-blue-400 hover:bg-slate-50",
-            uploading && "pointer-events-none opacity-60"
-          )}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 3,
+            textAlign: "center",
+            cursor: "pointer",
+            borderStyle: "dashed",
+            borderWidth: 2,
+            borderColor: isDragging ? "primary.main" : "divider",
+            bgcolor: isDragging ? "primary.50" : "background.paper",
+            transition: "all 0.15s ease",
+            "&:hover": {
+              borderColor: "primary.main",
+              bgcolor: "background.default",
+            },
+          }}
         >
           {uploading ? (
-            <div className="flex flex-col items-center py-2">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-              <span className="text-xs font-bold text-slate-700">กำลังอัปโหลดรูปภาพไปยัง MinIO S3...</span>
-            </div>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 1 }}>
+              <CircularProgress size={32} sx={{ mb: 1 }} />
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                กำลังอัปโหลดรูปภาพ
+              </Typography>
+            </Box>
           ) : (
             <>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100/70 text-blue-600 mb-3 shadow-2xs">
-                <Camera className="h-6 w-6" />
-              </div>
-
-              <div className="text-xs font-bold text-slate-800">
-                ลากรูปมาวางที่นี่ หรือ <span className="text-blue-600 underline">คลิกเพื่อเลือกรูปภาพ</span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                รองรับไฟล์ JPG, PNG, WEBP, GIF (ขนาดสูงสุด 5MB)
-              </p>
+              <PhotoCameraIcon sx={{ fontSize: 36, color: "primary.main", mb: 1 }} />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกรูปภาพ
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
+                รองรับไฟล์ JPG PNG WEBP GIF ขนาดสูงสุด 5MB
+              </Typography>
             </>
           )}
-        </div>
+        </Paper>
       )}
 
-      {/* Hidden native file input (supports camera on mobile) */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: "none" }}
       />
-    </div>
+    </Box>
   );
 }

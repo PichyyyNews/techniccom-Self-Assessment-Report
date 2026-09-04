@@ -1,147 +1,211 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Calendar,
-  Sparkles,
-  Users,
-  CheckSquare,
-  Trophy,
-  Award,
-  Plus,
-  GraduationCap,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AddIcon from "@mui/icons-material/Add";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
-export default function StudentSubPage() {
+export default function StudentsPage() {
   const { termLabel } = useAcademicYear();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const sampleStudents = [
+    {
+      code: "66209010001",
+      name: "นายสมชาย ใจมั่น",
+      classLevel: "ปวช 2 สาขาช่างเทคนิคคอมพิวเตอร์",
+      advisor: "อ.วิชัย เกียรติสกุล",
+      status: "กำลังศึกษา",
+    },
+    {
+      code: "66209010015",
+      name: "นางสาววิภาดา แก้วเกิด",
+      classLevel: "ปวช 2 สาขาช่างเทคนิคคอมพิวเตอร์",
+      advisor: "อ.วิชัย เกียรติสกุล",
+      status: "กำลังศึกษา",
+    },
+    {
+      code: "65309010005",
+      name: "นายกิตติศักดิ์ รัตนผล",
+      classLevel: "ปวส 1 สาขาเทคโนโลยีสารสนเทศ",
+      advisor: "อ.ณัฐพร ศรีวิชัย",
+      status: "กำลังศึกษา",
+    },
+  ];
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Top Navigation with Back Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard/students"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 text-xs font-bold transition shadow-2xs group"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>← กลับหน้าภาพรวมงานนักเรียน</span>
-        </Link>
+    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            ทะเบียนข้อมูลนักเรียนและนักศึกษา
+          </Typography>
+          <Tooltip title="ฐานข้อมูลทะเบียนนักเรียนนักศึกษา แยกตามระดับชั้น ปวช และ ปวส สาขาวิชา และครูที่ปรึกษา">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+        </Box>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-xs text-blue-800 font-bold">
-          <Calendar className="h-3.5 w-3.5 text-blue-600" />
-          <span>รอบข้อมูล: {termLabel}</span>
-        </div>
-      </div>
-
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">
-          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-          มาตรฐานที่ 1 คุณภาพของผู้สำเร็จการศึกษา (ด้านข้อมูลพื้นฐานและอัตราคงอยู่)
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              ทะเบียนข้อมูลนักเรียนและนักศึกษา
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mt-1 leading-relaxed">
-              ฐานข้อมูลทะเบียนนักเรียน-นักศึกษา แยกตามระดับชั้น ปวช./ปวส. สาขาวิชา และครูที่ปรึกษา เพื่อติดตามอัตราคงอยู่และการสำเร็จการศึกษาตามแผน
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => alert("ระบบฟอร์มบันทึกข้อมูลจะเชื่อมต่อกับฐานข้อมูลในเฟสถัดไป")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Chip
+            icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
+            label={`รอบข้อมูล ${termLabel}`}
+            variant="outlined"
+            size="small"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+          <Tooltip title="กลับภาพรวมงานนักเรียน">
+            <IconButton
+              component={Link}
+              href="/dashboard/students"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: 15 }} />}
+            onClick={() => setSnackbarOpen(true)}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Plus className="h-4 w-4" />
-            <span>+ นำเข้าข้อมูลนักศึกษาใหม่</span>
-          </button>
-        </div>
-      </div>
+            นำเข้านักศึกษา
+          </Button>
+        </Box>
+      </Box>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">นักเรียนทั้งหมดในระบบ</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">1,248 คน</div>
-          <div className="text-xs font-semibold text-emerald-600 mt-1">ปวช. 780 คน | ปวส. 468 คน</div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">อัตราคงอยู่ของผู้เรียน</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">98.4%</div>
-          <div className="text-xs font-semibold text-blue-600 mt-1">ผ่านเกณฑ์มาตรฐาน สอศ.</div>
-        </div>
-      </div>
+      {/* 2. Compact KPI Summary Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+          gap: 1.5,
+        }}
+      >
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            จำนวนนักเรียนและนักศึกษาทั้งหมด
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              1,248 คน
+            </Typography>
+            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              ปวช 820 • ปวส 428
+            </Typography>
+          </Box>
+        </Paper>
 
-      {/* Data Table Preview */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="text-sm font-bold text-slate-800">
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            อัตราการคงอยู่ของผู้เรียน
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              98.4%
+            </Typography>
+            <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              ผ่านเกณฑ์มาตรฐาน สอศ
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+
+      {/* 3. Data Table */}
+      <Paper sx={{ overflow: "hidden" }}>
+        <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h4">
             รายการบันทึกข้อมูลประจำ {termLabel}
-          </div>
-          <span className="text-xs text-slate-400 font-semibold">แสดงรายการตัวอย่าง</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 text-left font-bold text-slate-500">รหัสนักศึกษา</th><th className="py-3 px-4 text-left font-bold text-slate-500">ชื่อ - นามสกุล</th><th className="py-3 px-4 text-left font-bold text-slate-500">ระดับชั้น / สาขาวิชา</th><th className="py-3 px-4 text-left font-bold text-slate-500">ครูที่ปรึกษา</th><th className="py-3 px-4 text-left font-bold text-slate-500">สถานะภาพ</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">66209010001</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">นายสมชาย ใจมั่น</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 2 สาขาช่างเทคนิคคอมพิวเตอร์</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      อ.วิชัย เกียรติสกุล
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">66209010015</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">นางสาววิภาดา แก้วเกิด</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 2 สาขาช่างเทคนิคคอมพิวเตอร์</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      อ.วิชัย เกียรติสกุล
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">65309010005</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">นายกิตติศักดิ์ รัตนผล</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวส. 1 สาขาเทคโนโลยีสารสนเทศ</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      อ.ณัฐพร ศรีวิชัย
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            แสดงรายการตัวอย่าง
+          </Typography>
+        </Box>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>รหัสนักศึกษา</TableCell>
+                <TableCell>ชื่อ นามสกุล</TableCell>
+                <TableCell>ระดับชั้น และ สาขาวิชา</TableCell>
+                <TableCell>ครูที่ปรึกษา</TableCell>
+                <TableCell align="right">สถานะภาพ</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sampleStudents.map((std) => (
+                <TableRow key={std.code} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {std.code}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{std.name}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {std.classLevel}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={std.advisor} color="primary" variant="outlined" />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Chip size="small" label={std.status} color="success" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Snackbar feedback */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="info" sx={{ width: "100%" }}>
+          ระบบฟอร์มบันทึกข้อมูลจะเปิดให้เชื่อมต่อกับฐานข้อมูลในรอบถัดไป
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

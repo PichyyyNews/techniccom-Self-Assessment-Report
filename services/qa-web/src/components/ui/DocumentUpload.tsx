@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import {
-  UploadCloud,
-  FileText,
-  X,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-} from "lucide-react";
-import { clsx } from "clsx";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Alert from "@mui/material/Alert";
+import LinearProgress from "@mui/material/LinearProgress";
+import Chip from "@mui/material/Chip";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DescriptionIcon from "@mui/icons-material/Description";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 interface DocumentUploadProps {
   value?: string | null;
@@ -26,7 +29,7 @@ export function DocumentUpload({
   fileName,
   onChange,
   folder = "license-documents",
-  label = "เอกสารหลักฐาน / สแกนบัตรใบอนุญาต (PDF หรือ รูปภาพ)",
+  label = "เอกสารหลักฐาน หรือ สแกนบัตรใบอนุญาต",
   className,
 }: DocumentUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -37,7 +40,6 @@ export function DocumentUpload({
   const handleUploadFile = async (file: File) => {
     if (!file) return;
 
-    // Validate mime type
     const validMimes = [
       "application/pdf",
       "image/jpeg",
@@ -47,11 +49,10 @@ export function DocumentUpload({
     ];
 
     if (!validMimes.includes(file.type)) {
-      setError("กรุณาเลือกไฟล์ PDF หรือรูปภาพ (JPG, PNG, WEBP)");
+      setError("กรุณาเลือกไฟล์ PDF หรือรูปภาพ JPG PNG WEBP");
       return;
     }
 
-    // Validate size (10MB)
     if (file.size > 10 * 1024 * 1024) {
       setError("ขนาดไฟล์ต้องไม่เกิน 10MB");
       return;
@@ -121,123 +122,174 @@ export function DocumentUpload({
     fileName?.toLowerCase().endsWith(".pdf");
 
   return (
-    <div className={clsx("space-y-1.5", className)}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }} className={className}>
       {label && (
-        <label className="block text-[11px] font-semibold text-slate-700">
+        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
           {label}
-        </label>
+        </Typography>
       )}
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
-          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
+        <Alert severity="error" onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
       {value ? (
-        /* Document Preview Card */
-        <div className="relative flex items-center justify-between gap-3 rounded-2xl border border-teal-200 bg-teal-50/40 p-3.5 transition hover:bg-teal-50/60">
-          <div className="flex items-center gap-3 min-w-0">
+        <Paper
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1.75,
+            bgcolor: "background.paper",
+            borderColor: "primary.light",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
             {isPdf ? (
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 border border-rose-200 flex-shrink-0">
-                <FileText className="h-6 w-6" />
-              </div>
+              <Box
+                sx={{
+                  display: "flex",
+                  width: 44,
+                  height: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 2,
+                  bgcolor: "error.50",
+                  color: "error.main",
+                  flexShrink: 0,
+                }}
+              >
+                <DescriptionIcon />
+              </Box>
             ) : (
-              <img
+              <Box
+                component="img"
                 src={value}
                 alt="เอกสารหลักฐาน"
-                className="h-12 w-12 rounded-xl object-cover border border-slate-200 shadow-2xs flex-shrink-0 bg-white"
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  objectFit: "cover",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  flexShrink: 0,
+                }}
               />
             )}
 
-            <div className="min-w-0">
-              <div className="flex items-center gap-1 text-xs font-bold text-teal-800">
-                <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" />
-                <span>{isPdf ? "ไฟล์เอกสาร PDF" : "ไฟล์รูปภาพหลักฐาน"}</span>
-              </div>
-              <p className="text-[11px] text-slate-600 truncate mt-0.5 max-w-[240px] sm:max-w-xs font-medium">
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <CheckCircleIcon sx={{ fontSize: 16, color: "success.main" }} />
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
+                  {isPdf ? "ไฟล์เอกสาร PDF" : "ไฟล์รูปภาพหลักฐาน"}
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: "block",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: { xs: 180, sm: 300 },
+                }}
+              >
                 {fileName || value.split("/").pop()}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <a
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+            <Button
+              size="small"
+              variant="outlined"
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-lg border border-teal-300 bg-white px-2.5 py-1 text-xs font-bold text-teal-700 hover:bg-teal-50 transition shadow-2xs"
+              endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+              sx={{ display: { xs: "none", sm: "inline-flex" } }}
             >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">เปิดดูไฟล์</span>
-            </a>
+              เปิดดูไฟล์
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              size="small"
+              variant="outlined"
+              color="secondary"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs disabled:opacity-50"
             >
               เปลี่ยน
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <IconButton
+              size="small"
+              color="error"
               onClick={handleRemove}
               disabled={uploading}
-              className="rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition shadow-2xs disabled:opacity-50"
-              title="ลบไฟล์เอกสาร"
+              aria-label="ลบไฟล์"
             >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Paper>
       ) : (
-        /* Dropzone / Upload Area */
-        <div
+        <Paper
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={clsx(
-            "relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center cursor-pointer transition-all duration-150 select-none",
-            isDragging
-              ? "border-teal-500 bg-teal-50/60 scale-[1.01]"
-              : "border-slate-200 bg-slate-50/50 hover:border-teal-400 hover:bg-teal-50/20",
-            uploading && "pointer-events-none opacity-60"
-          )}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 3,
+            textAlign: "center",
+            cursor: "pointer",
+            borderStyle: "dashed",
+            borderWidth: 2,
+            borderColor: isDragging ? "primary.main" : "divider",
+            bgcolor: isDragging ? "primary.50" : "background.paper",
+            transition: "all 0.15s ease",
+            "&:hover": {
+              borderColor: "primary.main",
+              bgcolor: "background.default",
+            },
+          }}
         >
           {uploading ? (
-            <div className="flex flex-col items-center py-2">
-              <Loader2 className="h-7 w-7 animate-spin text-teal-600 mb-2" />
-              <span className="text-xs font-bold text-slate-700">กำลังอัปโหลดเอกสารไปยัง MinIO S3...</span>
-            </div>
+            <Box sx={{ width: "100%", maxWidth: 280, py: 1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
+                กำลังอัปโหลดเอกสาร
+              </Typography>
+              <LinearProgress />
+            </Box>
           ) : (
             <>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100/70 text-teal-700 mb-2 shadow-2xs">
-                <UploadCloud className="h-5 w-5" />
-              </div>
-
-              <div className="text-xs font-bold text-slate-800">
-                ลากไฟล์มาวางที่นี่ หรือ <span className="text-teal-600 underline">คลิกเพื่ออัปโหลดไฟล์</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                รองรับไฟล์ PDF จากระบบ KSP Self-Service, KSP School หรือรูปถ่ายบัตร JPG, PNG (สูงสุด 10MB)
-              </p>
+              <CloudUploadIcon sx={{ fontSize: 36, color: "primary.main", mb: 1 }} />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+                ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
+                รองรับไฟล์ PDF หรือรูปภาพ JPG PNG WEBP ขนาดไม่เกิน 10MB
+              </Typography>
             </>
           )}
-        </div>
+        </Paper>
       )}
 
-      {/* Hidden native file input */}
       <input
         ref={fileInputRef}
         type="file"
         accept="application/pdf,image/jpeg,image/png,image/webp"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: "none" }}
       />
-    </div>
+    </Box>
   );
 }

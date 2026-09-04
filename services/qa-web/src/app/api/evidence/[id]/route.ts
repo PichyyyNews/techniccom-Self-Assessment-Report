@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
@@ -57,6 +58,19 @@ export async function DELETE(
     await prisma.evidenceFile.delete({
       where: { id },
     });
+
+    // Invalidate Next.js cache
+    try {
+      revalidatePath("/stock");
+      revalidatePath("/quick-upload");
+      revalidatePath("/dashboard");
+      revalidatePath("/teachers/lesson-plans");
+      revalidatePath("/teachers/researches");
+      revalidatePath("/teachers/trainings");
+      revalidatePath("/students");
+    } catch (cacheErr) {
+      console.warn("revalidatePath warning:", cacheErr);
+    }
 
     // Log Activity
     try {

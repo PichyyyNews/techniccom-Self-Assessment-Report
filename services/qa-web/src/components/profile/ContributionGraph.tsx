@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Activity, Clock, CheckCircle2 } from "lucide-react";
-import { clsx } from "clsx";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 interface DayData {
-  date: string; // YYYY-MM-DD
+  date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
 }
@@ -26,17 +32,9 @@ export function ContributionGraph({
   contributionMap?: Record<string, number>;
   recentActivities?: RecentActivity[];
 }) {
-  const [hoveredDay, setHoveredDay] = useState<{
-    date: string;
-    count: number;
-    x: number;
-    y: number;
-  } | null>(null);
-
-  // Generate exact 52 weeks (364 days) leading up to today
   const { weeks, monthLabels, totalCount } = useMemo(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon ...
+    const dayOfWeek = today.getDay();
     const totalDays = 52 * 7 + dayOfWeek;
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - totalDays + 1);
@@ -65,7 +63,6 @@ export function ContributionGraph({
         months.push({ label: monthNames[month], weekIndex: weekIdx });
       }
 
-      // Strictly use REAL database activity log data (0 if no activity)
       const count = contributionMap[dateStr] || 0;
       countSum += count;
 
@@ -98,166 +95,219 @@ export function ContributionGraph({
     };
   }, [contributionMap, totalContributions]);
 
+  const totalWeeksCount = weeks.length || 52;
+
   const getCellColor = (level: number) => {
     switch (level) {
       case 1:
-        return "bg-emerald-300 hover:ring-2 hover:ring-emerald-400";
+        return "#86efac";
       case 2:
-        return "bg-emerald-500 hover:ring-2 hover:ring-emerald-600";
+        return "#22c55e";
       case 3:
-        return "bg-emerald-600 hover:ring-2 hover:ring-emerald-700";
+        return "#16a34a";
       case 4:
-        return "bg-emerald-800 hover:ring-2 hover:ring-emerald-900";
+        return "#15803d";
       default:
-        return "bg-slate-100 hover:bg-slate-200 border border-slate-200/40";
+        return "#f1f5f9";
     }
   };
 
-  const totalWeeksCount = weeks.length || 53;
-
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-5">
+    <Paper sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.25 }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200/70 flex-shrink-0 shadow-2xs">
-            <Activity className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              กิจกรรมและการมีส่วนร่วม (Contribution Activity)
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              <strong className="text-emerald-700 font-bold">{totalCount} กิจกรรมจริง</strong> บันทึกจากระบบในรอบ 1 ปีที่ผ่านมา
-            </p>
-          </div>
-        </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          pb: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              width: 30,
+              height: 30,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 1.5,
+              bgcolor: "success.50",
+              color: "success.main",
+              border: "1px solid",
+              borderColor: "success.light",
+              flexShrink: 0,
+            }}
+          >
+            <ShowChartIcon sx={{ fontSize: 18 }} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>กิจกรรมและการมีส่วนร่วม</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "none", sm: "inline" } }}>
+              <strong style={{ color: "#16a34a" }}>{totalCount} รายการ</strong> ในรอบ 1 ปี
+            </Typography>
+          </Box>
+        </Box>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 self-start sm:self-auto">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          เชื่อมโยงระบบฐานข้อมูลจริง (PostgreSQL)
-        </div>
-      </div>
+        <Chip
+          size="small"
+          label="ข้อมูลจริง"
+          color="success"
+          variant="outlined"
+          sx={{ height: 20, fontSize: "0.6875rem" }}
+        />
+      </Box>
 
-      {/* Heatmap Grid Wrapper (Spans full width gracefully) */}
-      <div className="overflow-x-auto pb-2 pt-1">
-        <div className="w-full min-w-[700px]">
-          {/* Month Labels Bar */}
-          <div className="flex text-[11px] text-slate-400 font-medium pl-10 mb-1.5 relative h-5">
+      {/* Heatmap Grid Wrapper */}
+      <Box sx={{ overflowX: "auto", pb: 1, pt: 0.5 }}>
+        <Box sx={{ minWidth: 680 }}>
+          {/* Month Labels */}
+          <Box sx={{ position: "relative", height: 20, pl: 5, mb: 0.5 }}>
             {monthLabels.map((m, idx) => (
-              <span
+              <Typography
                 key={idx}
-                className="absolute"
-                style={{
+                variant="caption"
+                sx={{
+                  position: "absolute",
                   left: `calc(2.5rem + ${(m.weekIndex / totalWeeksCount) * 100}%)`,
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  fontSize: "0.6875rem",
                 }}
               >
                 {m.label}
-              </span>
+              </Typography>
             ))}
-          </div>
+          </Box>
 
           {/* Grid Container */}
-          <div className="flex items-center gap-2 w-full">
-            {/* Day Labels (Mon, Wed, Fri) */}
-            <div className="flex flex-col justify-between text-[10px] text-slate-400 font-semibold w-8 pr-1 py-0.5 h-[98px] sm:h-[112px] select-none flex-shrink-0">
-              <span>จันทร์</span>
-              <span>พุธ</span>
-              <span>ศุกร์</span>
-            </div>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+            {/* Day Labels */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                width: 32,
+                pr: 0.5,
+                py: 0.5,
+                height: 104,
+                userSelect: "none",
+                flexShrink: 0,
+              }}
+            >
+              <Typography variant="caption" sx={{ fontSize: "0.625rem", color: "text.secondary" }}>
+                จันทร์
+              </Typography>
+              <Typography variant="caption" sx={{ fontSize: "0.625rem", color: "text.secondary" }}>
+                พุธ
+              </Typography>
+              <Typography variant="caption" sx={{ fontSize: "0.625rem", color: "text.secondary" }}>
+                ศุกร์
+              </Typography>
+            </Box>
 
-            {/* Weeks columns spanning across width */}
-            <div className="flex-1 flex gap-[3px] sm:gap-[4px] justify-between">
+            {/* Weeks columns */}
+            <Box sx={{ flex: 1, display: "flex", gap: "3px", justifyContent: "space-between" }}>
               {weeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex-1 flex flex-col gap-[3px] sm:gap-[4px]">
+                <Box key={wIdx} sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "3px" }}>
                   {week.map((day, dIdx) => (
-                    <div
+                    <Tooltip
                       key={dIdx}
-                      onMouseEnter={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoveredDay({
-                          date: day.date,
-                          count: day.count,
-                          x: rect.left + rect.width / 2,
-                          y: rect.top - 8,
-                        });
-                      }}
-                      onMouseLeave={() => setHoveredDay(null)}
-                      className={clsx(
-                        "w-full aspect-square rounded-[3px] transition-all cursor-pointer",
-                        getCellColor(day.level)
-                      )}
-                    />
+                      title={`${day.date} มี ${day.count} กิจกรรม`}
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        sx={{
+                          width: "100%",
+                          aspectRatio: "1/1",
+                          borderRadius: "2px",
+                          bgcolor: getCellColor(day.level),
+                          cursor: "pointer",
+                          transition: "opacity 0.1s",
+                          "&:hover": { opacity: 0.8 },
+                        }}
+                      />
+                    </Tooltip>
                   ))}
-                </div>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {/* Bottom Footer / Legend */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 text-[11px] text-slate-500 border-t border-slate-100 mt-4">
-            <span className="text-slate-400 text-xs">
-              * บันทึกกิจกรรมอัตโนมัติเมื่อมีการอัปเดตข้อมูล, อัปโหลดเอกสาร SAR หรือประเมินคุณภาพ
-            </span>
-
-            <div className="flex items-center gap-1.5 font-medium text-slate-500 self-end sm:self-auto">
-              <span>น้อย</span>
-              <span className="h-3 w-3 rounded-[3px] bg-slate-100 inline-block border border-slate-200/80" title="0 กิจกรรม" />
-              <span className="h-3 w-3 rounded-[3px] bg-emerald-300 inline-block" title="1 กิจกรรม" />
-              <span className="h-3 w-3 rounded-[3px] bg-emerald-500 inline-block" title="2-3 กิจกรรม" />
-              <span className="h-3 w-3 rounded-[3px] bg-emerald-600 inline-block" title="4-5 กิจกรรม" />
-              <span className="h-3 w-3 rounded-[3px] bg-emerald-800 inline-block" title="6+ กิจกรรม" />
-              <span>มาก</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hover Tooltip */}
-        {hoveredDay && (
-          <div
-            className="fixed z-50 -translate-x-1/2 -translate-y-full px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-xl pointer-events-none whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
-            style={{ left: hoveredDay.x, top: hoveredDay.y }}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              gap: 1,
+              pt: 2,
+              mt: 1.5,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
           >
-            <strong>{hoveredDay.count} กิจกรรม</strong> ในวันที่{" "}
-            {new Date(hoveredDay.date).toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </div>
-        )}
-      </div>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              บันทึกกิจกรรมอัตโนมัติเมื่อมีการอัปเดตข้อมูล หรือจัดเก็บเอกสาร
+            </Typography>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>น้อย</Typography>
+              <Box sx={{ width: 10, height: 10, borderRadius: "2px", bgcolor: "#f1f5f9", border: "1px solid #e2e8f0" }} />
+              <Box sx={{ width: 10, height: 10, borderRadius: "2px", bgcolor: "#86efac" }} />
+              <Box sx={{ width: 10, height: 10, borderRadius: "2px", bgcolor: "#22c55e" }} />
+              <Box sx={{ width: 10, height: 10, borderRadius: "2px", bgcolor: "#16a34a" }} />
+              <Box sx={{ width: 10, height: 10, borderRadius: "2px", bgcolor: "#15803d" }} />
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>มาก</Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Recent Activity Log List */}
-      {recentActivities.length > 0 && (
-        <div className="pt-3 border-t border-slate-100 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-            ประวัติกิจกรรมล่าสุดในระบบ (Recent Activity Logs):
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {recentActivities.map((act) => (
-              <div
+      {recentActivities && recentActivities.length > 0 && (
+        <Box sx={{ pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <AccessTimeIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+            <Typography variant="subtitle2">
+              ประวัติกิจกรรมล่าสุด
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {recentActivities.slice(0, 5).map((act) => (
+              <Box
                 key={act.id}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-700"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  p: 1.25,
+                  borderRadius: 2,
+                  bgcolor: "background.default",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
               >
-                <div className="flex items-center gap-2 truncate">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                  <span className="font-semibold truncate">{act.title}</span>
-                </div>
-                <span className="text-[10px] text-slate-400 flex items-center gap-1 flex-shrink-0">
-                  <Clock className="h-3 w-3" />
-                  {new Date(act.createdAt).toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: "success.main" }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {act.title}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {new Date(act.createdAt).toLocaleDateString("th-TH")}
+                </Typography>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 }

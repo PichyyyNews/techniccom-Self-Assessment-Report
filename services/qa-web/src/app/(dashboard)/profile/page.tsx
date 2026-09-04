@@ -4,38 +4,77 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Sparkles,
-  Edit3,
-  Plus,
-  Trash2,
-  X,
-  Loader2,
-  CheckCircle2,
-  Shield,
-  Key,
-  Quote,
-  Clock,
-  Camera,
-  Share2,
-  Check,
-  ArrowLeft,
-  Eye,
-  Lock,
-  FileBadge,
-  Building2,
-  ExternalLink,
-  FileText,
-  AlertTriangle,
-  Scroll,
-} from "lucide-react";
+import PersonIcon from "@mui/icons-material/Person";
+import MailIcon from "@mui/icons-material/Mail";
+import PhoneIcon from "@mui/icons-material/Phone";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import WorkIcon from "@mui/icons-material/Work";
+import SchoolIcon from "@mui/icons-material/School";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import SecurityIcon from "@mui/icons-material/Security";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import ShareIcon from "@mui/icons-material/Share";
+import CheckIcon from "@mui/icons-material/Check";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import LockIcon from "@mui/icons-material/Lock";
+import BadgeIcon from "@mui/icons-material/Badge";
+import BusinessIcon from "@mui/icons-material/Business";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import DescriptionIcon from "@mui/icons-material/Description";
+import WarningIcon from "@mui/icons-material/Warning";
+import ArticleIcon from "@mui/icons-material/Article";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+
+const User = PersonIcon;
+const Mail = MailIcon;
+const Phone = PhoneIcon;
+const Calendar = CalendarTodayIcon;
+const Briefcase = WorkIcon;
+const GraduationCap = SchoolIcon;
+const Award = EmojiEventsIcon;
+const Sparkles = AutoAwesomeIcon;
+const Edit3 = EditIcon;
+const Plus = AddIcon;
+const Trash2 = DeleteIcon;
+const X = CloseIcon;
+const Loader2 = ({ className }: { className?: string }) => (
+  <CircularProgress size={16} sx={{ display: "inline-flex" }} />
+);
+const CheckCircle2 = CheckCircleIcon;
+const Shield = SecurityIcon;
+const Key = VpnKeyIcon;
+const Quote = FormatQuoteIcon;
+const Clock = AccessTimeIcon;
+const Camera = PhotoCameraIcon;
+const Share2 = ShareIcon;
+const Check = CheckIcon;
+const ArrowLeft = ArrowBackIcon;
+const Eye = VisibilityIcon;
+const Lock = LockIcon;
+const FileBadge = BadgeIcon;
+const Building2 = BusinessIcon;
+const ExternalLink = OpenInNewIcon;
+const FileText = DescriptionIcon;
+const AlertTriangle = WarningIcon;
+const Scroll = ArticleIcon;
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { DocumentUpload } from "@/components/ui/DocumentUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
@@ -185,6 +224,17 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
   });
   const [isRenewalPending, setIsRenewalPending] = useState(false);
   const [skillsList, setSkillsList] = useState<string[]>([]);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({ open: false, message: "", severity: "success" });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    content: string;
+    onConfirm: () => Promise<void>;
+  }>({ open: false, title: "", content: "", onConfirm: async () => {} });
   const [skillInput, setSkillInput] = useState("");
   const [passwordForm, setPasswordForm] = useState({
     password: "",
@@ -370,29 +420,36 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
     setActiveModal("teacherLicense");
   };
 
-  const handleDeleteTeacherLicense = async (licenseId: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการใบอนุญาต/คุณวุฒินี้?")) return;
-    try {
-      setSubmitting(true);
-      const targetEndpoint = isSelf ? "/api/profile" : `/api/profile/${userId}`;
-      const res = await fetch(targetEndpoint, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          section: "teacherLicense",
-          action: "delete",
-          licenseId,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการลบรายการ");
-      if (data.user) setUser(data.user);
-      await fetchProfile();
-    } catch (err: any) {
-      alert(err.message || "เกิดข้อผิดพลาดในการลบรายการ");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleDeleteTeacherLicense = (licenseId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "ยืนยันการลบรายการ",
+      content: "คุณแน่ใจหรือไม่ว่าต้องการลบรายการใบอนุญาตหรือคุณวุฒินี้",
+      onConfirm: async () => {
+        try {
+          setSubmitting(true);
+          const targetEndpoint = isSelf ? "/api/profile" : `/api/profile/${userId}`;
+          const res = await fetch(targetEndpoint, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              section: "teacherLicense",
+              action: "delete",
+              licenseId,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการลบรายการ");
+          if (data.user) setUser(data.user);
+          setSnackbar({ open: true, message: "ลบรายการใบอนุญาตเรียบร้อยแล้ว", severity: "success" });
+          await fetchProfile();
+        } catch (err: any) {
+          setSnackbar({ open: true, message: err.message || "เกิดข้อผิดพลาดในการลบรายการ", severity: "error" });
+        } finally {
+          setSubmitting(false);
+        }
+      },
+    });
   };
 
   const getLicenseIcon = (name?: string) => {
@@ -614,16 +671,17 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการบันทึกข้อมูล", severity: "error" });
         return;
       }
 
       setActiveModal("none");
+      setSnackbar({ open: true, message: "บันทึกข้อมูลเรียบร้อยแล้ว", severity: "success" });
       fetchProfile();
       if (isSelf && updateSession) updateSession();
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -680,7 +738,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-5 space-y-3.5">
       {/* Top Breadcrumb navigation */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -730,16 +788,16 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       </div>
 
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-        {/* Cover Graphic Banner */}
-        <div className="h-28 sm:h-52 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+        {/* Compact Cover Graphic Banner */}
+        <div className="h-16 sm:h-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 relative">
           <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
         </div>
 
         {/* Profile Identity Layout */}
-        <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-0">
+        <div className="px-3 sm:px-5 pb-3.5 sm:pb-4 pt-0">
           {/* Top Floating Row: Avatar (Left) + Action Buttons (Right) */}
-          <div className="flex items-end justify-between -mt-10 sm:-mt-20 mb-3 sm:mb-5">
+          <div className="flex items-end justify-between -mt-8 sm:-mt-10 mb-2.5">
             {/* Avatar with Camera Trigger */}
             <div className="relative group flex-shrink-0">
               {user?.avatarUrl && !avatarError ? (
@@ -747,10 +805,10 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                   src={user.avatarUrl}
                   alt={user.name}
                   onError={() => setAvatarError(true)}
-                  className="h-20 w-20 sm:h-36 sm:w-36 rounded-2xl sm:rounded-3xl object-cover border-4 border-white shadow-xl shadow-slate-900/10 bg-white"
+                  className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl sm:rounded-2xl object-cover border-2 sm:border-3 border-white shadow-md bg-white"
                 />
               ) : (
-                <div className="flex h-20 w-20 sm:h-36 sm:w-36 items-center justify-center rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-2xl sm:text-4xl border-4 border-white shadow-xl shadow-slate-900/10">
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xl sm:text-2xl border-2 sm:border-3 border-white shadow-md">
                   {user?.name ? user.name.charAt(0) : "U"}
                 </div>
               )}
@@ -760,36 +818,36 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 <button
                   type="button"
                   onClick={openBasicModal}
-                  className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 p-1.5 sm:p-2 rounded-xl bg-slate-900 text-white shadow-md hover:bg-slate-800 transition active:scale-95"
+                  className="absolute -bottom-1 -right-1 p-1 rounded-lg bg-slate-900 text-white shadow hover:bg-slate-800 transition active:scale-95"
                   title="เปลี่ยนรูปประจำตัว"
                 >
-                  <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Camera className="h-3 w-3" />
                 </button>
               )}
             </div>
 
             {/* Desktop Action Buttons (sm:flex) */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={handleCopyLink}
                 className={clsx(
-                  "inline-flex items-center justify-center gap-1.5 rounded-2xl px-4 py-3 text-sm font-bold transition active:scale-95 shadow-2xs border",
+                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition active:scale-95 border",
                   copied
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/25"
+                    ? "bg-emerald-600 text-white border-emerald-600"
                     : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                 )}
                 title="คัดลอกลิงก์โปรไฟล์เพื่อแชร์"
               >
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4 text-white" />
-                    <span>คัดลอกลิงก์แล้ว!</span>
+                    <Check className="h-3.5 w-3.5 text-white" />
+                    <span>คัดลอกแล้ว</span>
                   </>
                 ) : (
                   <>
-                    <Share2 className="h-4 w-4 text-slate-500" />
-                    <span>แชร์โปรไฟล์</span>
+                    <Share2 className="h-3.5 w-3.5 text-slate-500" />
+                    <span>แชร์</span>
                   </>
                 )}
               </button>
@@ -798,122 +856,122 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                 <>
                   <button
                     onClick={openBasicModal}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-700 active:scale-95"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-95"
                   >
-                    <Edit3 className="h-4 w-4" />
+                    <Edit3 className="h-3.5 w-3.5" />
                     <span>แก้ไขข้อมูลส่วนตัว</span>
                   </button>
 
                   <button
                     onClick={openPasswordModal}
-                    className="p-3 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95"
                     title="เปลี่ยนรหัสผ่าน"
                   >
-                    <Key className="h-4 w-4 text-slate-500" />
+                    <Key className="h-3.5 w-3.5 text-slate-500" />
                   </button>
                 </>
               )}
             </div>
 
-            {/* Mobile Action Buttons (sm:hidden - compact & robust) */}
-            <div className="flex sm:hidden items-center gap-1.5 flex-shrink-0">
+            {/* Mobile Action Buttons (sm:hidden - compact) */}
+            <div className="flex sm:hidden items-center gap-1 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleCopyLink}
                 className={clsx(
-                  "p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 shadow-2xs flex items-center justify-center",
+                  "p-1.5 rounded-lg border text-xs font-semibold transition active:scale-95 flex items-center justify-center",
                   copied
                     ? "bg-emerald-600 text-white border-emerald-600"
                     : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                 )}
                 title="แชร์โปรไฟล์"
               >
-                {copied ? <Check className="h-4 w-4 text-white" /> : <Share2 className="h-4 w-4 text-slate-600" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-white" /> : <Share2 className="h-3.5 w-3.5 text-slate-600" />}
               </button>
 
               {canEdit && (
                 <>
                   <button
                     onClick={openBasicModal}
-                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 whitespace-nowrap"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold active:scale-95 whitespace-nowrap"
                   >
-                    <Edit3 className="h-3.5 w-3.5" />
+                    <Edit3 className="h-3 w-3" />
                     <span>แก้ไข</span>
                   </button>
 
                   <button
                     onClick={openPasswordModal}
-                    className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition active:scale-95"
                     title="เปลี่ยนรหัสผ่าน"
                   >
-                    <Key className="h-4 w-4 text-slate-600" />
+                    <Key className="h-3.5 w-3.5 text-slate-600" />
                   </button>
                 </>
               )}
             </div>
           </div>
 
-          {/* User Name & Details Section (100% Inside White Card) */}
-          <div className="space-y-2">
+          {/* User Name & Details Section */}
+          <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                 {user?.name}
               </h1>
               <span
                 className={clsx(
-                  "inline-flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xl text-xs font-black border",
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border",
                   getBadgeStyle(roleColor)
                 )}
               >
-                {isRoot && <Shield className="h-3.5 w-3.5" />}
+                {isRoot && <Shield className="h-3 w-3" />}
                 {roleTitle}
               </span>
             </div>
 
-            <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-blue-600" />
-              {user?.position || "บุคลากรวิทยาลัย"}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+              <span className="font-medium text-slate-700 flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-blue-600" />
+                {user?.position || "บุคลากรวิทยาลัย"}
+              </span>
 
-            <p className="text-xs text-slate-400 flex items-center gap-2">
-              <Mail className="h-3.5 w-3.5 text-slate-400" />
-              {user?.email}
-            </p>
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Mail className="h-3 w-3 text-slate-400" />
+                {user?.email}
+              </span>
+            </div>
           </div>
 
           {/* Social Bio / Philosophy */}
-          <div className="mt-5 pt-4 border-t border-slate-100 text-xs sm:text-sm text-slate-600 leading-relaxed">
-            {user?.bio ? (
-              <div className="flex items-start gap-2.5 bg-slate-50/90 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
-                <Quote className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5 rotate-180" />
-                <p className="whitespace-pre-line text-slate-800 font-medium">{user.bio}</p>
+          {user?.bio ? (
+            <div className="mt-2.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
+              <div className="flex items-start gap-2 bg-slate-50/80 p-2 sm:p-2.5 rounded-xl border border-slate-100">
+                <Quote className="h-3.5 w-3.5 text-blue-500 flex-shrink-0 mt-0.5 rotate-180" />
+                <p className="whitespace-pre-line text-slate-800 font-normal leading-relaxed">{user.bio}</p>
               </div>
-            ) : (
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
-                <span className="text-slate-400 text-xs italic">
-                  ยังไม่มีคำแนะนำตัวหรือคติประจำใจ
-                </span>
-                {canEdit && (
-                  <button
-                    onClick={openBasicModal}
-                    className="text-xs font-bold text-blue-600 hover:underline"
-                  >
-                    + เพิ่มคำแนะนำตัว
-                  </button>
-                )}
+            </div>
+          ) : (
+            canEdit && (
+              <div className="mt-2 pt-1.5 border-t border-slate-100">
+                <button
+                  onClick={openBasicModal}
+                  className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>เพิ่มคำแนะนำตัวหรือคติประจำใจ</span>
+                </button>
               </div>
-            )}
-          </div>
+            )
+          )}
 
           {/* Quick Contact Facts */}
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-600">
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
-              <Phone className="h-3.5 w-3.5 text-slate-400" />
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/70 text-[11px]">
+              <Phone className="h-3 w-3 text-slate-400" />
               <span>{user?.phone ? user.phone : "ไม่ได้ระบุเบอร์โทร"}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/70 text-[11px]">
+              <Calendar className="h-3 w-3 text-slate-400" />
               <span>
                 {user?.birthDate
                   ? new Date(user.birthDate).toLocaleDateString("th-TH", {
@@ -924,15 +982,15 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                   : "ไม่ได้ระบุวันเกิด"}
               </span>
               {age !== null && (
-                <span className="font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-200 text-[10px]">
-                  (อายุ {age} ปี)
+                <span className="font-semibold text-slate-700 bg-white px-1 py-0.2 rounded border border-slate-200 text-[10px]">
+                  {age} ปี
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 bg-emerald-50/70 px-3 py-1.5 rounded-xl border border-emerald-200/70 text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="font-semibold">{user?.isActive ? "สถานะบัญชีปกติ" : "ระงับการใช้งาน"}</span>
+            <div className="flex items-center gap-1 bg-emerald-50/70 px-2 py-1 rounded-lg border border-emerald-200/70 text-emerald-700 text-[11px]">
+              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+              <span className="font-medium">{user?.isActive ? "สถานะปกติ" : "ระงับการใช้งาน"}</span>
             </div>
           </div>
         </div>
@@ -956,44 +1014,44 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
         );
 
         return (
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-6">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs space-y-4">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/20 flex-shrink-0">
-                  <Scroll className="h-5 w-5" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-xs flex-shrink-0">
+                  <Scroll className="h-4 w-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm sm:text-base lg:text-lg font-black text-slate-900 leading-tight">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
                       ใบอนุญาตประกอบวิชาชีพและคุณวุฒิวิชาชีพครู
                     </h3>
-                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[10px] font-black bg-teal-50 text-teal-700 border border-teal-200">
+                    <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
                       SAR มาตรฐานวิชาชีพครูและสาขาช่าง
                     </span>
                   </div>
-                  <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-400 mt-0.5">
                     คุรุสภา (A/B/P-License / ผ่อนผัน) • TPQI • มาตรฐานฝีมือแรงงาน (DSD) • กว.
                   </p>
                 </div>
               </div>
 
               {canEdit && (
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => openTeacherLicenseModal(undefined, "KSP_B_LICENSE")}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition shadow-sm shadow-teal-500/20 active:scale-95 whitespace-nowrap"
+                    className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition active:scale-95 whitespace-nowrap"
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                     <span>+ คุรุสภา/ผ่อนผัน</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => openTeacherLicenseModal(undefined, "TPQI_CERTIFICATE")}
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-900 transition shadow-sm active:scale-95 whitespace-nowrap"
+                    className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900 transition active:scale-95 whitespace-nowrap"
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                     <span>+ คุณวุฒิ TPQI/DSD</span>
                   </button>
                 </div>
@@ -1295,44 +1353,44 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       })()}
 
       {/* ================= 4. TWO-COLUMN DETAILS (EDUCATION & WORK HISTORY) ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
         {/* Left Column: Educational Qualifications (วุฒิการศึกษา) */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200/60">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-200/60">
                 <GraduationCap className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                   วุฒิการศึกษา (Educational Qualifications)
                 </h3>
-                <p className="text-xs text-slate-400">ประวัติการศึกษาและคุณวุฒิ</p>
+                <p className="text-[11px] text-slate-400">ประวัติการศึกษาและคุณวุฒิ</p>
               </div>
             </div>
 
             {canEdit && (
               <button
                 onClick={openEducationModal}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition active:scale-95"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition active:scale-95"
               >
-                <Edit3 className="h-3.5 w-3.5" />
+                <Edit3 className="h-3 w-3" />
                 แก้ไขวุฒิ
               </button>
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {currentEducation.length === 0 ? (
-              <p className="text-xs text-slate-400 italic py-2">ยังไม่มีข้อมูลวุฒิการศึกษา</p>
+              <p className="text-xs text-slate-400 italic py-1.5">ยังไม่มีข้อมูลวุฒิการศึกษา</p>
             ) : (
               currentEducation.map((edu, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 transition hover:bg-slate-50"
+                  className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-50/70 border border-slate-200/70 transition hover:bg-slate-50"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
-                    <GraduationCap className="h-4 w-4 text-blue-600" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
+                    <GraduationCap className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -1340,7 +1398,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                         {edu.degree} {edu.major && `• ${edu.major}`}
                       </h4>
                       {edu.year && (
-                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200 flex-shrink-0">
+                        <span className="text-[10px] font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
                           พ.ศ. {edu.year}
                         </span>
                       )}
@@ -1356,42 +1414,42 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
         </div>
 
         {/* Right Column: Work History & Experience (ประวัติการทำงาน) */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200/60">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200/60">
                 <Briefcase className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                   ประวัติการทำงาน & ผลงาน (Experience)
                 </h3>
-                <p className="text-xs text-slate-400">หน้าที่ความรับผิดชอบและผลงาน</p>
+                <p className="text-[11px] text-slate-400">หน้าที่ความรับผิดชอบและผลงาน</p>
               </div>
             </div>
 
             {canEdit && (
               <button
                 onClick={openWorkHistoryModal}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition active:scale-95"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition active:scale-95"
               >
-                <Edit3 className="h-3.5 w-3.5" />
+                <Edit3 className="h-3 w-3" />
                 แก้ไขประวัติ
               </button>
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {currentWorkHistory.length === 0 ? (
-              <p className="text-xs text-slate-400 italic py-2">ยังไม่มีข้อมูลประวัติการทำงาน</p>
+              <p className="text-xs text-slate-400 italic py-1.5">ยังไม่มีข้อมูลประวัติการทำงาน</p>
             ) : (
               currentWorkHistory.map((work, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/70 transition hover:bg-slate-50"
+                  className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-xl bg-slate-50/70 border border-slate-200/70 transition hover:bg-slate-50"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
-                    <Briefcase className="h-4 w-4 text-indigo-600" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
+                    <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -1399,7 +1457,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                         {work.role}
                       </h4>
                       {work.period && (
-                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200 flex-shrink-0">
+                        <span className="text-[10px] font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
                           {work.period}
                         </span>
                       )}
@@ -1416,18 +1474,18 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       </div>
 
       {/* ================= 4. DETAILED PROFESSIONAL LICENSES (ข้อมูลใบอนุญาตประกอบวิชาชีพ) ================= */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 border border-teal-200/60">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-600 border border-teal-200/60">
               <FileBadge className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 ข้อมูลใบอนุญาตประกอบวิชาชีพ (Professional Licenses)
               </h3>
-              <p className="text-xs text-slate-400">
-                ใบอนุญาตประกอบวิชาชีพครู, ผู้บริหารสถานศึกษา, ใบ กว. และใบรับรองวิชาชีพเฉพาะทาง
+              <p className="text-[11px] text-slate-400">
+                ใบอนุญาตประกอบวิชาชีพครู ผู้บริหารสถานศึกษา ใบ กว. และใบรับรองวิชาชีพเฉพาะทาง
               </p>
             </div>
           </div>
@@ -1436,16 +1494,16 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
             <button
               type="button"
               onClick={openLicensesModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-teal-50 text-teal-700 text-xs font-bold hover:bg-teal-100 transition active:scale-95"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 text-xs font-semibold hover:bg-teal-100 transition active:scale-95"
             >
-              <Edit3 className="h-3.5 w-3.5" />
+              <Edit3 className="h-3 w-3" />
               จัดการใบประกอบวิชาชีพ
             </button>
           )}
         </div>
 
         {currentLicenses.length === 0 ? (
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-dashed border-slate-200">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-dashed border-slate-200">
             <span className="text-slate-400 text-xs italic">
               ยังไม่มีข้อมูลใบอนุญาตประกอบวิชาชีพ
             </span>
@@ -1460,32 +1518,32 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
             {currentLicenses.map((lic, idx) => {
               const statusInfo = getLicenseStatus(lic);
               return (
                 <div
                   key={idx}
-                  className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3 transition hover:bg-slate-50 hover:border-slate-300"
+                  className="p-3 sm:p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2.5 transition hover:bg-slate-50 hover:border-slate-300"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-teal-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-teal-700 border border-slate-200 shadow-2xs flex-shrink-0 mt-0.5">
                         <FileBadge className="h-4 w-4 text-teal-600" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                           {lic.name}
                         </h4>
-                        <div className="text-[11px] font-mono font-bold text-slate-600 mt-0.5">
-                          เลขที่: <span className="bg-white px-1.5 py-0.5 rounded border border-slate-200">{lic.licenseNumber || "-"}</span>
+                        <div className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
+                          เลขที่: <span className="bg-white px-1.5 py-0.2 rounded border border-slate-200">{lic.licenseNumber || "-"}</span>
                         </div>
                       </div>
                     </div>
 
                     <span
                       className={clsx(
-                        "inline-flex items-center px-2 py-0.5 text-[10px] font-black rounded-lg border flex-shrink-0",
+                        "inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-md border flex-shrink-0",
                         statusInfo.style
                       )}
                     >
@@ -1493,13 +1551,13 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-slate-500 pt-2 border-t border-slate-200/60">
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                      <span className="truncate">ผู้ออก: {lic.issuer || "ไม่ระบุหน่วยงาน"}</span>
+                  <div className="space-y-1 text-xs text-slate-500 pt-2 border-t border-slate-200/60">
+                    <div className="flex items-center gap-1">
+                      <Building2 className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                      <span className="truncate text-[11px]">ผู้ออก: {lic.issuer || "ไม่ระบุหน่วยงาน"}</span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
                       {lic.issueDate && (
                         <div className="flex items-center gap-1 text-slate-600">
                           <Calendar className="h-3 w-3 text-slate-400" />
@@ -1517,15 +1575,15 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
                   </div>
 
                   {lic.fileUrl && (
-                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-end">
+                    <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-end">
                       <a
                         href={lic.fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-teal-700 hover:bg-teal-50 transition shadow-2xs"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-semibold text-teal-700 hover:bg-teal-50 transition shadow-2xs"
                       >
                         <ExternalLink className="h-3 w-3 text-teal-600" />
-                        ดูไฟล์เอกสารหลักฐาน
+                        ดูหลักฐาน
                       </a>
                     </div>
                   )}
@@ -1537,39 +1595,39 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       </div>
 
       {/* ================= 5. SKILLS & EXPERTISE ================= */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-7 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60">
               <Award className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 ทักษะและความเชี่ยวชาญ (Skills & Expertise)
               </h3>
-              <p className="text-xs text-slate-400">องค์ความรู้และทักษะเฉพาะทาง</p>
+              <p className="text-[11px] text-slate-400">องค์ความรู้และทักษะเฉพาะทาง</p>
             </div>
           </div>
 
           {canEdit && (
             <button
               onClick={openSkillsModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition active:scale-95"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition active:scale-95"
             >
-              <Edit3 className="h-3.5 w-3.5" />
+              <Edit3 className="h-3 w-3" />
               แก้ไขทักษะ
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
           {currentSkills.length === 0 ? (
             <p className="text-xs text-slate-400 italic py-1">ยังไม่มีข้อมูลทักษะความเชี่ยวชาญ</p>
           ) : (
             currentSkills.map((skill, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200/80 shadow-2xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-medium border border-slate-200/80 shadow-2xs hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition"
               >
                 <Sparkles className="h-3 w-3 text-amber-500" />
                 {skill}
@@ -2869,7 +2927,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (passwordForm.password !== passwordForm.confirmPassword) {
-                  alert("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน");
+                  setSnackbar({ open: true, message: "รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน", severity: "warning" });
                   return;
                 }
                 handleSaveSection("password", { password: passwordForm.password });
@@ -2931,6 +2989,51 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
       )}
     </>
   )}
+
+  {/* Confirmation Dialog */}
+  <Dialog
+    open={confirmDialog.open}
+    onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+    maxWidth="xs"
+    fullWidth
+  >
+    <DialogTitle sx={{ fontWeight: 800 }}>{confirmDialog.title}</DialogTitle>
+    <DialogContent>
+      <Typography variant="body2">{confirmDialog.content}</Typography>
+    </DialogContent>
+    <DialogActions sx={{ p: 2 }}>
+      <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))} color="inherit">
+        ยกเลิก
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        onClick={async () => {
+          setConfirmDialog((prev) => ({ ...prev, open: false }));
+          await confirmDialog.onConfirm();
+        }}
+      >
+        ยืนยัน
+      </Button>
+    </DialogActions>
+  </Dialog>
+
+  {/* Feedback Snackbar */}
+  <Snackbar
+    open={snackbar.open}
+    autoHideDuration={4000}
+    onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+  >
+    <Alert
+      onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      severity={snackbar.severity}
+      variant="filled"
+      sx={{ width: "100%", boxShadow: 3 }}
+    >
+      {snackbar.message}
+    </Alert>
+  </Snackbar>
 </div>
 );
 }

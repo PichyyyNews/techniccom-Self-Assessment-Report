@@ -1,51 +1,37 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  FileText,
-  Image as ImageIcon,
-  Video,
-  Download,
-  Eye,
-  ExternalLink,
-  Plus,
-  Zap,
-  MapPin,
-  Building2,
-  Calendar,
-  Loader2,
-  FolderArchive,
-  X,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Avatar from "@mui/material/Avatar";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import BoltIcon from "@mui/icons-material/Bolt";
+import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import PersonIcon from "@mui/icons-material/Person";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
-
-interface EvidenceFileItem {
-  id: string;
-  title: string;
-  description?: string | null;
-  category: string;
-  fileKey: string;
-  fileUrl: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  academicYear: string;
-  semester: string;
-  metadata?: {
-    location?: string;
-    organization?: string;
-    eventDate?: string;
-    subjectCode?: string;
-    gradeLevel?: string;
-    externalVideoUrl?: string;
-  } | null;
-  createdAt: string;
-  user?: {
-    name: string;
-    avatarUrl?: string | null;
-  } | null;
-}
+import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
+import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
 
 interface LiveEvidenceSectionProps {
   category: string | string[];
@@ -54,16 +40,68 @@ interface LiveEvidenceSectionProps {
   scope?: "all" | "my";
 }
 
+function stringToColor(string: string) {
+  let hash = 0;
+  for (let i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    "#2563eb",
+    "#7c3aed",
+    "#059669",
+    "#d97706",
+    "#dc2626",
+    "#0891b2",
+    "#4f46e5",
+    "#db2777",
+    "#0d9488",
+  ];
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// Thai Date Formatter
+function formatThaiDateTime(dateString: string) {
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    const months = [
+      "ม.ค.",
+      "ก.พ.",
+      "มี.ค.",
+      "เม.ย.",
+      "พ.ค.",
+      "มิ.ย.",
+      "ก.ค.",
+      "ส.ค.",
+      "ก.ย.",
+      "ต.ค.",
+      "พ.ย.",
+      "ธ.ค.",
+    ];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear() + 543;
+    const hours = d.getHours().toString().padStart(2, "0");
+    const minutes = d.getMinutes().toString().padStart(2, "0");
+    return `${day} ${month} ${year} ${hours}:${minutes} น.`;
+  } catch {
+    return dateString;
+  }
+}
+
 export function LiveEvidenceSection({
   category,
-  sectionTitle = "ไฟล์หลักฐานที่อัปโหลดแล้วในระบบ (Live Evidence)",
-  emptyNotice = "ยังไม่มีไฟล์หลักฐานที่อัปโหลดในรอบปีการศึกษานี้",
+  sectionTitle = "ไฟล์หลักฐานที่จัดเก็บในระบบ",
+  emptyNotice = "ยังไม่มีไฟล์หลักฐานในรอบปีการศึกษานี้",
   scope = "all",
 }: LiveEvidenceSectionProps) {
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
+
   const { selectedYear, selectedSemester } = useAcademicYear();
-  const [files, setFiles] = useState<EvidenceFileItem[]>([]);
+  const [files, setFiles] = useState<EvidenceFileDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [previewFile, setPreviewFile] = useState<EvidenceFileItem | null>(null);
+  const [detailsFile, setDetailsFile] = useState<EvidenceFileDetails | null>(null);
 
   const fetchEvidence = useCallback(async () => {
     setLoading(true);
@@ -75,20 +113,15 @@ export function LiveEvidenceSection({
         params.set("semester", selectedSemester);
       }
 
-      if (Array.isArray(category)) {
-        // Fetch all and filter client-side
-      } else {
-        params.set("category", category);
-      }
+      // Support multi-category
+      const categoryParam = Array.isArray(category) ? category.join(",") : category;
+      params.set("category", categoryParam);
+      params.set("_t", String(Date.now()));
 
       const res = await fetch(`/api/evidence?${params.toString()}`);
       const data = await res.json();
       if (res.ok && data.files) {
-        let list: EvidenceFileItem[] = data.files;
-        if (Array.isArray(category)) {
-          list = list.filter((f) => category.includes(f.category));
-        }
-        setFiles(list);
+        setFiles(data.files);
       }
     } catch (err) {
       console.error("Failed to load live evidence:", err);
@@ -101,207 +134,292 @@ export function LiveEvidenceSection({
     fetchEvidence();
   }, [fetchEvidence]);
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith("image/")) return <ImageIcon className="h-5 w-5 text-cyan-600" />;
-    if (fileType.includes("pdf")) return <FileText className="h-5 w-5 text-rose-600" />;
-    if (fileType.startsWith("video/")) return <Video className="h-5 w-5 text-indigo-600" />;
-    return <FileText className="h-5 w-5 text-blue-600" />;
+  // Star Toggle
+  const handleToggleStar = async (file: EvidenceFileDetails, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/evidence/${file.id}/star`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id
+              ? {
+                  ...f,
+                  metadata: {
+                    ...f.metadata,
+                    starredBy: data.starredBy,
+                  },
+                }
+              : f
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Failed to star file:", err);
+    }
+  };
+
+  const handleFileUpdated = (updated: EvidenceFileDetails) => {
+    setFiles((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+    <Paper sx={{ overflow: "hidden" }}>
       {/* Section Header */}
-      <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-black text-slate-800">{sectionTitle}</h3>
-            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
-              {files.length} รายการ
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            เชื่อมโยงอัตโนมัติจากหน้า Quick Upload และคลัง Stock กลาง
-          </p>
-        </div>
+      <Box
+        sx={{
+          px: 1.5,
+          py: 1,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.default",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", fontSize: "0.875rem" }}>
+            {sectionTitle}
+          </Typography>
+          <Chip size="small" label={`${files.length} รายการ`} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+        </Box>
 
-        <div className="flex items-center gap-2">
-          <Link
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Tooltip title="รีเฟรชข้อมูล">
+            <IconButton size="small" onClick={fetchEvidence} sx={{ p: 0.4 }}>
+              <RefreshIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="เปิดดูในคลังหลักฐานทั้งหมด">
+            <IconButton
+              component={Link}
+              href="/stock"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <FolderSpecialIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Button
+            component={Link}
             href="/quick-upload"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs"
+            variant="contained"
+            size="small"
+            startIcon={<BoltIcon sx={{ fontSize: 15 }} />}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Zap className="h-3.5 w-3.5 text-amber-300" />
-            <span>+ อัปโหลดไฟล์เพิ่ม</span>
-          </Link>
-          <Link
-            href="/stock"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
-          >
-            <FolderArchive className="h-3.5 w-3.5 text-slate-400" />
-            <span>ดูในคลัง Stock</span>
-          </Link>
-        </div>
-      </div>
+            อัปโหลดเพิ่ม
+          </Button>
+        </Box>
+      </Box>
 
-      {/* Files Display */}
+      {/* Content Area */}
       {loading ? (
-        <div className="py-12 text-center space-y-2">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600" />
-          <p className="text-xs text-slate-400 font-medium">กำลังโหลดไฟล์หลักฐาน...</p>
-        </div>
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <CircularProgress size={30} sx={{ mb: 1.5 }} />
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            กำลังโหลดไฟล์หลักฐาน
+          </Typography>
+        </Box>
       ) : files.length === 0 ? (
-        <div className="p-8 text-center space-y-3">
-          <div className="h-12 w-12 mx-auto rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
-            <FolderArchive className="h-6 w-6" />
-          </div>
-          <p className="text-xs font-bold text-slate-600">{emptyNotice}</p>
-          <Link
-            href="/quick-upload"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 underline"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>คลิกที่นี่เพื่ออัปโหลดหลักฐานเข้าสู่หมวดนี้</span>
-          </Link>
-        </div>
+        <Box sx={{ py: 6, px: 3, textAlign: "center" }}>
+          <FolderSpecialIcon sx={{ fontSize: 44, color: "text.disabled", mb: 1 }} />
+          <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+            {emptyNotice}
+          </Typography>
+          <Box sx={{ mt: 1.5 }}>
+            <Button
+              component={Link}
+              href="/quick-upload"
+              size="small"
+              variant="text"
+              startIcon={<AddIcon />}
+            >
+              คลิกที่นี่เพื่อเริ่มอัปโหลดหลักฐานเข้าสู่หมวดนี้
+            </Button>
+          </Box>
+        </Box>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 font-bold text-slate-500">ชื่อเอกสาร / ไฟล์</th>
-                <th className="py-3 px-4 font-bold text-slate-500">ข้อมูลเพิ่มเติม / สถานที่</th>
-                <th className="py-3 px-4 font-bold text-slate-500">ผู้จัดเก็บ</th>
-                <th className="py-3 px-4 font-bold text-slate-500">ขนาด</th>
-                <th className="py-3 px-4 font-bold text-slate-500 text-right">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {files.map((file) => (
-                <tr key={file.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2.5">
-                      {getFileIcon(file.fileType)}
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-900 truncate max-w-xs sm:max-w-sm">
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 50 }}></TableCell>
+                <TableCell>ชื่อเอกสารและหลักฐาน</TableCell>
+                <TableCell>ผู้จัดเก็บ</TableCell>
+                <TableCell>วันเวลาที่อัปโหลด</TableCell>
+                <TableCell>ขนาด</TableCell>
+                <TableCell align="right">การจัดการ</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {files.map((file) => {
+                const meta = file.metadata || {};
+                const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
+                const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
+                const tags = Array.isArray(meta.tags) ? meta.tags : [];
+
+                return (
+                  <TableRow
+                    key={file.id}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => setDetailsFile(file)}
+                  >
+                    {/* Mini Thumbnail */}
+                    <TableCell sx={{ pr: 0 }}>
+                      <EvidenceThumbnail
+                        fileUrl={file.fileUrl}
+                        fileType={file.fileType}
+                        fileName={file.fileName}
+                        title={file.title}
+                        variant="table"
+                      />
+                    </TableCell>
+
+                    {/* Title & Extra */}
+                    <TableCell>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: { xs: 200, sm: 320 },
+                          }}
+                        >
                           {file.title}
-                        </div>
-                        <div className="text-[11px] text-slate-400 truncate">
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: { xs: 200, sm: 320 },
+                          }}
+                        >
                           {file.fileName}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-slate-600">
-                    {file.metadata?.location ? (
-                      <div className="flex items-center gap-1 text-[11px] text-slate-600">
-                        <MapPin className="h-3 w-3 text-slate-400" />
-                        <span>{file.metadata.location}</span>
-                      </div>
-                    ) : file.metadata?.subjectCode ? (
-                      <span className="text-[11px] font-semibold text-blue-700">
-                        {file.metadata.subjectCode}
-                      </span>
-                    ) : (
-                      file.description || "-"
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-slate-600">
-                    {file.user?.name || "บุคลากร"}
-                  </td>
-                  <td className="py-3 px-4 text-slate-400">
-                    {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewFile(file)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition"
-                        title="ดูตัวอย่างไฟล์"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <a
-                        href={file.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-slate-100 transition"
-                        title="ดาวน์โหลดไฟล์"
-                      >
-                        <Download className="h-4 w-4" />
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        </Typography>
+                        {tags.length > 0 && (
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                            {tags.slice(0, 3).map((t, idx) => (
+                              <Chip key={idx} size="small" label={`#${t}`} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
+                    </TableCell>
+
+                    {/* Uploader */}
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Avatar
+                          src={file.user?.avatarUrl || undefined}
+                          alt={file.user?.name}
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            bgcolor: stringToColor(file.user?.name || "User"),
+                            color: "#ffffff",
+                          }}
+                        >
+                          {file.user?.name ? file.user.name.charAt(0) : <PersonIcon sx={{ fontSize: 16 }} />}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {file.user?.name || "บุคลากร"}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                            {file.user?.position || file.user?.roleCode || "ผู้บันทึก"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+
+                    {/* Upload Time */}
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <AccessTimeIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          {formatThaiDateTime(file.createdAt)}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+
+                    {/* File Size */}
+                    <TableCell>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
+                      </Typography>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+                        {/* Star Button */}
+                        <Tooltip title={isStarred ? "เลิกติดดาว" : "ติดดาว"}>
+                          <IconButton
+                            size="small"
+                            color={isStarred ? "warning" : "default"}
+                            onClick={(e) => handleToggleStar(file, e)}
+                          >
+                            {isStarred ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+
+                        {/* View Details */}
+                        <Tooltip title="ดูรายละเอียดและพรีวิว">
+                          <IconButton
+                            size="small"
+                            onClick={() => setDetailsFile(file)}
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
+                        {/* Direct Download */}
+                        <Tooltip title="ดาวน์โหลดไฟล์">
+                          <IconButton
+                            size="small"
+                            component="a"
+                            href={file.fileUrl}
+                            download={file.fileName}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FileDownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
-      {/* Preview Modal */}
-      {previewFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
-              <div className="truncate">
-                <h4 className="text-sm font-black text-slate-900 truncate">
-                  {previewFile.title}
-                </h4>
-                <p className="text-[11px] text-slate-400 truncate">
-                  {previewFile.fileName}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={previewFile.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  <span>เปิดแท็บใหม่</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewFile(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-auto p-4 bg-slate-100/60 flex items-center justify-center min-h-[400px]">
-              {previewFile.fileType.startsWith("image/") ? (
-                <img
-                  src={previewFile.fileUrl}
-                  alt={previewFile.title}
-                  className="max-h-[70vh] max-w-full object-contain rounded-xl shadow-md"
-                />
-              ) : previewFile.fileType.includes("pdf") ? (
-                <iframe
-                  src={previewFile.fileUrl}
-                  title={previewFile.title}
-                  className="w-full h-[70vh] rounded-xl border border-slate-200 bg-white"
-                />
-              ) : previewFile.fileType.startsWith("video/") ? (
-                <video
-                  src={previewFile.fileUrl}
-                  controls
-                  className="max-h-[70vh] max-w-full rounded-xl shadow-md"
-                />
-              ) : (
-                <div className="p-8 text-center space-y-2">
-                  <FileText className="h-10 w-10 text-blue-600 mx-auto" />
-                  <p className="text-xs font-bold text-slate-700">
-                    คลิกดาวน์โหลดเพื่อเปิดดูไฟล์นี้
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Details & Preview Dialog */}
+      <FileDetailsDialog
+        open={Boolean(detailsFile)}
+        file={detailsFile}
+        onClose={() => setDetailsFile(null)}
+        onFileUpdated={handleFileUpdated}
+      />
+    </Paper>
   );
 }

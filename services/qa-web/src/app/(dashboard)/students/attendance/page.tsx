@@ -1,147 +1,213 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Calendar,
-  Sparkles,
-  Users,
-  CheckSquare,
-  Trophy,
-  Award,
-  Plus,
-  GraduationCap,
-} from "lucide-react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AddIcon from "@mui/icons-material/Add";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
-export default function StudentSubPage() {
+export default function AttendancePage() {
   const { termLabel } = useAcademicYear();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const sampleAttendance = [
+    {
+      course: "20105 2001 การเขียนโปรแกรม",
+      group: "ปวช 2 ช่างเทคนิคคอมพิวเตอร์ กลุ่ม 1",
+      totalPeriods: "64 คาบ",
+      rate: "94.5%",
+      status: "ผ่านเกณฑ์",
+    },
+    {
+      course: "20105 2102 ระบบเครือข่ายเบื้องต้น",
+      group: "ปวช 2 ช่างเทคนิคคอมพิวเตอร์ กลุ่ม 1",
+      totalPeriods: "64 คาบ",
+      rate: "92.0%",
+      status: "ผ่านเกณฑ์",
+    },
+    {
+      course: "30901 1002 ฐานข้อมูลเชิงสัมพันธ์",
+      group: "ปวส 1 เทคโนโลยีสารสนเทศ กลุ่ม 1",
+      totalPeriods: "72 คาบ",
+      rate: "91.8%",
+      status: "ผ่านเกณฑ์",
+    },
+  ];
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Top Navigation with Back Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/dashboard/students"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-600 text-xs font-bold transition shadow-2xs group"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span>← กลับหน้าภาพรวมงานนักเรียน</span>
-        </Link>
+    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            บันทึกการเข้าเรียน และ พฤติกรรม
+          </Typography>
+          <Tooltip title="ระบบบันทึกเวลาเรียนรายคาบโดยครูผู้สอน และบันทึกพฤติกรรมการมาเรียนเพื่อประเมินเวลาเรียน 80%">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="success" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+        </Box>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-xs text-blue-800 font-bold">
-          <Calendar className="h-3.5 w-3.5 text-blue-600" />
-          <span>รอบข้อมูล: {termLabel}</span>
-        </div>
-      </div>
-
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">
-          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-          มาตรฐานที่ 1 ด้านคุณธรรม จริยธรรม และค่านิยมที่พึงประสงค์ (วินัยและความรับผิดชอบ)
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              บันทึกการเข้าเรียน & พฤติกรรม
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mt-1 leading-relaxed">
-              ระบบบันทึกเวลาเรียนรายคาบโดยครูผู้สอน และบันทึกพฤติกรรมการมาเรียนรายวัน เพื่อใช้ประเมินเวลาเรียน 80% และเกณฑ์ SAR คุณลักษณะผู้เรียน
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => alert("ระบบฟอร์มบันทึกข้อมูลจะเชื่อมต่อกับฐานข้อมูลในเฟสถัดไป")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Chip
+            icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
+            label={`รอบข้อมูล ${termLabel}`}
+            variant="outlined"
+            size="small"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+          <Tooltip title="กลับภาพรวมงานนักเรียน">
+            <IconButton
+              component={Link}
+              href="/dashboard/students"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: 15 }} />}
+            onClick={() => setSnackbarOpen(true)}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Plus className="h-4 w-4" />
-            <span>+ บันทึกเช็คชื่อคาบเรียนวันนี้</span>
-          </button>
-        </div>
-      </div>
+            เช็คชื่อวันนี้
+          </Button>
+        </Box>
+      </Box>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">สถิติการมาเรียนเฉลี่ย</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">92.6%</div>
-          <div className="text-xs font-semibold text-emerald-600 mt-1">คำนวณจากรายวิชาที่เปิดสอน</div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">ผ่านเกณฑ์เวลาเรียน 80%</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">99.1%</div>
-          <div className="text-xs font-semibold text-blue-600 mt-1">มีสิทธิ์เข้าสอบปลายภาค</div>
-        </div>
-      </div>
+      {/* 2. Compact KPI Summary Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+          gap: 1.5,
+        }}
+      >
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            สถิติการมาเรียนเฉลี่ย
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              92.6%
+            </Typography>
+            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              คำนวณจากรายวิชาสอน
+            </Typography>
+          </Box>
+        </Paper>
 
-      {/* Data Table Preview */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="text-sm font-bold text-slate-800">
+        <Paper sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            ผ่านเกณฑ์เวลาเรียน 80%
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
+              99.1%
+            </Typography>
+            <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
+              มีสิทธิ์สอบปลายภาค
+            </Typography>
+          </Box>
+        </Paper>
+      </Box>
+
+      {/* 3. Data Table */}
+      <Paper sx={{ overflow: "hidden" }}>
+        <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h4">
             รายการบันทึกข้อมูลประจำ {termLabel}
-          </div>
-          <span className="text-xs text-slate-400 font-semibold">แสดงรายการตัวอย่าง</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 text-left font-bold text-slate-500">รหัสวิชา / รายวิชา</th><th className="py-3 px-4 text-left font-bold text-slate-500">กลุ่มเรียน</th><th className="py-3 px-4 text-left font-bold text-slate-500">จำนวนคาบสอน</th><th className="py-3 px-4 text-left font-bold text-slate-500">สถิติการมาเรียน</th><th className="py-3 px-4 text-left font-bold text-slate-500">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">20105-2001 การเขียนโปรแกรม</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช.2 ช่างเทคนิคคอมฯ (กลุ่ม 1)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">64 คาบ</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      94.2% (ดีมาก)
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">30105-2003 ระบบเครือข่าย</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวส.1 เทคโนโลยีสารสนเทศ</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">80 คาบ</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      91.8% (ดี)
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">20105-2104 งานซ่อมไมโครคอมฯ</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช.3 ช่างเทคนิคคอมฯ (กลุ่ม 2)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">48 คาบ</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      93.5% (ดีมาก)
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            แสดงรายการตัวอย่าง
+          </Typography>
+        </Box>
+
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>รหัสวิชา และ รายวิชา</TableCell>
+                <TableCell>กลุ่มเรียน</TableCell>
+                <TableCell>จำนวนคาบสอน</TableCell>
+                <TableCell>สถิติการมาเรียน</TableCell>
+                <TableCell align="right">สถานะ</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sampleAttendance.map((row, idx) => (
+                <TableRow key={idx} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {row.course}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      {row.group}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.totalPeriods}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: "success.main" }}>
+                      {row.rate}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Chip size="small" label={row.status} color="success" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Snackbar feedback */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={() => setSnackbarOpen(false)} severity="info" sx={{ width: "100%" }}>
+          ระบบฟอร์มบันทึกเช็คชื่อจะเปิดให้เชื่อมต่อกับฐานข้อมูลในรอบถัดไป
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
