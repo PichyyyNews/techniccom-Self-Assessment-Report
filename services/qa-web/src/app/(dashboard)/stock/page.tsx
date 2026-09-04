@@ -51,6 +51,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
 import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
+import { groupEvidenceFiles, GroupedEvidenceFile } from "@/lib/evidence-grouping";
 
 const CATEGORY_MAP: Record<
   string,
@@ -119,8 +120,9 @@ export default function StockPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const [detailsFile, setDetailsFile] = useState<EvidenceFileDetails | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<EvidenceFileDetails | null>(null);
+  const [detailsFile, setDetailsFile] = useState<GroupedEvidenceFile | EvidenceFileDetails | null>(null);
+  const [initialSlideIndex, setInitialSlideIndex] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<GroupedEvidenceFile | EvidenceFileDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
@@ -155,16 +157,24 @@ export default function StockPage() {
     fetchFiles();
   }, [fetchFiles]);
 
+  const groupedFiles = React.useMemo(() => groupEvidenceFiles(files), [files]);
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/evidence/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการลบไฟล์");
-      setFiles((prev) => prev.filter((f) => f.id !== deleteTarget.id));
+      const idsToDelete =
+        deleteTarget.gallery && deleteTarget.gallery.length > 0
+          ? deleteTarget.gallery.map((g) => g.id)
+          : [deleteTarget.id];
+
+      await Promise.all(
+        idsToDelete.map((id) =>
+          fetch(`/api/evidence/${id}`, { method: "DELETE" })
+        )
+      );
+
+      setFiles((prev) => prev.filter((f) => !idsToDelete.includes(f.id)));
       setDeleteTarget(null);
       setSnackbarMessage("ลบไฟล์หลักฐานเรียบร้อยแล้ว");
     } catch (err: any) {
@@ -222,7 +232,7 @@ export default function StockPage() {
           </Tooltip>
           <Chip
             size="small"
-            label={`${files.length} รายการ (${totalSizeMB.toFixed(1)} MB)`}
+            label={`${groupedFiles.length} รายการ (${files.length} ไฟล์ • ${totalSizeMB.toFixed(1)} MB)`}
             color="primary"
             variant="outlined"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
@@ -357,21 +367,82 @@ export default function StockPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {files.map((file) => {
+                {groupedFiles.map((file) => {
                   const cat = CATEGORY_MAP[file.category] || { label: file.category, color: "default" };
                   const isOwner = isOwnerOrRoot(file);
                   const meta = file.metadata || {};
                   const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
                   const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
                   const tags = Array.isArray(meta.tags) ? meta.tags : [];
+                  const galleryCount = file.gallery?.length || 1;
+
                   return (
-                    <TableRow key={file.id} hover sx={{ cursor: "pointer" }} onClick={() => setDetailsFile(file)}>
-                      <TableCell sx={{ pr: 0 }}><EvidenceThumbnail fileUrl={file.fileUrl} fileType={file.fileType} fileName={file.fileName} title={file.title} variant="table" /></TableCell>
+                    <TableRow
+                      key={file.id}
+                      hover
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => {
+                        setInitialSlideIndex(0);
+                        setDetailsFile(file);
+                      }}
+                    >
+                      <TableCell sx={{ pr: 0 }}>
+                        <EvidenceThumbnail
+                          fileUrl={file.fileUrl}
+                          fileType={file.fileType}
+                          fileName={file.fileName}
+                          title={file.title}
+                          variant="table"
+                          gallery={file.gallery}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: { xs: 180, sm: 280 } }}>{file.title}</Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: { xs: 180, sm: 280 } }}>{file.fileName}</Typography>
-                          {tags.length > 0 && (<Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{tags.slice(0, 3).map((t, idx) => <Chip key={idx} size="small" label={`#${t}`} variant="outlined" sx={{ height: 18, fontSize: 10 }} />)}</Box>)}
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 700,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                maxWidth: { xs: 180, sm: 280 },
+                              }}
+                            >
+                              {file.title}
+                            </Typography>
+                            {galleryCount > 1 && (
+                              <Chip
+                                size="small"
+                                label={`${galleryCount} ไฟล์`}
+                                color="primary"
+                                variant="outlined"
+                                sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                              />
+                            )}
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                              display: "block",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              maxWidth: { xs: 180, sm: 280 },
+                            }}
+                          >
+                            {galleryCount > 1
+                              ? `ชุดหลักฐาน ${galleryCount} รายการ (${file.fileName})`
+                              : file.fileName}
+                          </Typography>
+                          {tags.length > 0 && (
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                              {tags.slice(0, 3).map((t, idx) => (
+                                <Chip key={idx} size="small" label={`#${t}`} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                              ))}
+                            </Box>
+                          )}
                         </Box>
                       </TableCell>
                       <TableCell><Chip size="small" label={cat.label} color={cat.color} variant="outlined" /></TableCell>
@@ -402,7 +473,7 @@ export default function StockPage() {
                       <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
                           <Tooltip title={isStarred ? "เลิกติดดาว" : "ติดดาว"}><IconButton size="small" color={isStarred ? "warning" : "default"} onClick={(e) => handleToggleStar(file, e)}>{isStarred ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}</IconButton></Tooltip>
-                          <Tooltip title="ดูรายละเอียดและพรีวิว"><IconButton size="small" onClick={() => setDetailsFile(file)}><VisibilityIcon fontSize="small" /></IconButton></Tooltip>
+                          <Tooltip title="ดูรายละเอียดและพรีวิว"><IconButton size="small" onClick={() => { setInitialSlideIndex(0); setDetailsFile(file); }}><VisibilityIcon fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="ดาวน์โหลด"><IconButton size="small" component="a" href={file.fileUrl} download={file.fileName} target="_blank" rel="noopener noreferrer"><FileDownloadIcon fontSize="small" /></IconButton></Tooltip>
                           {isOwner && <Tooltip title="ลบไฟล์"><IconButton size="small" color="error" onClick={() => setDeleteTarget(file)}><DeleteIcon fontSize="small" /></IconButton></Tooltip>}
                         </Box>
@@ -416,13 +487,15 @@ export default function StockPage() {
         </Paper>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2 }}>
-          {files.map((file) => {
+          {groupedFiles.map((file) => {
             const cat = CATEGORY_MAP[file.category] || { label: file.category, color: "default" };
             const isOwner = isOwnerOrRoot(file);
             const meta = file.metadata || {};
             const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
             const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
             const tags = Array.isArray(meta.tags) ? meta.tags : [];
+            const galleryCount = file.gallery?.length || 1;
+
             return (
               <Paper
                 key={file.id}
@@ -441,7 +514,10 @@ export default function StockPage() {
                     transform: "translateY(-2px)",
                   },
                 }}
-                onClick={() => setDetailsFile(file)}
+                onClick={() => {
+                  setInitialSlideIndex(0);
+                  setDetailsFile(file);
+                }}
               >
                 <EvidenceThumbnail
                   fileUrl={file.fileUrl}
@@ -450,11 +526,27 @@ export default function StockPage() {
                   title={file.title}
                   variant="card"
                   height={150}
+                  gallery={file.gallery}
+                  onOpenFullscreen={(slideIdx) => {
+                    setInitialSlideIndex(slideIdx);
+                    setDetailsFile(file);
+                  }}
                 />
                 <Box sx={{ p: 1.75, display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
-                      <Chip size="small" label={cat.label} color={cat.color} variant="outlined" sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 600 }} />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Chip size="small" label={cat.label} color={cat.color} variant="outlined" sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 600 }} />
+                        {galleryCount > 1 && (
+                          <Chip
+                            size="small"
+                            label={`${galleryCount} ภาพ`}
+                            color="primary"
+                            variant="filled"
+                            sx={{ height: 20, fontSize: "0.65rem", fontWeight: 700 }}
+                          />
+                        )}
+                      </Box>
                       <IconButton
                         size="small"
                         color={isStarred ? "warning" : "default"}
@@ -469,7 +561,7 @@ export default function StockPage() {
                       {file.title}
                     </Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mb: 0.75, fontSize: "0.725rem" }}>
-                      {file.fileName}
+                      {galleryCount > 1 ? `ชุดไฟล์ ${galleryCount} รายการ` : file.fileName}
                     </Typography>
                     {tags.length > 0 && (
                       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.75 }}>
@@ -551,7 +643,7 @@ export default function StockPage() {
 
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
                       <Tooltip title="ดูรายละเอียด">
-                        <IconButton size="small" onClick={() => setDetailsFile(file)} sx={{ p: 0.5 }}>
+                        <IconButton size="small" onClick={() => { setInitialSlideIndex(0); setDetailsFile(file); }} sx={{ p: 0.5 }}>
                           <VisibilityIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                       </Tooltip>
@@ -576,7 +668,13 @@ export default function StockPage() {
         </Box>
       )}
 
-      <FileDetailsDialog open={Boolean(detailsFile)} file={detailsFile} onClose={() => setDetailsFile(null)} onFileUpdated={handleFileUpdated} />
+      <FileDetailsDialog
+        open={Boolean(detailsFile)}
+        file={detailsFile}
+        initialSlideIndex={initialSlideIndex}
+        onClose={() => setDetailsFile(null)}
+        onFileUpdated={handleFileUpdated}
+      />
 
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
         {deleteTarget && (

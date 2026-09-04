@@ -32,6 +32,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
 import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
+import { groupEvidenceFiles, GroupedEvidenceFile } from "@/lib/evidence-grouping";
 
 interface LiveEvidenceSectionProps {
   category: string | string[];
@@ -83,7 +84,7 @@ function formatThaiDateTime(dateString: string) {
     const year = d.getFullYear() + 543;
     const hours = d.getHours().toString().padStart(2, "0");
     const minutes = d.getMinutes().toString().padStart(2, "0");
-    return `${day} ${month} ${year} ${hours}:${minutes} น.`;
+    return `${day} ${month} ${year} เวลา ${hours}:${minutes} น.`;
   } catch {
     return dateString;
   }
@@ -101,7 +102,8 @@ export function LiveEvidenceSection({
   const { selectedYear, selectedSemester } = useAcademicYear();
   const [files, setFiles] = useState<EvidenceFileDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [detailsFile, setDetailsFile] = useState<EvidenceFileDetails | null>(null);
+  const [detailsFile, setDetailsFile] = useState<GroupedEvidenceFile | EvidenceFileDetails | null>(null);
+  const [initialSlideIndex, setInitialSlideIndex] = useState(0);
 
   const fetchEvidence = useCallback(async () => {
     setLoading(true);
@@ -166,6 +168,8 @@ export function LiveEvidenceSection({
     setFiles((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   };
 
+  const groupedFiles = React.useMemo(() => groupEvidenceFiles(files), [files]);
+
   return (
     <Paper sx={{ overflow: "hidden" }}>
       {/* Section Header */}
@@ -187,7 +191,13 @@ export function LiveEvidenceSection({
           <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.primary", fontSize: "0.875rem" }}>
             {sectionTitle}
           </Typography>
-          <Chip size="small" label={`${files.length} รายการ`} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip
+            size="small"
+            label={`${groupedFiles.length} รายการ${files.length > groupedFiles.length ? ` (${files.length} ไฟล์)` : ""}`}
+            color="primary"
+            variant="outlined"
+            sx={{ height: 20, fontSize: "0.6875rem" }}
+          />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -227,7 +237,7 @@ export function LiveEvidenceSection({
             กำลังโหลดไฟล์หลักฐาน
           </Typography>
         </Box>
-      ) : files.length === 0 ? (
+      ) : groupedFiles.length === 0 ? (
         <Box sx={{ py: 6, px: 3, textAlign: "center" }}>
           <FolderSpecialIcon sx={{ fontSize: 44, color: "text.disabled", mb: 1 }} />
           <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
@@ -259,18 +269,22 @@ export function LiveEvidenceSection({
               </TableRow>
             </TableHead>
             <TableBody>
-              {files.map((file) => {
+              {groupedFiles.map((file) => {
                 const meta = file.metadata || {};
                 const starredBy = Array.isArray(meta.starredBy) ? meta.starredBy : [];
                 const isStarred = currentUserId ? starredBy.includes(currentUserId) : false;
                 const tags = Array.isArray(meta.tags) ? meta.tags : [];
+                const galleryCount = file.gallery?.length || 1;
 
                 return (
                   <TableRow
                     key={file.id}
                     hover
                     sx={{ cursor: "pointer" }}
-                    onClick={() => setDetailsFile(file)}
+                    onClick={() => {
+                      setInitialSlideIndex(0);
+                      setDetailsFile(file);
+                    }}
                   >
                     {/* Mini Thumbnail */}
                     <TableCell sx={{ pr: 0 }}>
@@ -280,24 +294,36 @@ export function LiveEvidenceSection({
                         fileName={file.fileName}
                         title={file.title}
                         variant="table"
+                        gallery={file.gallery}
                       />
                     </TableCell>
 
                     {/* Title & Extra */}
                     <TableCell>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 700,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            maxWidth: { xs: 200, sm: 320 },
-                          }}
-                        >
-                          {file.title}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 700,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              maxWidth: { xs: 200, sm: 320 },
+                            }}
+                          >
+                            {file.title}
+                          </Typography>
+                          {galleryCount > 1 && (
+                            <Chip
+                              size="small"
+                              label={`${galleryCount} ไฟล์`}
+                              color="primary"
+                              variant="outlined"
+                              sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
+                            />
+                          )}
+                        </Box>
                         <Typography
                           variant="caption"
                           sx={{
@@ -309,7 +335,9 @@ export function LiveEvidenceSection({
                             maxWidth: { xs: 200, sm: 320 },
                           }}
                         >
-                          {file.fileName}
+                          {galleryCount > 1
+                            ? `ชุดหลักฐาน ${galleryCount} รายการ (${file.fileName})`
+                            : file.fileName}
                         </Typography>
                         {tags.length > 0 && (
                           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
@@ -384,7 +412,10 @@ export function LiveEvidenceSection({
                         <Tooltip title="ดูรายละเอียดและพรีวิว">
                           <IconButton
                             size="small"
-                            onClick={() => setDetailsFile(file)}
+                            onClick={() => {
+                              setInitialSlideIndex(0);
+                              setDetailsFile(file);
+                            }}
                           >
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
@@ -417,6 +448,7 @@ export function LiveEvidenceSection({
       <FileDetailsDialog
         open={Boolean(detailsFile)}
         file={detailsFile}
+        initialSlideIndex={initialSlideIndex}
         onClose={() => setDetailsFile(null)}
         onFileUpdated={handleFileUpdated}
       />

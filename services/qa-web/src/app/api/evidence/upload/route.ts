@@ -88,6 +88,11 @@ export async function POST(req: Request) {
     await ensureBucketExists();
 
     if (rawFiles.length > 0) {
+      const batchId =
+        rawFiles.length > 1
+          ? `batch_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+          : null;
+
       // Process each file in batch
       for (let i = 0; i < rawFiles.length; i++) {
         const file = rawFiles[i];
@@ -137,6 +142,10 @@ export async function POST(req: Request) {
           tags,
           starredBy: [],
           comments: [],
+          batchId,
+          batchIndex: i + 1,
+          batchTotal: rawFiles.length,
+          originalTitle: title,
         };
 
         const evidence = await prisma.evidenceFile.create({
