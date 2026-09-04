@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import {
   ArrowLeft,
   Calendar,
@@ -52,14 +53,7 @@ export default function Page() {
               ระบบจัดเก็บแผนการสอนมุ่งเน้นสมรรถนะอาชีพ บันทึกผลการจัดการเรียนรู้ และร่องรอยการประเมินผู้เรียนตามสภาพจริง
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => alert("ระบบฟอร์มบันทึกข้อมูลจะเชื่อมต่อกับฐานข้อมูลในเฟสถัดไป")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ เพิ่มแผนการจัดการเรียนรู้</span>
-          </button>
+          <Link href="/quick-upload" className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"><Plus className="h-4 w-4" /><span>+ เพิ่มแผนการจัดการเรียนรู้</span></Link>
         </div>
       </div>
 
@@ -77,72 +71,8 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Data Table Preview */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="text-sm font-bold text-slate-800">
-            รายการบันทึกข้อมูลประจำ {termLabel}
-          </div>
-          <span className="text-xs text-slate-400 font-semibold">แสดงรายการตัวอย่าง</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 text-left font-bold text-slate-500">รหัสวิชา - ชื่อวิชา</th><th className="py-3 px-4 text-left font-bold text-slate-500">ระดับชั้น / กลุ่ม</th><th className="py-3 px-4 text-left font-bold text-slate-500">จำนวนชั่วโมง</th><th className="py-3 px-4 text-left font-bold text-slate-500">สถานะการส่งแผน</th><th className="py-3 px-4 text-left font-bold text-slate-500">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">20105-2001 การเขียนโปรแกรมคอมพิวเตอร์</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 2 สาขาเทคนิคคอมพิวเตอร์ (กลุ่ม 1)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">4 คาบ/สัปดาห์</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      อนุมัติแล้ว
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">30105-2003 ระบบเครือข่ายและความปลอดภัย</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวส. 1 สาขาเทคโนโลยีสารสนเทศ</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">5 คาบ/สัปดาห์</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      รอตรวจสอบ
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">20105-2104 การบำรุงรักษาไมโครคอมพิวเตอร์</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 3 สาขาช่างเทคนิคคอมพิวเตอร์</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">3 คาบ/สัปดาห์</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      อนุมัติแล้ว
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Live Uploaded Evidence Files */}
+      <LiveEvidenceSection category="lesson_plan" sectionTitle="ไฟล์แผนการจัดการเรียนรู้ที่อัปโหลดในระบบ (Live Lesson Plans)" emptyNotice="ยังไม่มีไฟล์แผนการสอนที่อัปโหลดในรอบปีการศึกษานี้" />
     </div>
   );
 }

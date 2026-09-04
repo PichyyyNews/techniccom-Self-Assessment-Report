@@ -39,6 +39,7 @@ import {
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { DocumentUpload } from "@/components/ui/DocumentUpload";
 import { ContributionGraph } from "@/components/profile/ContributionGraph";
+import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import { clsx } from "clsx";
 
 export type LicenseTypeEnum =
@@ -1577,6 +1578,14 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
           )}
         </div>
       </div>
+
+      {/* ================= 5. EVIDENCE FILES & ARTIFACTS (คลังผลงานและหลักฐานที่บันทึก) ================= */}
+      <LiveEvidenceSection
+        category={["lesson_plan", "training_cert", "training_photo", "speaker_activity", "research", "student_work", "license", "other"]}
+        sectionTitle="คลังผลงานและร่องรอยหลักฐานที่อัปโหลด (My Evidence Artifacts)"
+        emptyNotice="ยังไม่มีไฟล์หลักฐานที่คุณอัปโหลดในรอบปีการศึกษานี้"
+        scope="my"
+      />
 
       {/* ================= MODALS (Rendered only if canEdit) ================= */}
       {canEdit && (

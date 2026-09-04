@@ -63,5 +63,7 @@ export const config = {
     "/profile/:path*",
     "/teachers/:path*",
     "/students/:path*",
+    "/quick-upload/:path*",
+    "/stock/:path*",
   ],
 };

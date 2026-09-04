@@ -132,9 +132,40 @@ model User {
   teacherLicenses  TeacherLicense[] // ข้อมูลใบอนุญาตประกอบวิชาชีพทางการศึกษาและคุณวุฒิวิชาชีพ (คุรุสภา / TPQI / DSD / กว.)
   skills           String[]         // ทักษะ / ความเชี่ยวชาญ
   isActive         Boolean          @default(true)
+  evidenceFiles    EvidenceFile[]   // ไฟล์หลักฐานและร่องรอยผลงาน (แผนการสอน, วุฒิบัตร, ภาพอบรม, วิจัย, ชิ้นงานเด็ก ฯลฯ)
   activities       ActivityLog[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   @@index([email])
 }
+
+model EvidenceFile {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String   // ชื่อเอกสาร / หัวข้อหลักฐาน (เช่น "แผนการจัดการเรียนรู้วิชาเครือข่าย")
+  description   String?  // รายละเอียดเพิ่มเติม (เช่น "สถานที่อบรม, หัวข้อบรรยาย")
+  category      String   // "lesson_plan" | "training_cert" | "training_photo" | "speaker_activity" | "research" | "license" | "student_work" | "other"
+  
+  fileKey       String   // S3 MinIO Object Key
+  fileUrl       String   // URL สำหรับเข้าถึงไฟล์
+  fileName      String   // ชื่อไฟล์ต้นฉบับ
+  fileType      String   // MIME Type เช่น "application/pdf", "image/jpeg"
+  fileSize      Int      // ขนาดไฟล์ (Bytes)
+  
+  academicYear  String   @default("2568") // ปีการศึกษา เช่น "2568"
+  semester      String   @default("1")    // ภาคเรียน เช่น "1", "2", "all"
+  
+  metadata      Json?    // { location, organization, eventDate, subjectCode, gradeLevel, externalVideoUrl }
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([academicYear, semester])
+  @@index([createdAt])
+}
+

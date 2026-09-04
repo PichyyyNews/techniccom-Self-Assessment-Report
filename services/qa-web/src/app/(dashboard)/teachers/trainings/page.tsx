@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import {
   ArrowLeft,
   Calendar,
@@ -52,14 +53,7 @@ export default function Page() {
               บันทึกประวัติการอบรม พัฒนาสมรรถนะวิชาชีพครู และการแลกเปลี่ยนเรียนรู้ชุมชนทางวิชาชีพ (PLC) สะสมชั่วโมงประเมิน SAR และวิทยฐานะ
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => alert("ระบบฟอร์มบันทึกข้อมูลจะเชื่อมต่อกับฐานข้อมูลในเฟสถัดไป")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ เพิ่มประวัติการอบรม/สัมมนา</span>
-          </button>
+          <Link href="/quick-upload" className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"><Plus className="h-4 w-4" /><span>+ เพิ่มประวัติการอบรม/สัมมนา</span></Link>
         </div>
       </div>
 
@@ -77,72 +71,8 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Data Table Preview */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="text-sm font-bold text-slate-800">
-            รายการบันทึกข้อมูลประจำ {termLabel}
-          </div>
-          <span className="text-xs text-slate-400 font-semibold">แสดงรายการตัวอย่าง</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 text-left font-bold text-slate-500">ชื่อหลักสูตร / การอบรม</th><th className="py-3 px-4 text-left font-bold text-slate-500">หน่วยงานผู้จัด</th><th className="py-3 px-4 text-left font-bold text-slate-500">ระยะเวลา (ชม.)</th><th className="py-3 px-4 text-left font-bold text-slate-500">เอกสารวุฒิบัตร</th><th className="py-3 px-4 text-left font-bold text-slate-500">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">การประยุกต์ใช้ Generative AI ในการจัดการเรียนการสอนอาชีวศึกษา</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">สำนักพัฒนาสมรรถนะครูและบุคลากรอาชีวศึกษา (สสอ.)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">18 ชม.</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      แนบไฟล์แล้ว
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">การติดตั้งและการบริหารจัดการ Cloud Infrastructure ขั้นสูง</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">สถาบันคุณวุฒิวิชาชีพ (องค์การมหาชน)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">15 ชม.</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      แนบไฟล์แล้ว
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">PLC: ชุมชนแห่งการเรียนรู้ทางวิชาชีพเพื่อแก้ปัญหาการเรียนรู้</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">วิทยาลัยเทคนิคคอมพิวเตอร์</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">15 ชม.</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      แนบไฟล์แล้ว
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Live Uploaded Evidence Files */}
+      <LiveEvidenceSection category={["training_cert", "training_photo", "speaker_activity"]} sectionTitle="หลักฐานวุฒิบัตร ภาพการอบรมดูงาน และการเป็นวิทยากร (Live Training & Speaker Evidence)" emptyNotice="ยังไม่มีหลักฐานการอบรมหรือวิทยากรในรอบปีการศึกษานี้" />
     </div>
   );
 }

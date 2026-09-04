@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import {
   ArrowLeft,
   Calendar,
@@ -51,14 +52,7 @@ export default function StudentSubPage() {
               ศูนย์รวมคะแนนผลสัมฤทธิ์ทางการเรียน (GPAX), ผลการทดสอบระดับชาติด้านอาชีวศึกษา (V-NET) และการประเมินมาตรฐานวิชาชีพ TPQI/DSD
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => alert("ระบบฟอร์มบันทึกข้อมูลจะเชื่อมต่อกับฐานข้อมูลในเฟสถัดไป")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ บันทึกผลการประเมินสมรรถนะ</span>
-          </button>
+          <Link href="/quick-upload" className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-200 transition active:scale-95"><Plus className="h-4 w-4" /><span>+ บันทึกผลการประเมินสมรรถนะ</span></Link>
         </div>
       </div>
 
@@ -76,72 +70,8 @@ export default function StudentSubPage() {
         </div>
       </div>
 
-      {/* Data Table Preview */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="text-sm font-bold text-slate-800">
-            รายการบันทึกข้อมูลประจำ {termLabel}
-          </div>
-          <span className="text-xs text-slate-400 font-semibold">แสดงรายการตัวอย่าง</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 text-left font-bold text-slate-500">สาขาวิชา / สาขางาน</th><th className="py-3 px-4 text-left font-bold text-slate-500">ระดับชั้น</th><th className="py-3 px-4 text-left font-bold text-slate-500">ผู้เข้าสอบ (คน)</th><th className="py-3 px-4 text-left font-bold text-slate-500">อัตราการผ่าน (%)</th><th className="py-3 px-4 text-left font-bold text-slate-500">การจัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">สาขาวิชาช่างเทคนิคคอมพิวเตอร์</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 3</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">85 คน</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      91.7% ผ่านเกณฑ์
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">สาขาวิชาเทคโนโลยีสารสนเทศ</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวส. 2</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">64 คน</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      93.8% ผ่านเกณฑ์
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-                <tr className="border-b border-slate-100 hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-4 text-xs font-bold text-slate-800">มาตรฐานฝีมือแรงงาน DSD (ช่างไมโครคอมฯ)</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">ปวช. 3 / ปวส. 2</td>
-                  <td className="py-3 px-4 text-xs text-slate-600">120 คน</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      87.5% ผ่านเกณฑ์
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800">
-                      ดูรายละเอียด
-                    </button>
-                  </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Live Uploaded Evidence Files */}
+      <LiveEvidenceSection category="student_work" sectionTitle="หลักฐานชิ้นงานและผลงานนักศึกษา (Live Student Artifacts)" emptyNotice="ยังไม่มีการอัปโหลดชิ้นงานนักศึกษาในรอบปีการศึกษานี้" />
     </div>
   );
 }

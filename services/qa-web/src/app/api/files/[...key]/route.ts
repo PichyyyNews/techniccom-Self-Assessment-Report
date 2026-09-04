@@ -34,6 +34,12 @@ export async function GET(
       contentType = "image/jpeg";
     } else if (key.toLowerCase().endsWith(".png")) {
       contentType = "image/png";
+    } else if (key.toLowerCase().endsWith(".webp")) {
+      contentType = "image/webp";
+    } else if (key.toLowerCase().endsWith(".mp4")) {
+      contentType = "video/mp4";
+    } else if (key.toLowerCase().endsWith(".webm")) {
+      contentType = "video/webm";
     }
 
     return new NextResponse(Buffer.from(byteArray), {

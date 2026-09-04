@@ -22,6 +22,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
+  Zap,
+  FolderArchive,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSidebar } from "./SidebarContext";
@@ -79,6 +81,24 @@ export function AppSidebar({
           icon: GraduationCap,
           show: canAccessDashboard,
           badge: "ใหม่",
+        },
+      ],
+    },
+    {
+      groupTitle: "คลังหลักฐาน & อัปโหลด (FILES)",
+      items: [
+        {
+          title: "ทางลัดอัปโหลดด่วน",
+          href: "/quick-upload",
+          icon: Zap,
+          show: true,
+          badge: "ด่วน",
+        },
+        {
+          title: "คลังไฟล์หลักฐาน",
+          href: "/stock",
+          icon: FolderArchive,
+          show: true,
         },
       ],
     },
