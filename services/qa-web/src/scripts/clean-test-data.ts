@@ -63,6 +63,42 @@ async function main() {
   const deletedLicenses = await prisma.teacherLicense.deleteMany({});
   console.log(`\n📜 ลบข้อมูล TeacherLicense: ${deletedLicenses.count} รายการ`);
 
+  // 8. Clean Users: Keep strictly ONLY 1 primary Root Admin user
+  const primaryRootEmail = (process.env.ROOT_ADMIN_EMAIL || "admin@technic.ac.th").trim().toLowerCase();
+  const secondaryUsers = await prisma.user.findMany({
+    where: {
+      email: {
+        not: primaryRootEmail,
+      },
+    },
+  });
+
+  for (const u of secondaryUsers) {
+    if (u.avatarUrl && u.avatarUrl.includes("/profile-photos/")) {
+      const photoKey = u.avatarUrl.replace("/api/files/", "");
+      try {
+        await s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: S3_BUCKET,
+            Key: photoKey,
+          })
+        );
+        console.log(`   🗑️ ลบรูปโปรไฟล์ผู้ใช้ซ้ำออกจาก MinIO: ${photoKey}`);
+      } catch (err: any) {
+        console.warn(`   ⚠️ ไม่สามารถลบรูปโปรไฟล์ (${photoKey}):`, err.message);
+      }
+    }
+  }
+
+  const deletedUsers = await prisma.user.deleteMany({
+    where: {
+      email: {
+        not: primaryRootEmail,
+      },
+    },
+  });
+  console.log(`\n👤 ลบบัญชีผู้ใช้ส่วนเกิน/บัญชีทดสอบ: ${deletedUsers.count} รายการ (คงเหลือเฉพาะ Root User: ${primaryRootEmail})`);
+
   console.log("\n========================================================");
   console.log("🔍 ตรวจสอบข้อมูล Master Configuration ที่ต้องคงไว้ 100%:");
   const rootUsers = await prisma.user.count({ where: { roleCode: "ROOT" } });
