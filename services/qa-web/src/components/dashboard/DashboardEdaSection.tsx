@@ -44,6 +44,10 @@ export function DashboardEdaSection({
     trainingBins: any[];
     workloadData: any[];
     licenseDistribution: any[];
+    qualificationData?: any[];
+    academicRankData?: any[];
+    researchProductivity?: any[];
+    planCompletionRate?: number;
     totalTeachers: number;
     avgTrainingHours: number;
   } | null>(null);
@@ -212,16 +216,20 @@ export function DashboardEdaSection({
             </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {/* 1. SAR Target vs Actual & License Horizon */}
+              {/* 1. SAR Target vs Actual, License Horizon & Qualification/Rank */}
               <SarRadarTargetChart
                 metrics={edaData.sarStandardsRadar}
                 licenses={edaData.licenseDistribution}
+                qualifications={edaData.qualificationData}
+                academicRanks={edaData.academicRankData}
               />
 
-              {/* 2. Training Histogram & Faculty Workload */}
+              {/* 2. Training Histogram, Faculty Workload & Academic Productivity */}
               <FacultyWorkloadChart
                 trainingBins={edaData.trainingBins}
                 workloadData={edaData.workloadData}
+                researchProductivity={edaData.researchProductivity}
+                planCompletionRate={edaData.planCompletionRate}
               />
             </Box>
           )}

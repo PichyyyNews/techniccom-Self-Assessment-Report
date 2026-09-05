@@ -17,8 +17,13 @@ import Tooltip from "@mui/material/Tooltip";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import GroupWorkIcon from "@mui/icons-material/GroupWork";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DonutLargeIcon from "@mui/icons-material/DonutLarge";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { BarChart } from "@mui/x-charts/BarChart";
+import { PieChart } from "@mui/x-charts/PieChart";
 
 interface WeeklyTrendItem {
   week: string;
@@ -42,6 +47,22 @@ interface RoomComparisonItem {
   totalChecked: number;
 }
 
+interface DayOfWeekItem {
+  day: string;
+  rate: number;
+  present: number;
+  late: number;
+  absent: number;
+  leave: number;
+}
+
+interface AbsenceDecompositionItem {
+  id: number;
+  label: string;
+  value: number;
+  color: string;
+}
+
 interface AtRiskStudentItem {
   studentCode: string;
   name: string;
@@ -60,6 +81,8 @@ interface AttendanceRiskChartProps {
   riskSegments: RiskSegmentItem[];
   roomComparison: RoomComparisonItem[];
   atRiskStudents: AtRiskStudentItem[];
+  dayOfWeekPattern?: DayOfWeekItem[];
+  absenceDecomposition?: AbsenceDecompositionItem[];
 }
 
 export function AttendanceRiskChart({
@@ -67,6 +90,8 @@ export function AttendanceRiskChart({
   riskSegments,
   roomComparison,
   atRiskStudents,
+  dayOfWeekPattern = [],
+  absenceDecomposition = [],
 }: AttendanceRiskChartProps) {
   const [filterRisk, setFilterRisk] = useState<"ALL" | "WARNING" | "CRITICAL">("ALL");
 
@@ -83,6 +108,11 @@ export function AttendanceRiskChart({
     อัตราเข้าเรียน: r.rate,
   }));
 
+  const dayChartData = dayOfWeekPattern.map((d) => ({
+    day: d.day,
+    ร้อยละเข้าเรียน: d.rate,
+  }));
+
   const filteredStudents = atRiskStudents.filter((s) => {
     if (filterRisk === "ALL") return true;
     return s.riskLevel === filterRisk;
@@ -93,13 +123,16 @@ export function AttendanceRiskChart({
       {/* 1. 18-Week Longitudinal Attendance Trend (LineChart) */}
       <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-          <Box>
-            <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
-              📈 แนวโน้มการเข้าชั้นเรียน 18 สัปดาห์ (Longitudinal Time-Series Trend)
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              ติดตามความต่อเนื่องและตรวจจับการลดลงของอัตราการเข้าเรียนตามช่วงสัปดาห์ตลอดภาคเรียน
-            </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <TimelineIcon sx={{ fontSize: 20, color: "primary.main" }} />
+            <Box>
+              <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                แนวโน้มการเข้าชั้นเรียน 18 สัปดาห์ (Longitudinal Time-Series Trend)
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                ติดตามความต่อเนื่องและตรวจจับการลดลงของอัตราการเข้าเรียนตามช่วงสัปดาห์ตลอดภาคเรียน
+              </Typography>
+            </Box>
           </Box>
           <Chip size="small" label="เกณฑ์ขั้นต่ำสิทธิ์สอบ 80%" color="success" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
         </Box>
@@ -133,15 +166,18 @@ export function AttendanceRiskChart({
         {/* Risk Tiers Histogram */}
         <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-            <Box>
-              <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                🚨 การจัดกลุ่มความเสี่ยงเวลาเรียน (Risk Segmentation)
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                แจกแจงนักศึกษาตามเกณฑ์ 80% (เสี่ยงเฝ้าระวัง 70-79% vs วิกฤตหมดสิทธิ์สอบ &lt;70%)
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WarningAmberIcon sx={{ fontSize: 20, color: "warning.main" }} />
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  การจัดกลุ่มความเสี่ยงเวลาเรียน (Risk Segmentation)
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  แจกแจงนักศึกษาตามเกณฑ์ 80% (เสี่ยงเฝ้าระวัง 70-79% vs วิกฤตหมดสิทธิ์สอบ &lt;70%)
+                </Typography>
+              </Box>
             </Box>
-            <Chip size="small" label="EDA Risk Tiers" color="warning" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+            <Chip size="small" label="เกณฑ์การคัดกรอง SAR" color="warning" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
           </Box>
 
           <Box sx={{ width: "100%", height: 280 }}>
@@ -158,13 +194,16 @@ export function AttendanceRiskChart({
         {/* Room Benchmark */}
         <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-            <Box>
-              <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                🏢 เปรียบเทียบผลการเข้าเรียนรายกลุ่มเรียน (Classroom Benchmark)
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                เปรียบเทียบร้อยละการเข้าเรียนเฉลี่ยในแต่ละห้องเรียนเพื่อค้นหาห้องที่ต้องการการสนับสนุน
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <GroupWorkIcon sx={{ fontSize: 20, color: "success.main" }} />
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  เปรียบเทียบผลการเข้าเรียนรายกลุ่มเรียน (Classroom Benchmark)
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  เปรียบเทียบร้อยละการเข้าเรียนเฉลี่ยในแต่ละห้องเรียนเพื่อค้นหาห้องที่ต้องการการสนับสนุน
+                </Typography>
+              </Box>
             </Box>
             <Chip size="small" label="เกณฑ์เฉลี่ยแผนก 92.6%" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
           </Box>
@@ -180,6 +219,76 @@ export function AttendanceRiskChart({
           </Box>
         </Paper>
       </Box>
+
+      {/* 3. Grid: Day-of-Week Effect & Absence Decomposition */}
+      {(dayOfWeekPattern.length > 0 || absenceDecomposition.length > 0) && (
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.3fr 1fr" }, gap: 2 }}>
+          {/* Day of Week Attendance Pattern */}
+          <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CalendarMonthIcon sx={{ fontSize: 20, color: "primary.main" }} />
+                <Box>
+                  <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                    พฤติกรรมการเข้าเรียนรายวันในสัปดาห์ (Day-of-Week Pattern)
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    วิเคราะห์อัตราการเข้าเรียนแยกตามวัน (จันทร์ - ศุกร์) เพื่อตรวจจับ Day-of-Week Effect
+                  </Typography>
+                </Box>
+              </Box>
+              <Chip size="small" label="จันทร์ - ศุกร์" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+            </Box>
+
+            <Box sx={{ width: "100%", height: 260 }}>
+              <BarChart
+                dataset={dayChartData}
+                xAxis={[{ scaleType: "band", dataKey: "day" }]}
+                series={[{ dataKey: "ร้อยละเข้าเรียน", label: "อัตราการมาเรียน (%)", color: "#6366f1" }]}
+                height={240}
+                margin={{ top: 20, bottom: 40, left: 40, right: 10 }}
+              />
+            </Box>
+          </Paper>
+
+          {/* Absence Type Decomposition */}
+          <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+              <DonutLargeIcon sx={{ fontSize: 20, color: "secondary.main" }} />
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  สัดส่วนจำแนกสถานะการเข้าเรียน (Absence Breakdown)
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  แจกแจงสัดส่วนมาเรียนปกติ มาสาย ลาป่วย/ลากิจ และขาดเรียน
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ width: "100%", height: 260, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <PieChart
+                series={[
+                  {
+                    data: absenceDecomposition,
+                    innerRadius: 40,
+                    outerRadius: 85,
+                    paddingAngle: 3,
+                    cornerRadius: 4,
+                    highlightScope: { fade: "global", highlight: "item" },
+                  },
+                ]}
+                height={240}
+                slotProps={{
+                  legend: {
+                    direction: "horizontal",
+                    position: { vertical: "bottom", horizontal: "center" },
+                  },
+                }}
+              />
+            </Box>
+          </Paper>
+        </Box>
+      )}
 
       {/* 3. Early Warning Action Table (At-Risk Students) */}
       <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>

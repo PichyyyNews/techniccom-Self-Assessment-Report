@@ -143,6 +143,8 @@ export default function AttendancePage() {
     riskSegments: any[];
     roomComparison: any[];
     atRiskStudents: any[];
+    dayOfWeekPattern?: any[];
+    absenceDecomposition?: any[];
   } | null>(null);
 
   const fetchEdaData = useCallback(async () => {
@@ -939,6 +941,8 @@ export default function AttendancePage() {
               riskSegments={edaData.riskSegments}
               roomComparison={edaData.roomComparison}
               atRiskStudents={edaData.atRiskStudents}
+              dayOfWeekPattern={edaData.dayOfWeekPattern}
+              absenceDecomposition={edaData.absenceDecomposition}
             />
           )}
         </>

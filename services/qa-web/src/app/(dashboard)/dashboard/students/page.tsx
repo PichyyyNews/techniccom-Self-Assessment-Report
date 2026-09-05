@@ -49,6 +49,8 @@ export default function StudentDashboardPage() {
   const [edaData, setEdaData] = React.useState<{
     pyramidData: any[];
     statusPieData: any[];
+    classroomBenchmarks?: any[];
+    cohortProgression?: any[];
     totalStudents: number;
   } | null>(null);
 
@@ -355,6 +357,8 @@ export default function StudentDashboardPage() {
             <StudentDemographicPyramid
               pyramidData={edaData.pyramidData}
               statusPieData={edaData.statusPieData}
+              classroomBenchmarks={edaData.classroomBenchmarks}
+              cohortProgression={edaData.cohortProgression}
               totalStudents={edaData.totalStudents}
             />
           )}

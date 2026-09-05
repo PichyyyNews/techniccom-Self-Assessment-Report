@@ -396,7 +396,7 @@ export default function AdminDepartmentPage() {
           {activeTab === 0 && (
             <Paper elevation={0} sx={{ p: 2.5, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
               <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700, mb: 2, color: "primary.main" }}>
-                🏛️ ข้อมูลพื้นฐานสถานศึกษาและแผนกวิชา
+                ข้อมูลพื้นฐานสถานศึกษาและแผนกวิชา
               </Typography>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 3 }}>
                 <TextField
@@ -448,7 +448,7 @@ export default function AdminDepartmentPage() {
               <Divider sx={{ my: 2.5 }} />
 
               <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700, mb: 2, color: "primary.main" }}>
-                🎯 ปรัชญา วิสัยทัศน์ พันธกิจ และอัตลักษณ์ (SAR Context)
+                ปรัชญา วิสัยทัศน์ พันธกิจ และอัตลักษณ์ (SAR Context)
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
@@ -468,34 +468,34 @@ export default function AdminDepartmentPage() {
                   rows={2}
                   value={form.vision}
                   onChange={(e) => setForm({ ...form, vision: e.target.value })}
-                  placeholder="ความมุ่งหวังและทิศทางในการจัดการศึกษาของแผนกวิชา"
+                  placeholder="เช่น ผลิตและพัฒนากำลังคนด้านเทคโนโลยีคอมพิวเตอร์..."
                   fullWidth
                 />
                 <TextField
                   label="พันธกิจ (Mission)"
                   size="small"
                   multiline
-                  rows={3}
+                  rows={2}
                   value={form.mission}
                   onChange={(e) => setForm({ ...form, mission: e.target.value })}
-                  placeholder="หน้าที่หลักในการขับเคลื่อนแผนกวิชาสู่เป้าหมาย"
+                  placeholder="เช่น 1. จัดการเรียนการสอนด้านเทคโนโลยีคอมพิวเตอร์..."
                   fullWidth
                 />
                 <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
                   <TextField
-                    label="เอกลักษณ์ (Identity)"
-                    size="small"
-                    value={form.identity}
-                    onChange={(e) => setForm({ ...form, identity: e.target.value })}
-                    placeholder="เช่น ทักษะเด่น เน้นคุณธรรม นำเทคโนโลยี"
-                    fullWidth
-                  />
-                  <TextField
-                    label="อัตลักษณ์ (Uniqueness)"
+                    label="เอกลักษณ์ของแผนกวิชา"
                     size="small"
                     value={form.uniqueness}
                     onChange={(e) => setForm({ ...form, uniqueness: e.target.value })}
-                    placeholder="เช่น คอมพิวเตอร์ฮาร์ดแวร์ เครือข่าย และซอฟต์แวร์ประยุกต์"
+                    placeholder="เช่น บริการวิชาการ เชี่ยวชาญเทคโนโลยี"
+                    fullWidth
+                  />
+                  <TextField
+                    label="อัตลักษณ์ของผู้เรียน"
+                    size="small"
+                    value={form.identity}
+                    onChange={(e) => setForm({ ...form, identity: e.target.value })}
+                    placeholder="เช่น ทักษะเยี่ยม เปี่ยมคุณธรรม ล้ำหน้าเทคโนโลยี"
                     fullWidth
                   />
                 </Box>
@@ -507,7 +507,7 @@ export default function AdminDepartmentPage() {
           {activeTab === 1 && (
             <Paper elevation={0} sx={{ p: 2.5, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
               <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700, mb: 2, color: "primary.main" }}>
-                👨‍💼 ผู้บริหารแผนกวิชา
+                ผู้บริหารแผนกวิชา
               </Typography>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 3 }}>
                 <TextField
@@ -531,7 +531,7 @@ export default function AdminDepartmentPage() {
               <Divider sx={{ my: 2.5 }} />
 
               <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700, mb: 2, color: "primary.main" }}>
-                🌐 ช่องทางการสื่อสารและประชาสัมพันธ์
+                ช่องทางการสื่อสารและประชาสัมพันธ์
               </Typography>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
                 <TextField
@@ -568,7 +568,7 @@ export default function AdminDepartmentPage() {
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
                 <Box>
                   <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                    💻 ห้องปฏิบัติการและสถานที่ฝึกปฏิบัติ (Laboratories)
+                    ห้องปฏิบัติการและสถานที่ฝึกปฏิบัติ (Laboratories)
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
                     บันทึกรายการห้องปฏิบัติการ เครื่องมือ ครุภัณฑ์สำคัญ เพื่อเป็นข้อมูลประกอบการจัดการเรียนรู้ มาตรฐานที่ 2 SAR
@@ -641,7 +641,7 @@ export default function AdminDepartmentPage() {
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
                 <Box>
                   <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
-                    🎯 เป้าหมายคุณภาพประจำปีการศึกษา (SAR Quality Targets)
+                    เป้าหมายคุณภาพประจำปีการศึกษา (SAR Quality Targets)
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
                     กำหนดเกณฑ์และค่าเป้าหมายการประกันคุณภาพ เพื่อใช้เป็นเกณฑ์เทียบวัดผลการประเมินตนเองของแผนก
