@@ -39,6 +39,7 @@ interface LiveEvidenceSectionProps {
   sectionTitle?: string;
   emptyNotice?: string;
   scope?: "all" | "my";
+  hideUploadButton?: boolean;
 }
 
 function stringToColor(string: string) {
@@ -95,6 +96,7 @@ export function LiveEvidenceSection({
   sectionTitle = "ไฟล์หลักฐานที่จัดเก็บในระบบ",
   emptyNotice = "ยังไม่มีไฟล์หลักฐานในรอบปีการศึกษานี้",
   scope = "all",
+  hideUploadButton = false,
 }: LiveEvidenceSectionProps) {
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.id;
@@ -216,16 +218,18 @@ export function LiveEvidenceSection({
               <FolderSpecialIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Button
-            component={Link}
-            href="/quick-upload"
-            variant="contained"
-            size="small"
-            startIcon={<BoltIcon sx={{ fontSize: 15 }} />}
-            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
-          >
-            อัปโหลดเพิ่ม
-          </Button>
+          {!hideUploadButton && (
+            <Button
+              component={Link}
+              href="/quick-upload"
+              variant="contained"
+              size="small"
+              startIcon={<BoltIcon sx={{ fontSize: 15 }} />}
+              sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
+            >
+              อัปโหลดเพิ่ม
+            </Button>
+          )}
         </Box>
       </Box>
 

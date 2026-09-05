@@ -48,6 +48,7 @@ import StarBorderIcon from "@mui/icons-material/StarBorder";
 import PersonIcon from "@mui/icons-material/Person";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
 import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
@@ -222,6 +223,16 @@ export default function StockPage() {
       {/* 1. Ultra-Compact Page Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, pb: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             คลังไฟล์และร่องรอยหลักฐาน
           </Typography>

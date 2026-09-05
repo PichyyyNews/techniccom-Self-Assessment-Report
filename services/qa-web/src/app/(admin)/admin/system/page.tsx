@@ -443,16 +443,6 @@ export default function SystemAdminPage() {
               <RefreshIcon sx={{ fontSize: 18 }} className={loading ? "animate-spin" : ""} />
             </IconButton>
           </Tooltip>
-
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<BackupIcon sx={{ fontSize: 15 }} />}
-            onClick={openCreateSnapshotModal}
-            sx={{ fontWeight: 700, px: 1.25, py: 0.35, fontSize: "0.75rem" }}
-          >
-            สร้าง Snapshot
-          </Button>
         </Box>
       </Box>
 

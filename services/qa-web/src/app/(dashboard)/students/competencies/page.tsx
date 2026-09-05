@@ -34,6 +34,16 @@ export default function CompetenciesPage() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับภาพรวมงานนักเรียน">
+            <IconButton
+              component={Link}
+              href="/dashboard/students"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             ผลสัมฤทธิ์ และ สมรรถนะวิชาชีพ
           </Typography>
@@ -53,16 +63,6 @@ export default function CompetenciesPage() {
             size="small"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
           />
-          <Tooltip title="กลับภาพรวมงานนักเรียน">
-            <IconButton
-              component={Link}
-              href="/dashboard/students"
-              size="small"
-              sx={{ color: "text.secondary", p: 0.4 }}
-            >
-              <ArrowBackIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
           <Button
             component={Link}
             href="/quick-upload"
@@ -118,6 +118,7 @@ export default function CompetenciesPage() {
         category="student_work"
         sectionTitle="หลักฐานชิ้นงานและผลงานนักศึกษา"
         emptyNotice="ยังไม่มีการอัปโหลดชิ้นงานนักศึกษาในรอบปีการศึกษานี้"
+        hideUploadButton
       />
     </Box>
   );

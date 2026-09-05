@@ -32,21 +32,57 @@ const AcademicYearContext = createContext<AcademicYearContextType | undefined>(u
 export function AcademicYearProvider({ children }: { children: React.ReactNode }) {
   const [selectedYear, setSelectedYearState] = useState<string>("2568");
   const [selectedSemester, setSelectedSemesterState] = useState<string>("1");
+  const [availableYears, setAvailableYears] = useState<string[]>(AVAILABLE_YEARS);
 
-  // Load from localStorage on mount
+  // Load from DB & localStorage on mount
   useEffect(() => {
-    try {
-      const savedYear = localStorage.getItem("techsar_academic_year");
-      if (savedYear && AVAILABLE_YEARS.includes(savedYear)) {
-        setSelectedYearState(savedYear);
+    async function loadAcademicYears() {
+      try {
+        const res = await fetch("/api/admin/academic-years?active=true");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.items) && data.items.length > 0) {
+            const dbYears: string[] = Array.from(new Set(data.items.map((i: any) => String(i.year))));
+            dbYears.sort((a, b) => Number(b) - Number(a));
+            setAvailableYears(dbYears);
+
+            // If user has no saved selection, default to DB current
+            const savedYear = localStorage.getItem("techsar_academic_year");
+            const savedSemester = localStorage.getItem("techsar_academic_semester");
+
+            if (!savedYear && data.current?.year) {
+              setSelectedYearState(data.current.year);
+            } else if (savedYear && dbYears.includes(savedYear)) {
+              setSelectedYearState(savedYear);
+            }
+
+            if (!savedSemester && data.current?.semester) {
+              setSelectedSemesterState(data.current.semester);
+            } else if (savedSemester) {
+              setSelectedSemesterState(savedSemester);
+            }
+            return;
+          }
+        }
+      } catch {
+        // Fallback to local storage
       }
-      const savedSemester = localStorage.getItem("techsar_academic_semester");
-      if (savedSemester && SEMESTER_OPTIONS.some((s) => s.value === savedSemester)) {
-        setSelectedSemesterState(savedSemester);
+
+      try {
+        const savedYear = localStorage.getItem("techsar_academic_year");
+        if (savedYear && AVAILABLE_YEARS.includes(savedYear)) {
+          setSelectedYearState(savedYear);
+        }
+        const savedSemester = localStorage.getItem("techsar_academic_semester");
+        if (savedSemester && SEMESTER_OPTIONS.some((s) => s.value === savedSemester)) {
+          setSelectedSemesterState(savedSemester);
+        }
+      } catch {
+        // Ignore
       }
-    } catch {
-      // Ignore localStorage error (SSR or restricted mode)
     }
+
+    loadAcademicYears();
   }, []);
 
   const setSelectedYear = (year: string) => {
@@ -80,7 +116,7 @@ export function AcademicYearProvider({ children }: { children: React.ReactNode }
         setSelectedYear,
         selectedSemester,
         setSelectedSemester,
-        availableYears: AVAILABLE_YEARS,
+        availableYears,
         availableSemesters: SEMESTER_OPTIONS,
         termLabel,
         shortTermLabel,

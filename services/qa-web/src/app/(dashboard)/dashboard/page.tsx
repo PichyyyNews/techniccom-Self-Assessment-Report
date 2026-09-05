@@ -12,7 +12,6 @@ import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Avatar from "@mui/material/Avatar";
 import LinearProgress from "@mui/material/LinearProgress";
-import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -267,19 +266,6 @@ export default async function DashboardPage() {
                 อัปโหลดหลักฐาน
               </Button>
             </Link>
-            {canManageUsers && (
-              <Link href="/admin/users" style={{ textDecoration: "none" }}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<PeopleAltIcon sx={{ fontSize: 16 }} />}
-                  sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
-                >
-                  จัดการผู้ใช้
-                </Button>
-              </Link>
-            )}
           </Box>
         </Box>
       </Paper>

@@ -17,7 +17,37 @@ import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
 export default function ResearchesPage() {
-  const { termLabel } = useAcademicYear();
+  const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
+
+  const [summary, setSummary] = React.useState({
+    count: 0,
+    awardCount: 0,
+  });
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  const fetchSummary = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedYear) params.append("academicYear", selectedYear);
+      if (selectedSemester && selectedSemester !== "all") params.append("semester", selectedSemester);
+      const res = await fetch(`/api/teachers/summary?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.researches) {
+          setSummary(data.researches);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load researches summary:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedYear, selectedSemester]);
+
+  React.useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -33,8 +63,18 @@ export default function ResearchesPage() {
           borderColor: "divider",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" noWrap sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             งานวิจัย นวัตกรรม และ สิ่งประดิษฐ์
           </Typography>
           <Tooltip title="ฐานข้อมูลงานวิจัยในชั้นเรียน นวัตกรรมการเรียนรู้ และสิ่งประดิษฐ์ของคนรุ่นใหม่ร่วมกับนักศึกษา">
@@ -53,23 +93,21 @@ export default function ResearchesPage() {
             size="small"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
           />
-          <Tooltip title="กลับภาพรวมงานครู">
-            <IconButton
-              component={Link}
-              href="/dashboard"
-              size="small"
-              sx={{ color: "text.secondary", p: 0.4 }}
-            >
-              <ArrowBackIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
           <Button
             component={Link}
             href="/quick-upload"
             variant="contained"
             size="small"
             startIcon={<AddIcon sx={{ fontSize: 15 }} />}
-            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
+            sx={{
+              px: 1.25,
+              py: 0.35,
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              height: 30,
+            }}
           >
             เพิ่มงานวิจัย
           </Button>
@@ -86,28 +124,35 @@ export default function ResearchesPage() {
       >
         <Paper sx={{ p: 1.25 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
-            งานวิจัยในชั้นเรียน
+            งานวิจัยในชั้นเรียนและนวัตกรรม
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              3 ผลงาน
+              {loading ? "..." : `${summary.count} ผลงาน`}
             </Typography>
-            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              เสร็จสิ้นตามปีการศึกษา
+            <Typography
+              variant="caption"
+              sx={{
+                color: summary.count > 0 ? "success.main" : "text.secondary",
+                fontWeight: 600,
+                fontSize: "0.725rem",
+              }}
+            >
+              {summary.count > 0 ? "จัดเก็บในระบบแล้ว" : "รอบปีการศึกษานี้"}
             </Typography>
           </Box>
         </Paper>
 
         <Paper sx={{ p: 1.25 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
-            การประกวดสิ่งประดิษฐ์
+            นวัตกรรม สิ่งประดิษฐ์ และรางวัล
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              1 รางวัล
+              {loading ? "..." : `${summary.awardCount} รายการ`}
             </Typography>
             <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              ระดับภาค และ ระดับชาติ
+              สอดคล้องกับตัวชี้วัด SAR 3.1
             </Typography>
           </Box>
         </Paper>
@@ -118,6 +163,7 @@ export default function ResearchesPage() {
         category="research"
         sectionTitle="เอกสารงานวิจัยและสิ่งประดิษฐ์ที่จัดเก็บในระบบ"
         emptyNotice="ยังไม่มีเอกสารงานวิจัยหรือสิ่งประดิษฐ์ในรอบปีการศึกษานี้"
+        hideUploadButton
       />
     </Box>
   );

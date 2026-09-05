@@ -40,6 +40,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
 interface UploadCard {
@@ -174,6 +175,7 @@ export default function QuickUploadPage() {
   const [eventDate, setEventDate] = useState("");
   const [subjectCode, setSubjectCode] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
+  const [trainingHours, setTrainingHours] = useState("");
   const [externalVideoUrl, setExternalVideoUrl] = useState("");
   const [uploadYear, setUploadYear] = useState(selectedYear);
   const [uploadSemester, setUploadSemester] = useState(selectedSemester);
@@ -200,6 +202,7 @@ export default function QuickUploadPage() {
     setEventDate(new Date().toISOString().split("T")[0]);
     setSubjectCode("");
     setGradeLevel("");
+    setTrainingHours("");
     setExternalVideoUrl("");
     setTags([card.badge.replace(/\s+/g, "")]);
     setErrorMessage("");
@@ -269,6 +272,7 @@ export default function QuickUploadPage() {
       if (eventDate) formData.append("eventDate", eventDate);
       if (subjectCode.trim()) formData.append("subjectCode", subjectCode.trim());
       if (gradeLevel.trim()) formData.append("gradeLevel", gradeLevel.trim());
+      if (trainingHours.trim()) formData.append("trainingHours", trainingHours.trim());
       if (externalVideoUrl.trim()) formData.append("externalVideoUrl", externalVideoUrl.trim());
 
       const res = await fetch("/api/evidence/upload", {
@@ -305,6 +309,16 @@ export default function QuickUploadPage() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             ทางลัดอัปโหลดด่วน
           </Typography>
@@ -749,18 +763,29 @@ export default function QuickUploadPage() {
                   {(activeModalCard.category === "training_photo" ||
                     activeModalCard.category === "speaker_activity" ||
                     activeModalCard.category === "training_cert") && (
-                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                        <TextField
+                          label="สถานที่จัดกิจกรรม"
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          size="small"
+                        />
+                        <TextField
+                          label="หน่วยงานที่จัด"
+                          value={organization}
+                          onChange={(e) => setOrganization(e.target.value)}
+                          size="small"
+                        />
+                      </Box>
                       <TextField
-                        label="สถานที่จัดกิจกรรม"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        label="จำนวนชั่วโมงอบรม (ชม.)"
+                        type="number"
+                        value={trainingHours}
+                        onChange={(e) => setTrainingHours(e.target.value)}
                         size="small"
-                      />
-                      <TextField
-                        label="หน่วยงานที่จัด"
-                        value={organization}
-                        onChange={(e) => setOrganization(e.target.value)}
-                        size="small"
+                        placeholder="เช่น 6, 12, 18, 20"
+                        helperText="ใช้คำนวณสะสมตามเกณฑ์ SAR มาตรฐาน 2 (เกณฑ์ขั้นต่ำ 20 ชม./ปี)"
                       />
                     </Box>
                   )}

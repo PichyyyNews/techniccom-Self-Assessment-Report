@@ -10,6 +10,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StudentStatus {
+  ACTIVE         // กำลังศึกษา
+  GRADUATED      // สำเร็จการศึกษา
+  SUSPENDED      // พักการเรียน
+  DROPPED        // พ้นสภาพ
+}
+
 enum LicenseStatus {
   ACTIVE
   EXPIRING_SOON
@@ -134,6 +141,8 @@ model User {
   isActive         Boolean          @default(true)
   evidenceFiles    EvidenceFile[]   // ไฟล์หลักฐานและร่องรอยผลงาน (แผนการสอน, วุฒิบัตร, ภาพอบรม, วิจัย, ชิ้นงานเด็ก ฯลฯ)
   activities       ActivityLog[]
+  advisedStudents  Student[]     // นักเรียนที่อยู่ในความดูแล (ครูที่ปรึกษา)
+  teachingAssignments TeachingAssignment[] // รายวิชาที่ได้รับมอบหมายให้สอน
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -167,5 +176,188 @@ model EvidenceFile {
   @@index([category])
   @@index([academicYear, semester])
   @@index([createdAt])
+}
+
+// ทะเบียนข้อมูลนักเรียนนักศึกษา (ดัดแปลงจาก activity_attendance_System)
+model Student {
+  id            String        @id @default(cuid())
+  studentCode   String        // รหัสนักศึกษา 11 หลัก (e.g. "66209010001")
+  prefix        String        // คำนำหน้า: "นาย", "นางสาว"
+  firstName     String        // ชื่อจริง
+  lastName      String        // นามสกุล
+
+  level         String        // ระดับชั้น: "ปวช", "ปวส"
+  year          String        // ชั้นปี: "1", "2", "3"
+  majorName     String        // ชื่อเต็มสาขาวิชา (e.g. "เทคนิคคอมพิวเตอร์")
+  majorCode     String        // ชื่อย่อสาขาวิชา (e.g. "ชทค", "สทค")
+  room          String        // กลุ่มเรียน / ห้อง ("1", "2")
+
+  status        StudentStatus @default(ACTIVE)
+  academicYear  String        // ปีการศึกษา พ.ศ. (e.g. "2568")
+  semester      String        @default("1") // ภาคเรียน ("1", "2")
+
+  advisorId     String?       // FK → User (ครูที่ปรึกษา) optional
+  advisor       User?         @relation(fields: [advisorId], references: [id])
+  attendanceRecords AttendanceRecord[] // ประวัติการเข้าเรียน
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([studentCode, academicYear, semester])
+  @@index([academicYear, semester])
+  @@index([level, year, majorCode])
+  @@index([advisorId])
+  @@index([status])
+}
+
+// การตั้งค่ารอบปีการศึกษาและภาคเรียน (Academic Years & Terms)
+model AcademicYearConfig {
+  id          String    @id @default(cuid())
+  year        String    // ปีการศึกษา พ.ศ. เช่น "2568"
+  semester    String    // ภาคเรียน เช่น "1", "2", "all"
+  label       String    // เช่น "ภาคเรียนที่ 1"
+  isCurrent   Boolean   @default(false) // ปี/เทอมหลักของสถานศึกษา
+  isActive    Boolean   @default(true)  // เปิดใช้งานให้เลือกหรือไม่
+  startDate   DateTime? // วันเปิดภาคเรียน
+  endDate     DateTime? // วันปิดภาคเรียน
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([year, semester])
+  @@index([isCurrent])
+  @@index([isActive])
+}
+
+// การตั้งค่าระดับชั้น สาขาวิชา และกลุ่มเรียน (Curriculum & Class Sections Master Data)
+model ClassSectionConfig {
+  id          String   @id @default(cuid())
+  level       String   // ระดับชั้น: "ปวช", "ปวส"
+  year        String   // ชั้นปี: "1", "2", "3"
+  majorName   String   // ชื่อเต็มสาขาวิชา เช่น "ช่างเทคนิคคอมพิวเตอร์"
+  majorCode   String   // ชื่อย่อสาขาวิชา เช่น "ชทค"
+  room        String   // กลุ่มเรียน / ห้อง เช่น "1", "2"
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([level, year, majorCode, room])
+  @@index([level, year])
+  @@index([isActive])
+}
+
+// ข้อมูลรายวิชา (Courses / Subjects)
+model Course {
+  id           String               @id @default(cuid())
+  courseCode   String               @unique // รหัสวิชา เช่น "20204-2001"
+  courseName   String               // ชื่อวิชา เช่น "การเขียนโปรแกรมคอมพิวเตอร์"
+  theoryHours  Int                  @default(2) // ทฤษฎี (ชม./สัปดาห์)
+  practiceHours Int                 @default(2) // ปฏิบัติ (ชม./สัปดาห์)
+  credits      Int                  @default(3) // หน่วยกิต
+  level        String               @default("ปวช") // "ปวช", "ปวส"
+  majorCode    String               @default("ชทค") // รหัสย่อสาขาวิชา เช่น "ชทค"
+  isActive     Boolean              @default(true)
+  assignments  TeachingAssignment[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([majorCode])
+  @@index([level])
+}
+
+// การมอบหมายการสอนรายวิชาและห้องเรียน (Teaching Assignments)
+model TeachingAssignment {
+  id           String              @id @default(cuid())
+  courseId     String
+  course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacherId    String
+  teacher      User                @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  academicYear String              // ปีการศึกษา เช่น "2568"
+  semester     String              @default("1") // ภาคเรียน "1", "2"
+  level        String              // "ปวช", "ปวส"
+  year         String              // "1", "2", "3"
+  majorCode    String              // "ชทค"
+  room         String              // "1", "2"
+  totalPeriods Int                 @default(72) // คาบเรียนตลอดเทอม (18 สัปดาห์ x 4 คาบ)
+  sessions     AttendanceSession[]
+  records      AttendanceRecord[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([courseId, teacherId, academicYear, semester, level, year, majorCode, room])
+  @@index([teacherId])
+  @@index([academicYear, semester])
+  @@index([level, year, majorCode, room])
+}
+
+// รอบการเช็กชื่อรายวัน / รายคาบ (Daily Attendance Session)
+model AttendanceSession {
+  id           String              @id @default(cuid())
+  assignmentId String
+  assignment   TeachingAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  date         DateTime            // วันที่เช็คชื่อ
+  period       String?             // คาบเรียน เช่น "1-2", "3-4"
+  week         Int                 @default(1) // สัปดาห์ที่ 1 - 18
+  note         String?             // หัวข้อการสอน / หมายเหตุ
+  createdBy    String?             // ผู้บันทึก (ครู)
+  records      AttendanceRecord[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([assignmentId])
+  @@index([date])
+  @@index([week])
+}
+
+// รายการบันทึกสถานะการมาเรียนรายคน (Attendance Record)
+model AttendanceRecord {
+  id           String              @id @default(cuid())
+  assignmentId String
+  assignment   TeachingAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  sessionId    String?             // อ้างอิงรอบเช็กชื่อ (ถ้ามี)
+  session      AttendanceSession?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentCode  String              // รหัสนักศึกษา 11 หลัก
+  status       String              // "PRESENT" (มา), "LATE" (สาย), "ABSENT" (ขาด), "LEAVE" (ลา)
+  remark       String?             // หมายเหตุพฤติกรรม
+  date         DateTime            @default(now())
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([studentCode])
+  @@index([status])
+  @@index([date])
+}
+
+// ข้อมูลบริบทแผนกวิชา (Department Profile & Context สำหรับเอกสาร SAR)
+model DepartmentProfile {
+  id              String   @id @default(cuid())
+  nameTh          String   @default("แผนกวิชาเทคโนโลยีคอมพิวเตอร์")
+  nameEn          String?  @default("Department of Computer Technology")
+  collegeName     String   @default("วิทยาลัยเทคนิค")
+  faculty         String?  @default("ประเภทวิชาช่างอุตสาหกรรม")
+  philosophy      String?  @db.Text // ปรัชญา
+  vision          String?  @db.Text // วิสัยทัศน์
+  mission         String?  @db.Text // พันธกิจ
+  identity        String?  // เอกลักษณ์ (เช่น "ทักษะเด่น เน้นคุณธรรม")
+  uniqueness      String?  // อัตลักษณ์ (เช่น "คอมพิวเตอร์ฮาร์ดแวร์และเน็ตเวิร์กเข้มข้น")
+  colors          String?  @default("น้ำเงิน-ขาว") // สีประจำแผนก
+  logoUrl         String?  // โลโก้แผนก
+  coverUrl        String?  // ภาพหน้าปก
+  headTeacherId   String?  // ครูหัวหน้าแผนก
+  headTeacherName String?  // ชื่อหัวหน้าแผนก
+  phone           String?  // เบอร์ติดต่อแผนก
+  email           String?  // อีเมลแผนก
+  facebook        String?  // เพจ / ช่องทางติดต่อ
+  website         String?  // เว็บไซต์
+  roomLocation    String?  // ที่ตั้งห้องพักครู / อาคารปฏิบัติการ เช่น "อาคาร 4 ชั้น 2"
+  laboratories    Json?    // รายชื่อห้องปฏิบัติการและครุภัณฑ์หลัก [{ name, room, capacity, equipment }]
+  qualityGoals    Json?    // เป้าหมายคุณภาพประจำปี [{ indicator, target, note }]
+  academicYear    String?  // ปีการศึกษา เช่น "2569" หรือ null สำหรับโปรไฟล์หลัก
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 

@@ -17,7 +17,41 @@ import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
 export default function TrainingsPage() {
-  const { termLabel } = useAcademicYear();
+  const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
+
+  const [summary, setSummary] = React.useState({
+    totalHours: 0,
+    totalItems: 0,
+    certCount: 0,
+    photoCount: 0,
+    speakerCount: 0,
+    meetsRequirement: false,
+  });
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  const fetchSummary = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedYear) params.append("academicYear", selectedYear);
+      if (selectedSemester && selectedSemester !== "all") params.append("semester", selectedSemester);
+      const res = await fetch(`/api/teachers/summary?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.trainings) {
+          setSummary(data.trainings);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load trainings summary:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedYear, selectedSemester]);
+
+  React.useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -33,8 +67,18 @@ export default function TrainingsPage() {
           borderColor: "divider",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" noWrap sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             การพัฒนาวิชาชีพ และ อบรมสัมมนา
           </Typography>
           <Tooltip title="บันทึกประวัติการอบรม พัฒนาสมรรถนะวิชาชีพครู และการแลกเปลี่ยนเรียนรู้ชุมชนทางวิชาชีพ PLC">
@@ -53,23 +97,21 @@ export default function TrainingsPage() {
             size="small"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
           />
-          <Tooltip title="กลับภาพรวมงานครู">
-            <IconButton
-              component={Link}
-              href="/dashboard"
-              size="small"
-              sx={{ color: "text.secondary", p: 0.4 }}
-            >
-              <ArrowBackIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
           <Button
             component={Link}
             href="/quick-upload"
             variant="contained"
             size="small"
             startIcon={<AddIcon sx={{ fontSize: 15 }} />}
-            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
+            sx={{
+              px: 1.25,
+              py: 0.35,
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              height: 30,
+            }}
           >
             เพิ่มการอบรม
           </Button>
@@ -86,28 +128,35 @@ export default function TrainingsPage() {
       >
         <Paper sx={{ p: 1.25 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
-            ชั่วโมงอบรมสะสม
+            ชั่วโมงอบรมพัฒนาสะสม
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              48 ชั่วโมง
+              {loading ? "..." : `${summary.totalHours} ชั่วโมง`}
             </Typography>
-            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              ผ่านเกณฑ์ขั้นต่ำ 20 ชม./ปี
+            <Typography
+              variant="caption"
+              sx={{
+                color: summary.meetsRequirement ? "success.main" : "warning.main",
+                fontWeight: 600,
+                fontSize: "0.725rem",
+              }}
+            >
+              {summary.meetsRequirement ? "ผ่านเกณฑ์ขั้นต่ำ 20 ชม./ปี" : "เป้าหมายขั้นต่ำ 20 ชม./ปี"}
             </Typography>
           </Box>
         </Paper>
 
         <Paper sx={{ p: 1.25 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
-            หลักสูตรที่ผ่านการรับรอง
+            หลักฐานวุฒิบัตรและการเป็นวิทยากร
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              4 หลักสูตร
+              {loading ? "..." : `${summary.certCount} วุฒิบัตร`}
             </Typography>
             <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              สอดคล้องกับสาขาที่สอน
+              {summary.speakerCount > 0 ? `วิทยากร ${summary.speakerCount} ครั้ง • รวม ${summary.totalItems} รายการ` : `รวมหลักฐาน ${summary.totalItems} รายการ`}
             </Typography>
           </Box>
         </Paper>
@@ -118,6 +167,7 @@ export default function TrainingsPage() {
         category={["training_cert", "training_photo", "speaker_activity"]}
         sectionTitle="หลักฐานวุฒิบัตร ภาพการอบรมดูงาน และการเป็นวิทยากร"
         emptyNotice="ยังไม่มีหลักฐานการอบรมหรือวิทยากรในรอบปีการศึกษานี้"
+        hideUploadButton
       />
     </Box>
   );

@@ -28,6 +28,11 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import BadgeIcon from "@mui/icons-material/Badge";
 import DnsIcon from "@mui/icons-material/Dns";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import SecurityIcon from "@mui/icons-material/Security";
+import DateRangeIcon from "@mui/icons-material/DateRange";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useSidebar } from "./SidebarContext";
@@ -59,10 +64,25 @@ export function AppSidebar({
   const { shortTermLabel } = useAcademicYear();
 
   const isRoot = session?.user?.role === "ROOT";
-  const userPermissions = session?.user?.permissions || ["/dashboard"];
-  const canManageUsers = isRoot || userPermissions.includes("/admin/users");
+  const userPermissions = (session?.user as any)?.permissions || ["/dashboard"];
+  const canManageUsers = isRoot || userPermissions.includes("/admin/users") || userPermissions.includes("admin.users");
+  const canManageRoles = isRoot || userPermissions.includes("/admin/users") || userPermissions.includes("admin.roles");
+  const canManageAcademicYears = isRoot || userPermissions.includes("/admin/users") || userPermissions.includes("academic_year.manage");
+  const canManageCurriculum = isRoot || userPermissions.includes("/admin/users") || userPermissions.includes("curriculum.manage");
   const canManageLicenses =
-    isRoot || userPermissions.includes("/admin/licenses") || userPermissions.includes("/admin/users");
+    isRoot || userPermissions.includes("/admin/licenses") || userPermissions.includes("/admin/users") || userPermissions.includes("admin.licenses");
+  const canManageCourses =
+    isRoot ||
+    userPermissions.includes("/admin/courses") ||
+    userPermissions.includes("/admin/users") ||
+    userPermissions.includes("curriculum.manage") ||
+    (session?.user as any)?.role === "DEPT_HEAD";
+  const canManageDepartment =
+    isRoot ||
+    userPermissions.includes("/admin/department") ||
+    userPermissions.includes("admin.department") ||
+    userPermissions.includes("/admin/users") ||
+    (session?.user as any)?.role === "DEPT_HEAD";
   const canAccessDashboard = isRoot || userPermissions.includes("/dashboard");
 
   const userInitial = session?.user?.name ? session.user.name.charAt(0) : "U";
@@ -167,18 +187,47 @@ export function AppSidebar({
       groupTitle: "การบริหารระบบและสิทธิ์",
       items: [
         {
-          title: "จัดการผู้ใช้และสิทธิ์",
+          title: "จัดการบัญชีผู้ใช้งาน",
           href: "/admin/users",
           icon: VerifiedUserIcon,
           show: canManageUsers,
+        },
+        {
+          title: "กำหนดยศและสิทธิ์ (Matrix)",
+          href: "/admin/roles",
+          icon: SecurityIcon,
+          show: canManageRoles,
           badge: isRoot ? "ROOT" : undefined,
+        },
+        {
+          title: "รอบปีการศึกษาและเทอม",
+          href: "/admin/academic-years",
+          icon: DateRangeIcon,
+          show: canManageAcademicYears,
+        },
+        {
+          title: "ข้อมูลชั้นเรียนและสาขา",
+          href: "/admin/curriculum",
+          icon: MeetingRoomIcon,
+          show: canManageCurriculum,
+        },
+        {
+          title: "มอบหมายรายวิชาสอน",
+          href: "/admin/courses",
+          icon: AssignmentIndIcon,
+          show: canManageCourses,
+        },
+        {
+          title: "ข้อมูลและบริบทแผนกวิชา",
+          href: "/admin/department",
+          icon: ApartmentIcon,
+          show: canManageDepartment,
         },
         {
           title: "ประเภทใบอนุญาตและมาตรฐาน",
           href: "/admin/licenses",
           icon: BadgeIcon,
           show: canManageLicenses,
-          badge: isRoot ? "ROOT" : undefined,
         },
         {
           title: "ตั้งค่าระบบและมอนิเตอร์",

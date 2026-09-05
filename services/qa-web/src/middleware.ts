@@ -9,9 +9,21 @@ export default withAuth(
     const isRoot = token?.role === "ROOT";
     const userPermissions = (token?.permissions as string[]) || ["/dashboard"];
 
-    // 1. Guard /admin/* paths: ROOT or roles with permission for /admin/users
+    // 1. Guard /admin/* paths: ROOT or roles with permission
     if (pathname.startsWith("/admin")) {
-      const canAccessAdmin = isRoot || userPermissions.some((p) => pathname.startsWith(p));
+      const canAccessAdmin =
+        isRoot ||
+        userPermissions.includes("/admin/users") ||
+        userPermissions.includes("admin.users") ||
+        userPermissions.includes("admin.roles") ||
+        userPermissions.includes("academic_year.manage") ||
+        userPermissions.includes("curriculum.manage") ||
+        userPermissions.includes("admin.licenses") ||
+        userPermissions.includes("admin.system") ||
+        userPermissions.includes("admin.department") ||
+        userPermissions.includes("/admin/department") ||
+        token?.role === "DEPT_HEAD" ||
+        userPermissions.some((p) => pathname.startsWith(p));
       if (!canAccessAdmin) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }

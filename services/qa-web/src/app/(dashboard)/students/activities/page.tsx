@@ -63,6 +63,16 @@ export default function ActivitiesPage() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับภาพรวมงานนักเรียน">
+            <IconButton
+              component={Link}
+              href="/dashboard/students"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             กิจกรรมผู้เรียน และ บันทึกหน้าเสาธง
           </Typography>
@@ -82,16 +92,6 @@ export default function ActivitiesPage() {
             size="small"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
           />
-          <Tooltip title="กลับภาพรวมงานนักเรียน">
-            <IconButton
-              component={Link}
-              href="/dashboard/students"
-              size="small"
-              sx={{ color: "text.secondary", p: 0.4 }}
-            >
-              <ArrowBackIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
           <Button
             variant="contained"
             size="small"

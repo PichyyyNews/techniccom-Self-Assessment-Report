@@ -16,8 +16,13 @@ export async function PUT(
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== "ROOT") {
-      return NextResponse.json({ error: "เฉพาะ ROOT เท่านั้นที่สามารถแก้ไขยศ/สิทธิ์ได้" }, { status: 403 });
+    const canManageRoles =
+      session.user.role === "ROOT" ||
+      (session.user as any).permissions?.includes("admin.roles") ||
+      (session.user as any).permissions?.includes("/admin/users");
+
+    if (!canManageRoles) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์ในการแก้ไขยศ/สิทธิ์" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -69,8 +74,13 @@ export async function DELETE(
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== "ROOT") {
-      return NextResponse.json({ error: "เฉพาะ ROOT เท่านั้นที่สามารถลบยศ/สิทธิ์ได้" }, { status: 403 });
+    const canManageRoles =
+      session.user.role === "ROOT" ||
+      (session.user as any).permissions?.includes("admin.roles") ||
+      (session.user as any).permissions?.includes("/admin/users");
+
+    if (!canManageRoles) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์ในการลบยศ/สิทธิ์" }, { status: 403 });
     }
 
     const role = await prisma.roleDefinition.findUnique({

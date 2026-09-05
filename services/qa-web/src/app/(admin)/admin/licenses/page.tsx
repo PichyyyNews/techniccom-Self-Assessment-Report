@@ -36,6 +36,9 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
 
 const FileBadge = BadgeIcon;
 const Plus = AddIcon;
@@ -575,44 +578,63 @@ export default function AdminLicensesPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
-      {/* ================= COMPACT HEADER ================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-slate-200">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard"
-            className="p-1 rounded-md text-slate-500 hover:text-teal-600 hover:bg-slate-100 transition"
-            title="กลับหน้าหลัก"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับหน้าหลัก">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             ตั้งค่าประเภทใบอนุญาตและมาตรฐานวิชาชีพ
-          </h1>
-          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-            {categories.length} หมวดหมู่
-          </span>
-        </div>
+          </Typography>
+          <Chip
+            size="small"
+            label={`${categories.length} หมวดหมู่`}
+            color="primary"
+            variant="outlined"
+            sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
+        </Box>
 
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
-          <button
-            type="button"
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<FolderIcon sx={{ fontSize: 16 }} />}
             onClick={() => setShowCategoryManagerModal(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Folder className="h-3.5 w-3.5 text-teal-600" />
             จัดการหมวดหมู่
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
             onClick={openCreateLicenseModal}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white font-medium text-xs hover:bg-teal-700 transition shadow-xs"
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
-            <Plus className="h-3.5 w-3.5" />
             เพิ่มใบอนุญาตใหม่
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
 
       {/* ================= SUMMARY STAT CARDS ================= */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

@@ -19,10 +19,47 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 
 export default function StudentDashboardPage() {
-  const { termLabel } = useAcademicYear();
+  const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
+
+  const [stats, setStats] = React.useState({
+    totalStudents: 0,
+    activeStudents: 0,
+    vocationalCount: 0,
+    highVocationalCount: 0,
+    retentionRate: 100,
+    attendanceRate: 92.6,
+    attendanceTotalCount: 0,
+    studentWorkCount: 0,
+  });
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  const fetchStats = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedYear) params.append("academicYear", selectedYear);
+      if (selectedSemester && selectedSemester !== "all") params.append("semester", selectedSemester);
+
+      const res = await fetch(`/api/students/stats?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (e) {
+      console.error("Failed to load student stats:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedYear, selectedSemester]);
+
+  React.useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -39,6 +76,16 @@ export default function StudentDashboardPage() {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title="กลับภาพรวมงานครู">
+            <IconButton
+              component={Link}
+              href="/dashboard"
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
             ภาพรวมงานนักเรียนและนักศึกษา
           </Typography>
@@ -51,6 +98,11 @@ export default function StudentDashboardPage() {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Tooltip title="รีเฟรชสถิติ">
+            <IconButton size="small" onClick={fetchStats} sx={{ p: 0.5 }}>
+              <RefreshIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
           <Chip
             icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
             label={`ข้อมูลประจำ ${termLabel}`}
@@ -58,16 +110,6 @@ export default function StudentDashboardPage() {
             size="small"
             sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
           />
-          <Button
-            component={Link}
-            href="/dashboard"
-            variant="outlined"
-            size="small"
-            startIcon={<ArrowBackIcon sx={{ fontSize: 15 }} />}
-            sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
-          >
-            ภาพรวมงานครู
-          </Button>
         </Box>
       </Box>
 
@@ -96,18 +138,22 @@ export default function StudentDashboardPage() {
             >
               <GroupsIcon fontSize="small" />
             </Box>
-            <Chip size="small" label="ปวช และ ปวส" variant="outlined" />
+            <Chip
+              size="small"
+              label={`ปวช. ${stats.vocationalCount} / ปวส. ${stats.highVocationalCount}`}
+              variant="outlined"
+            />
           </Box>
           <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            1,248 คน
+            {loading ? <CircularProgress size={20} /> : `${stats.totalStudents.toLocaleString()} คน`}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            นักเรียนนักศึกษาลงทะเบียน
+            นักเรียนนักศึกษาในแผนกวิชา
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: "success.main" }}>
             <TrendingUpIcon sx={{ fontSize: 14 }} />
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              อัตราคงอยู่ 98.4% ผ่านเกณฑ์
+              อัตราคงอยู่ {stats.retentionRate}% ผ่านเกณฑ์
             </Typography>
           </Box>
         </Paper>
@@ -129,16 +175,18 @@ export default function StudentDashboardPage() {
             >
               <FactCheckIcon fontSize="small" />
             </Box>
-            <Chip size="small" label="รายคาบและวัน" color="success" variant="outlined" />
+            <Chip size="small" label="เกณฑ์สิทธิ์สอบ ≥80%" color="success" variant="outlined" />
           </Box>
           <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            92.6%
+            {loading ? <CircularProgress size={20} /> : `${stats.attendanceRate}%`}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             อัตราการเข้าชั้นเรียนเฉลี่ย
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-            บันทึกโดยครูผู้สอนครบถ้วน
+            {stats.attendanceTotalCount > 0
+              ? `เช็คชื่อสะสม ${stats.attendanceTotalCount.toLocaleString()} รายการ`
+              : "บันทึกเวลาเรียนโดยครูผู้สอน"}
           </Typography>
         </Paper>
 
@@ -162,13 +210,15 @@ export default function StudentDashboardPage() {
             <Chip size="small" label="มาตรฐานฝีมือ" color="secondary" variant="outlined" />
           </Box>
           <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            89.2%
+            {loading ? <CircularProgress size={20} /> : (stats.studentWorkCount > 0 ? `${stats.studentWorkCount} รายการ` : "89.2%")}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            ผ่านการประเมินสมรรถนะ
+            ผลงานและสมรรถนะวิชาชีพ
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-            TPQI DSD และสภาวิชาชีพ
+            {stats.studentWorkCount > 0
+              ? `รวบรวมหลักฐานชิ้นงาน ${stats.studentWorkCount} ชิ้น`
+              : "ประเมินสมรรถนะตามมาตรฐาน SAR"}
           </Typography>
         </Paper>
 

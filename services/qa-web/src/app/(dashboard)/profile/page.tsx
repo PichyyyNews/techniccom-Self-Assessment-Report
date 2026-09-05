@@ -42,6 +42,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
 
 const User = PersonIcon;
 const Mail = MailIcon;
@@ -739,53 +743,56 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-5 space-y-3.5">
-      {/* Top Breadcrumb navigation */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
-          {!isSelf ? (
-            <Link
-              href="/admin/users"
-              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
+      {/* 1. Ultra-Compact Page Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          pb: 0.75,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tooltip title={!isSelf ? "กลับหน้ารายชื่อผู้ใช้งาน" : "กลับหน้าหลัก"}>
+            <IconButton
+              component={Link}
+              href={!isSelf ? "/admin/users" : "/dashboard"}
+              size="small"
+              sx={{ color: "text.secondary", p: 0.4 }}
             >
-              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
-              <span>กลับหน้ารายชื่อผู้ใช้งาน</span>
-            </Link>
-          ) : (
-            <Link
-              href="/dashboard"
-              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition active:scale-95 select-none"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" />
-              <span>กลับหน้าหลัก (Dashboard)</span>
-            </Link>
-          )}
-
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            {!isSelf ? `โปรไฟล์บุคลากร: ${user.name}` : "โปรไฟล์และประวัติการทำงาน"}
+          </Typography>
           {!isSelf && (
-            <span className="text-xs font-semibold text-slate-400 truncate">
-              / ดูโปรไฟล์ของ <span className="text-slate-700 font-bold">{user.name}</span>
-            </span>
+            <Chip
+              size="small"
+              label={user?.position || "บุคลากร"}
+              color="primary"
+              variant="outlined"
+              sx={{ height: 20, fontSize: "0.6875rem" }}
+            />
           )}
-        </div>
+        </Box>
 
-        {/* Permission Status Pill (Only shown when viewing other users) */}
-        {!isSelf && (
-          <div>
-            {canEdit ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] sm:text-xs font-bold border border-emerald-200 shadow-2xs whitespace-nowrap">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">สิทธิ์แก้ไขโปรไฟล์ (Can Edit)</span>
-                <span className="sm:hidden">แก้ไขได้</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-xl bg-slate-100 text-slate-600 text-[11px] sm:text-xs font-bold border border-slate-200 shadow-2xs whitespace-nowrap">
-                <Eye className="h-3.5 w-3.5 text-slate-500" />
-                <span className="hidden sm:inline">โหมดดูข้อมูลอย่างเดียว (Read-Only)</span>
-                <span className="sm:hidden">ดูอย่างเดียว</span>
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          {!isSelf && (
+            <Chip
+              icon={canEdit ? <CheckCircleIcon sx={{ fontSize: "0.85rem !important" }} /> : <VisibilityIcon sx={{ fontSize: "0.85rem !important" }} />}
+              label={canEdit ? "สิทธิ์แก้ไขข้อมูลได้" : "โหมดดูข้อมูลอย่างเดียว"}
+              color={canEdit ? "success" : "default"}
+              variant="outlined"
+              size="small"
+              sx={{ height: 22, fontSize: "0.725rem" }}
+            />
+          )}
+        </Box>
+      </Box>
 
       {/* ================= 1. SOCIAL PROFILE HEADER BANNER ================= */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">

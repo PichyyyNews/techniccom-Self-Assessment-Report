@@ -594,6 +594,17 @@ export default function AdminUsersPage() {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+          <Button
+            component={Link}
+            href="/admin/roles"
+            variant="outlined"
+            size="small"
+            startIcon={<SecurityIcon sx={{ fontSize: 15 }} />}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem" }}
+          >
+            Matrix สิทธิ์ละเอียด
+          </Button>
+
           {activeTab === 0 ? (
             <Button
               variant="contained"

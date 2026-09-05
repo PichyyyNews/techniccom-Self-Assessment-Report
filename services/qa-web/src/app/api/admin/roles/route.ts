@@ -14,6 +14,7 @@ export async function GET() {
 
     const hasPermission =
       session.user.role === "ROOT" ||
+      session.user.permissions?.includes("admin.roles") ||
       session.user.permissions?.includes("/admin/users");
 
     if (!hasPermission) {
@@ -45,8 +46,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     }
 
-    if (session.user.role !== "ROOT") {
-      return NextResponse.json({ error: "เฉพาะ ROOT เท่านั้นที่สามารถสร้างยศ/สิทธิ์ใหม่ได้" }, { status: 403 });
+    const canManageRoles =
+      session.user.role === "ROOT" ||
+      (session.user as any).permissions?.includes("admin.roles") ||
+      (session.user as any).permissions?.includes("/admin/users");
+
+    if (!canManageRoles) {
+      return NextResponse.json({ error: "ไม่มีสิทธิ์ในการสร้างยศ/สิทธิ์ใหม่" }, { status: 403 });
     }
 
     const body = await req.json();

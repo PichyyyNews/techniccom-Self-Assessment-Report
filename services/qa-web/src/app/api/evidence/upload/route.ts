@@ -58,6 +58,7 @@ export async function POST(req: Request) {
     const subjectCode = (formData.get("subjectCode") as string)?.trim() || null;
     const gradeLevel = (formData.get("gradeLevel") as string)?.trim() || null;
     const externalVideoUrl = (formData.get("externalVideoUrl") as string)?.trim() || null;
+    const trainingHours = formData.get("trainingHours") ? Number(formData.get("trainingHours")) : null;
 
     // Tags field: parses JSON array string or comma-separated string
     const tagsRaw = formData.get("tags") as string | null;
@@ -139,6 +140,7 @@ export async function POST(req: Request) {
           subjectCode,
           gradeLevel,
           externalVideoUrl,
+          trainingHours,
           tags,
           starredBy: [],
           comments: [],
