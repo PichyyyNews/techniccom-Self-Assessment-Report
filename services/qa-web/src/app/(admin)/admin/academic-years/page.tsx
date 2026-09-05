@@ -56,7 +56,7 @@ interface AcademicYearItem {
 }
 
 export default function AdminAcademicYearsPage() {
-  const { termLabel } = useAcademicYear();
+  const { termLabel, setSelectedYear, setSelectedSemester } = useAcademicYear();
 
   const [items, setItems] = useState<AcademicYearItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -150,6 +150,9 @@ export default function AdminAcademicYearsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
+
+      setSelectedYear(item.year);
+      setSelectedSemester(item.semester);
 
       setSnackbar({
         open: true,
