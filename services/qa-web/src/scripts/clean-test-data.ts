@@ -99,26 +99,55 @@ async function main() {
   });
   console.log(`\n👤 ลบบัญชีผู้ใช้ส่วนเกิน/บัญชีทดสอบ: ${deletedUsers.count} รายการ (คงเหลือเฉพาะ Root User: ${primaryRootEmail})`);
 
-  console.log("\n========================================================");
-  console.log("🔍 ตรวจสอบข้อมูล Master Configuration ที่ต้องคงไว้ 100%:");
-  const rootUsers = await prisma.user.count({ where: { roleCode: "ROOT" } });
-  const allUsers = await prisma.user.count();
-  const roles = await prisma.roleDefinition.count();
-  const academicYears = await prisma.academicYearConfig.count();
-  const classSections = await prisma.classSectionConfig.count();
-  const licenseCategories = await prisma.licenseCategoryConfig.count();
-  const licenseTypes = await prisma.licenseTypeConfig.count();
-  const deptProfiles = await prisma.departmentProfile.count();
+  // 9. Clean Master Configs (ClassSectionConfig, AcademicYearConfig, DepartmentProfile, LicenseTypeConfig, LicenseCategoryConfig)
+  const delSections = await prisma.classSectionConfig.deleteMany({});
+  console.log(`\n🏫 ลบ ClassSectionConfig (กลุ่มเรียน/ห้องเรียน): ${delSections.count} รายการ -> เหลือ 0`);
 
-  console.log(` - ผู้ดูแลระบบสูงสุด (Root Admins): ${rootUsers} บัญชี (ผู้ใช้ทั้งหมด ${allUsers} บัญชี)`);
-  console.log(` - บทบาทและสิทธิ์ระบบ (RoleDefinition): ${roles} บทบาท`);
-  console.log(` - ปีการศึกษาและภาคเรียน (AcademicYearConfig): ${academicYears} ภาคเรียน`);
-  console.log(` - ห้องเรียนและสาขาวิชา (ClassSectionConfig): ${classSections} กลุ่มเรียน`);
-  console.log(` - หมวดหมู่ใบอนุญาตวิชาชีพ (LicenseCategoryConfig): ${licenseCategories} หมวดหมู่`);
-  console.log(` - ประเภทใบอนุญาตวิชาชีพ (LicenseTypeConfig): ${licenseTypes} ประเภท`);
-  console.log(` - ข้อมูลบริบทแผนกวิชา (DepartmentProfile): ${deptProfiles} ระเบียน`);
+  const delYears = await prisma.academicYearConfig.deleteMany({});
+  console.log(`📅 ลบ AcademicYearConfig (รอบปีการศึกษาและภาคเรียน): ${delYears.count} รายการ -> เหลือ 0`);
+
+  const delDept = await prisma.departmentProfile.deleteMany({});
+  console.log(`🏢 ลบ DepartmentProfile (ข้อมูลบริบทแผนกวิชา): ${delDept.count} รายการ -> เหลือ 0`);
+
+  const delTypes = await prisma.licenseTypeConfig.deleteMany({});
+  const delCats = await prisma.licenseCategoryConfig.deleteMany({});
+  console.log(`📜 ลบ LicenseTypeConfig (ประเภทใบอนุญาต): ${delTypes.count} รายการ -> เหลือ 0`);
+  console.log(`📂 ลบ LicenseCategoryConfig (หมวดหมู่ใบอนุญาต): ${delCats.count} รายการ -> เหลือ 0`);
+
+  const delRoles = await prisma.roleDefinition.deleteMany({
+    where: {
+      code: {
+        not: "ROOT",
+      },
+    },
+  });
+  console.log(`🛡️ ลบ RoleDefinition ทั่วไป: ${delRoles.count} รายการ (คงเหลือเฉพาะ ROOT: 1 แถว)`);
+
+  console.log("\n========================================================");
+  console.log("📊 ตรวจสอบจำนวนแถวคงเหลือในฐานข้อมูลทั้งหมด:");
+  const counts = {
+    Student: await prisma.student.count(),
+    LicenseTypeConfig: await prisma.licenseTypeConfig.count(),
+    TeachingAssignment: await prisma.teachingAssignment.count(),
+    EvidenceFile: await prisma.evidenceFile.count(),
+    Course: await prisma.course.count(),
+    ClassSectionConfig: await prisma.classSectionConfig.count(),
+    AcademicYearConfig: await prisma.academicYearConfig.count(),
+    LicenseCategoryConfig: await prisma.licenseCategoryConfig.count(),
+    User: await prisma.user.count(),
+    AttendanceRecord: await prisma.attendanceRecord.count(),
+    ActivityLog: await prisma.activityLog.count(),
+    RoleDefinition: await prisma.roleDefinition.count(),
+    DepartmentProfile: await prisma.departmentProfile.count(),
+    AttendanceSession: await prisma.attendanceSession.count(),
+    TeacherLicense: await prisma.teacherLicense.count(),
+  };
+
+  for (const [table, count] of Object.entries(counts)) {
+    console.log(` - ${table}: ${count} แถว`);
+  }
   console.log("========================================================");
-  console.log("✨ ฐานข้อมูลและระบบจัดเก็บไฟล์พร้อมสำหรับการใช้งานข้อมูลจริงเรียบร้อยแล้ว!");
+  console.log("✨ ฐานข้อมูลและระบบจัดเก็บไฟล์ Clean 100% พร้อมสำหรับการนำเข้าข้อมูลจริงเรียบร้อยแล้ว!");
 
   await prisma.$disconnect();
 }
