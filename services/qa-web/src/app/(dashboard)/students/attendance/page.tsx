@@ -508,12 +508,7 @@ export default function AttendancePage() {
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* 0. Breadcrumbs */}
-      <PageBreadcrumbs
-        items={[
-          { label: "งานนักศึกษา", href: "/dashboard/students" },
-          { label: "เช็คชื่อเข้าเรียนและพฤติกรรม" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Page Header (Standardized as per GEMINI.md) */}
       <Box

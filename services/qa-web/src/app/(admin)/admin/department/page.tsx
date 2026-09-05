@@ -266,12 +266,7 @@ export default function AdminDepartmentPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* 0. Breadcrumbs */}
-      <PageBreadcrumbs
-        items={[
-          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
-          { label: "ข้อมูลแผนกและห้องปฏิบัติการ" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Page Header */}
       <Box

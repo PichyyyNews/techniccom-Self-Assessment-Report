@@ -379,12 +379,7 @@ export default function SystemAdminPage() {
   return (
     <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", p: { xs: 1.25, sm: 2 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* 0. Breadcrumbs */}
-      <PageBreadcrumbs
-        items={[
-          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
-          { label: "ศูนย์มอนิเตอร์และระบบ" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Header */}
       <Box

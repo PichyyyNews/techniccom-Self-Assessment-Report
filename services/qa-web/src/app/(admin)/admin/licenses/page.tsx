@@ -473,13 +473,7 @@ export default function AdminLicensesPage() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
       {/* Breadcrumbs Navigation */}
-      <PageBreadcrumbs
-        items={[
-          { label: "ผู้ดูแลระบบ", href: "/admin" },
-          { label: "ตั้งค่าระบบ & มาสเตอร์ข้อมูล", href: "/admin/settings" },
-          { label: "ตั้งค่าประเภทใบอนุญาตวิชาชีพ (Licenses Master)" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* Universal Ultra-Compact Header */}
       <Box

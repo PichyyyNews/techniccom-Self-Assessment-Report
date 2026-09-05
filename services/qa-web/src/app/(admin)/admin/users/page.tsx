@@ -562,12 +562,7 @@ export default function AdminUsersPage() {
   return (
     <Box sx={{ width: "100%", maxWidth: 1300, mx: "auto", p: { xs: 1.25, sm: 2 }, display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* 0. Breadcrumbs */}
-      <PageBreadcrumbs
-        items={[
-          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
-          { label: "จัดการผู้ใช้งานและสิทธิ์" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Header */}
       <Box

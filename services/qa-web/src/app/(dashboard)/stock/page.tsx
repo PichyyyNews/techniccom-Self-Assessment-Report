@@ -227,12 +227,7 @@ export default function StockPage() {
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* Breadcrumbs Navigation */}
-      <PageBreadcrumbs
-        items={[
-          { label: "หน้าหลัก", href: "/dashboard" },
-          { label: "คลังไฟล์และร่องรอยหลักฐาน (Evidence Stock)" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Page Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, pb: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>

@@ -62,13 +62,7 @@ export default function LessonPlansPage() {
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
       {/* Breadcrumbs Navigation */}
-      <PageBreadcrumbs
-        items={[
-          { label: "หน้าหลัก", href: "/dashboard" },
-          { label: "งานวิชาการและจัดการเรียนรู้" },
-          { label: "แผนการจัดการเรียนรู้ (Lesson Plans)" },
-        ]}
-      />
+      <PageBreadcrumbs />
 
       {/* 1. Ultra-Compact Page Header */}
       <Box
