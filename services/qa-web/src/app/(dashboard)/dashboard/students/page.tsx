@@ -21,7 +21,12 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CircularProgress from "@mui/material/CircularProgress";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import DashboardCustomizeIcon from "@mui/icons-material/DashboardCustomize";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { StudentDemographicPyramid } from "@/components/analytics/StudentDemographicPyramid";
 
 export default function StudentDashboardPage() {
   const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
@@ -37,6 +42,15 @@ export default function StudentDashboardPage() {
     studentWorkCount: 0,
   });
   const [loading, setLoading] = React.useState<boolean>(true);
+
+  // EDA State & Fetching
+  const [activeTab, setActiveTab] = React.useState<number>(0);
+  const [edaLoading, setEdaLoading] = React.useState<boolean>(false);
+  const [edaData, setEdaData] = React.useState<{
+    pyramidData: any[];
+    statusPieData: any[];
+    totalStudents: number;
+  } | null>(null);
 
   const fetchStats = React.useCallback(async () => {
     try {
@@ -57,9 +71,36 @@ export default function StudentDashboardPage() {
     }
   }, [selectedYear, selectedSemester]);
 
+  const fetchEdaData = React.useCallback(async () => {
+    try {
+      setEdaLoading(true);
+      const res = await fetch(
+        `/api/analytics/students?academicYear=${selectedYear || "2569"}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setEdaData(data);
+      }
+    } catch (e) {
+      console.error("Failed to load student EDA data:", e);
+    } finally {
+      setEdaLoading(false);
+    }
+  }, [selectedYear]);
+
+  React.useEffect(() => {
+    setEdaData(null);
+  }, [selectedYear]);
+
   React.useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  React.useEffect(() => {
+    if (activeTab === 1 && !edaData) {
+      fetchEdaData();
+    }
+  }, [activeTab, edaData, fetchEdaData]);
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -99,7 +140,14 @@ export default function StudentDashboardPage() {
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
           <Tooltip title="รีเฟรชสถิติ">
-            <IconButton size="small" onClick={fetchStats} sx={{ p: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                fetchStats();
+                if (activeTab === 1) fetchEdaData();
+              }}
+              sx={{ p: 0.5 }}
+            >
               <RefreshIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
@@ -113,145 +161,205 @@ export default function StudentDashboardPage() {
         </Box>
       </Box>
 
-      {/* 2. SAR KPI Cards */}
-      <Box
+      {/* Tab Switcher: Quick KPI vs Demographic EDA */}
+      <Paper
+        elevation={0}
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-          gap: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 1.5,
+          px: 1,
         }}
       >
-        {/* Metric 1 */}
-        <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: "primary.50",
-                color: "primary.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <GroupsIcon fontSize="small" />
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          sx={{
+            minHeight: 40,
+            "& .MuiTab-root": {
+              minHeight: 40,
+              py: 0.5,
+              px: 1.5,
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              textTransform: "none",
+            },
+          }}
+        >
+          <Tab
+            icon={<DashboardCustomizeIcon sx={{ fontSize: 16 }} />}
+            iconPosition="start"
+            label="ภาพรวมตัวชี้วัด (Quick KPI)"
+          />
+          <Tab
+            icon={<QueryStatsIcon sx={{ fontSize: 16 }} />}
+            iconPosition="start"
+            label="การวิเคราะห์โครงสร้างประชากรผู้เรียน (Demographic & Retention EDA)"
+          />
+        </Tabs>
+      </Paper>
+
+      {/* TAB 0: SAR KPI Cards */}
+      {activeTab === 0 && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+            gap: 2,
+          }}
+        >
+          {/* Metric 1 */}
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  bgcolor: "primary.50",
+                  color: "primary.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <GroupsIcon fontSize="small" />
+              </Box>
+              <Chip
+                size="small"
+                label={`ปวช. ${stats.vocationalCount} / ปวส. ${stats.highVocationalCount}`}
+                variant="outlined"
+              />
             </Box>
-            <Chip
-              size="small"
-              label={`ปวช. ${stats.vocationalCount} / ปวส. ${stats.highVocationalCount}`}
-              variant="outlined"
-            />
-          </Box>
-          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            {loading ? <CircularProgress size={20} /> : `${stats.totalStudents.toLocaleString()} คน`}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            นักเรียนนักศึกษาในแผนกวิชา
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: "success.main" }}>
-            <TrendingUpIcon sx={{ fontSize: 14 }} />
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              อัตราคงอยู่ {stats.retentionRate}% ผ่านเกณฑ์
+            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+              {loading ? <CircularProgress size={20} /> : `${stats.totalStudents.toLocaleString()} คน`}
             </Typography>
-          </Box>
-        </Paper>
-
-        {/* Metric 2 */}
-        <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: "success.50",
-                color: "success.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <FactCheckIcon fontSize="small" />
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              นักเรียนนักศึกษาในแผนกวิชา
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: "success.main" }}>
+              <TrendingUpIcon sx={{ fontSize: 14 }} />
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                อัตราคงอยู่ {stats.retentionRate}% ผ่านเกณฑ์
+              </Typography>
             </Box>
-            <Chip size="small" label="เกณฑ์สิทธิ์สอบ ≥80%" color="success" variant="outlined" />
-          </Box>
-          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            {loading ? <CircularProgress size={20} /> : `${stats.attendanceRate}%`}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            อัตราการเข้าชั้นเรียนเฉลี่ย
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-            {stats.attendanceTotalCount > 0
-              ? `เช็คชื่อสะสม ${stats.attendanceTotalCount.toLocaleString()} รายการ`
-              : "บันทึกเวลาเรียนโดยครูผู้สอน"}
-          </Typography>
-        </Paper>
+          </Paper>
 
-        {/* Metric 3 */}
-        <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: "secondary.50",
-                color: "secondary.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <EmojiEventsIcon fontSize="small" />
+          {/* Metric 2 */}
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  bgcolor: "success.50",
+                  color: "success.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FactCheckIcon fontSize="small" />
+              </Box>
+              <Chip size="small" label="เกณฑ์สิทธิ์สอบ ≥80%" color="success" variant="outlined" />
             </Box>
-            <Chip size="small" label="มาตรฐานฝีมือ" color="secondary" variant="outlined" />
-          </Box>
-          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            {loading ? <CircularProgress size={20} /> : (stats.studentWorkCount > 0 ? `${stats.studentWorkCount} รายการ` : "89.2%")}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            ผลงานและสมรรถนะวิชาชีพ
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-            {stats.studentWorkCount > 0
-              ? `รวบรวมหลักฐานชิ้นงาน ${stats.studentWorkCount} ชิ้น`
-              : "ประเมินสมรรถนะตามมาตรฐาน SAR"}
-          </Typography>
-        </Paper>
+            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+              {loading ? <CircularProgress size={20} /> : `${stats.attendanceRate}%`}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              อัตราการเข้าชั้นเรียนเฉลี่ย
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+              {stats.attendanceTotalCount > 0
+                ? `เช็คชื่อสะสม ${stats.attendanceTotalCount.toLocaleString()} รายการ`
+                : "บันทึกเวลาเรียนโดยครูผู้สอน"}
+            </Typography>
+          </Paper>
 
-        {/* Metric 4 */}
-        <Paper sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: "warning.50",
-                color: "warning.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <WorkspacePremiumIcon fontSize="small" />
+          {/* Metric 3 */}
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  bgcolor: "secondary.50",
+                  color: "secondary.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <EmojiEventsIcon fontSize="small" />
+              </Box>
+              <Chip size="small" label="มาตรฐานฝีมือ" color="secondary" variant="outlined" />
             </Box>
-            <Chip size="small" label="กิจกรรมผู้เรียน" color="warning" variant="outlined" />
-          </Box>
-          <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-            95.1%
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            เข้าร่วมกิจกรรมพัฒนาผู้เรียน
-          </Typography>
-          <Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 1, fontWeight: 600 }}>
-            ผ่านเกณฑ์กิจกรรมชมรมและจิตอาสา
-          </Typography>
-        </Paper>
-      </Box>
+            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+              {loading ? <CircularProgress size={20} /> : (stats.studentWorkCount > 0 ? `${stats.studentWorkCount} รายการ` : "89.2%")}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              ผลงานและสมรรถนะวิชาชีพ
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+              {stats.studentWorkCount > 0
+                ? `รวบรวมหลักฐานชิ้นงาน ${stats.studentWorkCount} ชิ้น`
+                : "ประเมินสมรรถนะตามมาตรฐาน SAR"}
+            </Typography>
+          </Paper>
+
+          {/* Metric 4 */}
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  bgcolor: "warning.50",
+                  color: "warning.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <WorkspacePremiumIcon fontSize="small" />
+              </Box>
+              <Chip size="small" label="กิจกรรมผู้เรียน" color="warning" variant="outlined" />
+            </Box>
+            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
+              95.1%
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              เข้าร่วมกิจกรรมพัฒนาผู้เรียน
+            </Typography>
+            <Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 1, fontWeight: 600 }}>
+              ผ่านเกณฑ์กิจกรรมชมรมและจิตอาสา
+            </Typography>
+          </Paper>
+        </Box>
+      )}
+
+      {/* TAB 1: Demographic & Retention EDA */}
+      {activeTab === 1 && (
+        <>
+          {edaLoading || !edaData ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress size={36} />
+            </Box>
+          ) : (
+            <StudentDemographicPyramid
+              pyramidData={edaData.pyramidData}
+              statusPieData={edaData.statusPieData}
+              totalStudents={edaData.totalStudents}
+            />
+          )}
+        </>
+      )}
 
       {/* 3. Quick Navigation Modules */}
       <Paper sx={{ p: 2.5 }}>

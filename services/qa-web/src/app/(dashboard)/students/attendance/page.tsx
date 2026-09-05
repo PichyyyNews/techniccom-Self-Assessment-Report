@@ -49,9 +49,11 @@ import HistoryIcon from "@mui/icons-material/History";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
 
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { usePermission } from "@/hooks/usePermission";
+import { AttendanceRiskChart } from "@/components/analytics/AttendanceRiskChart";
 import * as XLSX from "xlsx";
 
 interface AssignmentOption {
@@ -133,6 +135,45 @@ export default function AttendancePage() {
 
   const [sessions, setSessions] = useState<AttendanceSessionItem[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(false);
+
+  // EDA Analytics State
+  const [edaLoading, setEdaLoading] = useState<boolean>(false);
+  const [edaData, setEdaData] = useState<{
+    weeklyTrend: any[];
+    riskSegments: any[];
+    roomComparison: any[];
+    atRiskStudents: any[];
+  } | null>(null);
+
+  const fetchEdaData = useCallback(async () => {
+    try {
+      setEdaLoading(true);
+      const params = new URLSearchParams();
+      if (selectedYear) params.append("academicYear", selectedYear);
+      if (selectedSemester && selectedSemester !== "all") params.append("semester", selectedSemester);
+      if (selectedAssignmentId) params.append("assignmentId", selectedAssignmentId);
+
+      const res = await fetch(`/api/analytics/attendance?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEdaData(data);
+      }
+    } catch (e) {
+      console.error("Failed to load attendance EDA data:", e);
+    } finally {
+      setEdaLoading(false);
+    }
+  }, [selectedYear, selectedSemester, selectedAssignmentId]);
+
+  useEffect(() => {
+    setEdaData(null);
+  }, [selectedYear, selectedSemester, selectedAssignmentId]);
+
+  useEffect(() => {
+    if (activeTab === 2 && !edaData) {
+      fetchEdaData();
+    }
+  }, [activeTab, edaData, fetchEdaData]);
 
   // Feedback Snackbar
   const [snackbar, setSnackbar] = useState<{
@@ -628,7 +669,14 @@ export default function AttendancePage() {
         )}
 
         <Tooltip title="รีเฟรชข้อมูล">
-          <IconButton size="small" onClick={fetchAssignmentData} sx={{ ml: "auto" }}>
+          <IconButton
+            size="small"
+            onClick={() => {
+              fetchAssignmentData();
+              if (activeTab === 2) fetchEdaData();
+            }}
+            sx={{ ml: "auto" }}
+          >
             <RefreshIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </Tooltip>
@@ -692,7 +740,7 @@ export default function AttendancePage() {
         </Paper>
       </Box>
 
-      {/* 4. Tabs: Student Summary vs Session History */}
+      {/* 4. Tabs: Student Summary vs Session History vs EDA Analytics */}
       <Paper sx={{ border: "1px solid", borderColor: "divider" }}>
         <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
           <Tab
@@ -705,6 +753,12 @@ export default function AttendancePage() {
             icon={<HistoryIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
             label={`ประวัติการเช็กชื่อย้อนหลัง (${sessions.length} ครั้ง)`}
+            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+          />
+          <Tab
+            icon={<QueryStatsIcon sx={{ fontSize: 16 }} />}
+            iconPosition="start"
+            label="วิเคราะห์สถิติเวลาเรียนและกลุ่มเสี่ยง (EDA Analytics)"
             sx={{ fontSize: "0.8125rem", minHeight: 40 }}
           />
         </Tabs>
@@ -870,6 +924,24 @@ export default function AttendancePage() {
             </Table>
           </TableContainer>
         </Paper>
+      )}
+
+      {/* TAB 2: Attendance Risk & Longitudinal EDA */}
+      {activeTab === 2 && (
+        <>
+          {edaLoading || !edaData ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+              <CircularProgress size={36} />
+            </Box>
+          ) : (
+            <AttendanceRiskChart
+              weeklyTrend={edaData.weeklyTrend}
+              riskSegments={edaData.riskSegments}
+              roomComparison={edaData.roomComparison}
+              atRiskStudents={edaData.atRiskStudents}
+            />
+          )}
+        </>
       )}
 
       {/* ==================== 5. DAILY CHECK-IN DIALOG ==================== */}

@@ -26,6 +26,7 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import SchoolIcon from "@mui/icons-material/School";
 import BoltIcon from "@mui/icons-material/Bolt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { DashboardEdaSection } from "@/components/dashboard/DashboardEdaSection";
 
 function calculateAge(birthDateString?: string | Date | null) {
   if (!birthDateString) return null;
@@ -336,78 +337,14 @@ export default async function DashboardPage() {
         </Box>
       </Paper>
 
-      {/* 3. SAR Quality Metrics */}
-      {canManageUsers && (
-        <Paper sx={{ p: 2.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-            <Box>
-              <Typography variant="h4">
-                มาตรฐานด้านคุณวุฒิและมาตรฐานวิชาชีพครู
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                เกณฑ์การประเมินคุณภาพการศึกษา สอศ และคุรุสภา
-              </Typography>
-            </Box>
-            <Chip size="small" label="ตัวชี้วัดความพร้อม SAR" color="success" variant="outlined" />
-          </Box>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-              gap: 2,
-            }}
-          >
-            {/* Metric 1 */}
-            <Paper sx={{ p: 2, bgcolor: "background.default" }}>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.5 }}>
-                ร้อยละครูที่มีใบอนุญาตถูกต้อง
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 1 }}>
-                <Typography variant="h1" sx={{ color: "primary.main" }}>
-                  {sarLicensePercentage}%
-                </Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  {validLicenseCount}/{totalActiveTeachers} ท่าน
-                </Typography>
-              </Box>
-              <LinearProgress variant="determinate" value={sarLicensePercentage} sx={{ height: 6, borderRadius: 3 }} />
-            </Paper>
-
-            {/* Metric 2 */}
-            <Paper sx={{ p: 2, bgcolor: "background.default" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
-                <CheckCircleIcon sx={{ fontSize: 16, color: "success.main" }} />
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
-                  ใบอนุญาตพร้อมใช้งาน
-                </Typography>
-              </Box>
-              <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-                {validLicenseCount} คน
-              </Typography>
-              <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600 }}>
-                ผ่านเกณฑ์มาตรฐานวิชาชีพ
-              </Typography>
-            </Paper>
-
-            {/* Metric 3 */}
-            <Paper sx={{ p: 2, bgcolor: "background.default" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
-                <AccessTimeIcon sx={{ fontSize: 16, color: "warning.main" }} />
-                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
-                  ใกล้หมดอายุ หรือต้องต่ออายุ
-                </Typography>
-              </Box>
-              <Typography variant="h2" sx={{ color: "warning.main", mb: 0.5 }}>
-                {expiringCount} คน
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                หมดอายุภายใน 180 วัน
-              </Typography>
-            </Paper>
-          </Box>
-        </Paper>
-      )}
+      {/* 3. SAR Quality Metrics & EDA Analytics */}
+      <DashboardEdaSection
+        canManageUsers={canManageUsers}
+        sarLicensePercentage={sarLicensePercentage}
+        validLicenseCount={validLicenseCount}
+        totalActiveTeachers={totalActiveTeachers}
+        expiringCount={expiringCount}
+      />
 
       {/* 4. System Statistics */}
       {canManageUsers && (
