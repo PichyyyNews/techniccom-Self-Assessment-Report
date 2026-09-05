@@ -42,6 +42,7 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 
 interface UploadCard {
   id: string;
@@ -296,6 +297,14 @@ export default function QuickUploadPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "หน้าหลัก", href: "/dashboard" },
+          { label: "ทางลัดอัปโหลดด่วน" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header */}
       <Box
         sx={{

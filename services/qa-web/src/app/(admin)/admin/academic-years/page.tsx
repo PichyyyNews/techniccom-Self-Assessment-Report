@@ -42,6 +42,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StarIcon from "@mui/icons-material/Star";
 
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 
 interface AcademicYearItem {
   id: string;
@@ -217,6 +218,14 @@ export default function AdminAcademicYearsPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
+          { label: "กำหนดปีการศึกษาและภาคเรียน" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header (Standardized as per GEMINI.md) */}
       <Box
         sx={{

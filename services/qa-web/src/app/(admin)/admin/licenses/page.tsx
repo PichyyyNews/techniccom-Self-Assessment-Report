@@ -3,70 +3,62 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import BadgeIcon from "@mui/icons-material/Badge";
-import AddIcon from "@mui/icons-material/Add";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import SecurityIcon from "@mui/icons-material/Security";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import WorkIcon from "@mui/icons-material/Work";
-import SchoolIcon from "@mui/icons-material/School";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import DescriptionIcon from "@mui/icons-material/Description";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import CheckIcon from "@mui/icons-material/Check";
-import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
-import FolderIcon from "@mui/icons-material/Folder";
-import TuneIcon from "@mui/icons-material/Tune";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-import WarningIcon from "@mui/icons-material/Warning";
-import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Chip from "@mui/material/Chip";
+import Grid from "@mui/material/Grid";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardActions from "@mui/material/CardActions";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Tooltip from "@mui/material/Tooltip";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import Chip from "@mui/material/Chip";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Divider from "@mui/material/Divider";
+import LinearProgress from "@mui/material/LinearProgress";
+import Skeleton from "@mui/material/Skeleton";
 
-const FileBadge = BadgeIcon;
-const Plus = AddIcon;
-const ArrowLeft = ArrowBackIcon;
-const Filter = FilterListIcon;
-const RefreshCw = RefreshIcon;
-const Loader2 = ({ className }: { className?: string }) => (
-  <CircularProgress size={16} sx={{ display: "inline-flex" }} />
-);
-const Edit2 = EditIcon;
-const Trash2 = DeleteIcon;
-const X = CloseIcon;
-const Sparkles = AutoAwesomeIcon;
-const Shield = SecurityIcon;
-const Clock = AccessTimeIcon;
-const Briefcase = WorkIcon;
-const GraduationCap = SchoolIcon;
-const Award = EmojiEventsIcon;
-const FileText = DescriptionIcon;
-const Tag = LocalOfferIcon;
-const Check = CheckIcon;
-const FolderPlus = CreateNewFolderIcon;
-const Folder = FolderIcon;
-const Settings2 = TuneIcon;
-const CheckCircle2 = CheckCircleIcon;
-const XCircle = CancelIcon;
-const AlertTriangle = WarningIcon;
-import { clsx } from "clsx";
+// MUI Icons
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import FolderIcon from "@mui/icons-material/Folder";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import BadgeIcon from "@mui/icons-material/Badge";
+import SchoolIcon from "@mui/icons-material/School";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import SecurityIcon from "@mui/icons-material/Security";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import WorkIcon from "@mui/icons-material/Work";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import DescriptionIcon from "@mui/icons-material/Description";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+
+import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export interface LicenseCategoryItem {
   id: string;
@@ -104,51 +96,52 @@ export interface LicenseConfigItem {
 }
 
 const COLOR_OPTIONS = [
-  { value: "teal", label: "สีเขียวหัวเป็ด (Teal)", badge: "bg-teal-50 text-teal-700 border-teal-200" },
-  { value: "blue", label: "สีน้ำเงิน (Blue)", badge: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "purple", label: "สีม่วง (Purple)", badge: "bg-purple-50 text-purple-700 border-purple-200" },
-  { value: "emerald", label: "สีเขียว (Emerald)", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  { value: "amber", label: "สีส้ม/ทอง (Amber)", badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  { value: "indigo", label: "สีคราม (Indigo)", badge: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  { value: "rose", label: "สีแดง (Rose)", badge: "bg-rose-50 text-rose-700 border-rose-200" },
-  { value: "slate", label: "สีเทา (Slate)", badge: "bg-slate-50 text-slate-700 border-slate-200" },
+  { value: "teal", label: "สีเขียวหัวเป็ด (Teal)", colorCode: "#0f766e" },
+  { value: "blue", label: "สีน้ำเงิน (Blue)", colorCode: "#1d4ed8" },
+  { value: "purple", label: "สีม่วง (Purple)", colorCode: "#7e22ce" },
+  { value: "emerald", label: "สีเขียว (Emerald)", colorCode: "#047857" },
+  { value: "amber", label: "สีส้ม/ทอง (Amber)", colorCode: "#b45309" },
+  { value: "indigo", label: "สีคราม (Indigo)", colorCode: "#4338ca" },
+  { value: "rose", label: "สีแดง (Rose)", colorCode: "#be123c" },
+  { value: "slate", label: "สีเทา (Slate)", colorCode: "#475569" },
 ];
 
 const ICON_OPTIONS = [
-  { value: "GraduationCap", label: "หมวกบัณฑิต (GraduationCap)", icon: GraduationCap },
-  { value: "Award", label: "เหรียญรางวัล (Award)", icon: Award },
-  { value: "Shield", label: "โล่ป้องกัน (Shield)", icon: Shield },
-  { value: "Clock", label: "นาฬิกาผ่อนผัน (Clock)", icon: Clock },
-  { value: "FileBadge", label: "บัตรรับรอง (FileBadge)", icon: FileBadge },
-  { value: "Briefcase", label: "กระเป๋าช่าง/งาน (Briefcase)", icon: Briefcase },
-  { value: "Sparkles", label: "ประกายดาว/สากล (Sparkles)", icon: Sparkles },
-  { value: "FileText", label: "เอกสารทั่วไป (FileText)", icon: FileText },
+  { value: "GraduationCap", label: "หมวกบัณฑิต (GraduationCap)", icon: <SchoolIcon /> },
+  { value: "Award", label: "เหรียญรางวัล (Award)", icon: <EmojiEventsIcon /> },
+  { value: "Shield", label: "โล่ป้องกัน (Shield)", icon: <SecurityIcon /> },
+  { value: "Clock", label: "นาฬิกาผ่อนผัน (Clock)", icon: <AccessTimeIcon /> },
+  { value: "FileBadge", label: "บัตรรับรอง (FileBadge)", icon: <BadgeIcon /> },
+  { value: "Briefcase", label: "กระเป๋าช่าง/งาน (Briefcase)", icon: <WorkIcon /> },
+  { value: "Sparkles", label: "ประกายดาว/สากล (Sparkles)", icon: <AutoAwesomeIcon /> },
+  { value: "FileText", label: "เอกสารทั่วไป (FileText)", icon: <DescriptionIcon /> },
 ];
 
-function getLicenseIcon(iconName: string) {
+function renderLicenseIcon(iconName: string, fontSize = 20) {
   switch (iconName) {
     case "GraduationCap":
-      return GraduationCap;
+      return <SchoolIcon sx={{ fontSize }} />;
     case "Award":
-      return Award;
+      return <EmojiEventsIcon sx={{ fontSize }} />;
     case "Shield":
-      return Shield;
+      return <SecurityIcon sx={{ fontSize }} />;
     case "Clock":
-      return Clock;
+      return <AccessTimeIcon sx={{ fontSize }} />;
     case "FileBadge":
-      return FileBadge;
+      return <BadgeIcon sx={{ fontSize }} />;
     case "Briefcase":
-      return Briefcase;
+      return <WorkIcon sx={{ fontSize }} />;
     case "Sparkles":
-      return Sparkles;
+      return <AutoAwesomeIcon sx={{ fontSize }} />;
     case "FileText":
     default:
-      return FileText;
+      return <DescriptionIcon sx={{ fontSize }} />;
   }
 }
 
 export default function AdminLicensesPage() {
   const { data: session } = useSession();
+  const { termLabel } = useAcademicYear();
 
   // Licenses Config State
   const [licenseConfigs, setLicenseConfigs] = useState<LicenseConfigItem[]>([]);
@@ -250,120 +243,85 @@ export default function AdminLicensesPage() {
     fetchCategories();
   }, []);
 
-  // Category Actions
-  const openCreateCategoryModal = () => {
-    setCategoryModalMode("create");
-    setSelectedCategory(null);
-    setCategoryFormData({
-      code: "",
-      title: "",
-      description: "",
-      icon: "GraduationCap",
-      color: "teal",
-      sortOrder: categories.length + 1,
-      isActive: true,
-    });
-    setShowCategoryEditModal(true);
-  };
-
-  const openEditCategoryModal = (cat: LicenseCategoryItem) => {
-    setCategoryModalMode("edit");
-    setSelectedCategory(cat);
-    setCategoryFormData({
-      code: cat.code,
-      title: cat.title,
-      description: cat.description || "",
-      icon: cat.icon || "GraduationCap",
-      color: cat.color || "teal",
-      sortOrder: cat.sortOrder || 0,
-      isActive: cat.isActive,
-    });
-    setShowCategoryEditModal(true);
-  };
-
-  const handleCategoryFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoryFormData.title || !categoryFormData.code) {
-      setSnackbar({ open: true, message: "กรุณากรอกรหัสและชื่อหมวดหมู่", severity: "warning" });
-      return;
-    }
-
-    try {
-      setCategoryFormSubmitting(true);
-      const url = "/api/admin/license-categories";
-      const method = categoryModalMode === "create" ? "POST" : "PUT";
-      const payload =
-        categoryModalMode === "create"
-          ? categoryFormData
-          : { id: selectedCategory?.id, ...categoryFormData };
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหมู่", severity: "error" });
-        return;
-      }
-
-      setShowCategoryEditModal(false);
-      setSnackbar({ open: true, message: "บันทึกหมวดหมู่สำเร็จ", severity: "success" });
-      fetchCategories();
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
-    } finally {
-      setCategoryFormSubmitting(false);
-    }
-  };
-
-  const handleToggleCategoryActive = async (cat: LicenseCategoryItem) => {
-    try {
-      const res = await fetch("/api/admin/license-categories", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggle-active", id: cat.id }),
-      });
-      if (res.ok) {
-        fetchCategories();
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDeleteCategory = (cat: LicenseCategoryItem) => {
+  // Reset to System Defaults
+  const handleResetLicenseDefaults = async () => {
     setConfirmDialog({
       open: true,
-      title: "ยืนยันการลบหมวดหมู่",
-      content: `ต้องการลบหมวดหมู่ "${cat.title}" หรือไม่`,
+      title: "คืนค่าเริ่มต้นมาตรฐานหรือไม่?",
+      content:
+        "ระบบจะทำการกู้คืนประเภทใบอนุญาตมาตรฐานคุรุสภา (A/B/P-License), หนังสือผ่อนผัน, คุณวุฒิ TPQI, กว. และหมวดหมู่หลักกลับคืนมา",
       onConfirm: async () => {
         try {
-          const res = await fetch(`/api/admin/license-categories?id=${cat.id}`, {
-            method: "DELETE",
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการลบหมวดหมู่", severity: "error" });
-            return;
+          const res = await fetch("/api/admin/license-configs/reset", { method: "POST" });
+          if (res.ok) {
+            setSnackbar({
+              open: true,
+              message: "คืนค่าเริ่มต้นมาตรฐานใบอนุญาตเรียบร้อยแล้ว",
+              severity: "success",
+            });
+            await fetchLicenseConfigs();
+            await fetchCategories();
+          } else {
+            throw new Error("ไม่สามารถรีเซ็ตได้");
           }
-          setSnackbar({ open: true, message: "ลบหมวดหมู่เรียบร้อยแล้ว", severity: "success" });
-          fetchCategories();
-          fetchLicenseConfigs();
-        } catch (err) {
-          console.error(err);
-          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
+        } catch (err: any) {
+          setSnackbar({
+            open: true,
+            message: err.message || "เกิดข้อผิดพลาดในการคืนค่าเริ่มต้น",
+            severity: "error",
+          });
         }
       },
     });
   };
 
-  // License Config Actions
+  // Toggle Active License
+  const handleToggleActive = async (id: string, currentState: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/license-configs/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !currentState }),
+      });
+      if (res.ok) {
+        setLicenseConfigs((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, isActive: !currentState } : c))
+        );
+        setSnackbar({
+          open: true,
+          message: !currentState ? "เปิดใช้งานใบอนุญาตแล้ว" : "ปิดการใช้งานใบอนุญาตแล้ว",
+          severity: "info",
+        });
+      }
+    } catch {
+      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการสลับสถานะ", severity: "error" });
+    }
+  };
+
+  // Delete License Config
+  const handleDeleteConfig = (config: LicenseConfigItem) => {
+    setConfirmDialog({
+      open: true,
+      title: `ลบประเภทใบอนุญาต "${config.title}"?`,
+      content: "หากลบแล้ว รายการนี้จะไม่ปรากฏให้เลือกในหน้าโปรไฟล์ครูอีกต่อไป",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/license-configs/${config.id}`, { method: "DELETE" });
+          if (res.ok) {
+            setLicenseConfigs((prev) => prev.filter((c) => c.id !== config.id));
+            setSnackbar({ open: true, message: "ลบประเภทใบอนุญาตสำเร็จ", severity: "success" });
+          } else {
+            const data = await res.json();
+            throw new Error(data.error || "ลบไม่สำเร็จ");
+          }
+        } catch (err: any) {
+          setSnackbar({ open: true, message: err.message, severity: "error" });
+        }
+      },
+    });
+  };
+
+  // Open Create/Edit License Modal
   const openCreateLicenseModal = () => {
     setLicenseModalMode("create");
     setSelectedLicense(null);
@@ -372,14 +330,14 @@ export default function AdminLicensesPage() {
       code: "",
       title: "",
       description: "",
-      category: categories[0]?.code || "vocational",
-      categoryLabel: categories[0]?.title || "คุณวุฒิวิชาชีพ / มาตรฐานฝีมือ",
+      category: categories[0]?.code || "ksp",
+      categoryLabel: categories[0]?.title || "ใบอนุญาตคุรุสภา / ผ่อนผัน (KSP)",
       defaultYears: 5,
       issuer: "",
-      color: "emerald",
+      color: "teal",
       icon: "FileBadge",
       requiresProvisionalRound: false,
-      requiresTitle: true,
+      requiresTitle: false,
       titleLabel: "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน",
       titlePlaceholder: "เช่น สาขาเทคโนโลยีสารสนเทศและการสื่อสาร ระดับ 4",
       presetChips: [],
@@ -401,184 +359,129 @@ export default function AdminLicensesPage() {
       categoryLabel: item.categoryLabel || "",
       defaultYears: item.defaultYears,
       issuer: item.issuer || "",
-      color: item.color || "emerald",
-      icon: item.icon || "FileBadge",
+      color: item.color,
+      icon: item.icon,
       requiresProvisionalRound: item.requiresProvisionalRound,
       requiresTitle: item.requiresTitle,
       titleLabel: item.titleLabel || "ระบุสาขาวิชาชีพ / ระดับมาตรฐาน",
-      titlePlaceholder: item.titlePlaceholder || "เช่น สาขาเทคโนโลยีสารสนเทศ",
+      titlePlaceholder: item.titlePlaceholder || "",
       presetChips: item.presetChips || [],
-      sortOrder: item.sortOrder || 0,
+      sortOrder: item.sortOrder,
       isActive: item.isActive,
     });
     setShowLicenseModal(true);
   };
 
+  // Submit License Form
   const handleLicenseFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!licenseFormData.title || !licenseFormData.code) {
-      setSnackbar({ open: true, message: "กรุณากรอกรหัสและชื่อประเภทใบอนุญาต", severity: "warning" });
-      return;
-    }
-
+    setLicenseFormSubmitting(true);
     try {
-      setLicenseFormSubmitting(true);
-      const url = "/api/admin/license-configs";
-      const method = licenseModalMode === "create" ? "POST" : "PUT";
-      const payload =
+      const url =
         licenseModalMode === "create"
-          ? licenseFormData
-          : { id: selectedLicense?.id, ...licenseFormData };
+          ? "/api/admin/license-configs"
+          : `/api/admin/license-configs/${selectedLicense?.id}`;
+      const method = licenseModalMode === "create" ? "POST" : "PUT";
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(licenseFormData),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการบันทึกประเภทใบอนุญาต", severity: "error" });
-        return;
-      }
+      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการบันทึก");
 
+      setSnackbar({
+        open: true,
+        message: licenseModalMode === "create" ? "เพิ่มประเภทใบอนุญาตสำเร็จ" : "แก้ไขสำเร็จ",
+        severity: "success",
+      });
       setShowLicenseModal(false);
-      setSnackbar({ open: true, message: "บันทึกประเภทใบอนุญาตสำเร็จ", severity: "success" });
-      fetchLicenseConfigs();
-    } catch (err) {
-      console.error(err);
-      setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
+      await fetchLicenseConfigs();
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err.message, severity: "error" });
     } finally {
       setLicenseFormSubmitting(false);
     }
   };
 
-  const handleToggleLicenseActive = async (item: LicenseConfigItem) => {
+  // Submit Category Form
+  const handleCategoryFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCategoryFormSubmitting(true);
     try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
+      const url =
+        categoryModalMode === "create"
+          ? "/api/admin/license-categories"
+          : `/api/admin/license-categories/${selectedCategory?.id}`;
+      const method = categoryModalMode === "create" ? "POST" : "PUT";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "toggle-active", id: item.id }),
+        body: JSON.stringify(categoryFormData),
       });
-      if (res.ok) {
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาดในการบันทึก");
+
+      setSnackbar({
+        open: true,
+        message: categoryModalMode === "create" ? "เพิ่มหมวดหมู่สำเร็จ" : "แก้ไขหมวดหมู่สำเร็จ",
+        severity: "success",
+      });
+      setShowCategoryEditModal(false);
+      await fetchCategories();
+      await fetchLicenseConfigs();
+    } catch (err: any) {
+      setSnackbar({ open: true, message: err.message, severity: "error" });
+    } finally {
+      setCategoryFormSubmitting(false);
     }
   };
 
-  const handleDeleteLicense = (item: LicenseConfigItem) => {
+  // Delete Category
+  const handleDeleteCategory = (cat: LicenseCategoryItem) => {
     setConfirmDialog({
       open: true,
-      title: "ยืนยันการลบประเภทใบอนุญาต",
-      content: `ต้องการลบประเภทใบอนุญาต "${item.title}" หรือไม่`,
+      title: `ลบหมวดหมู่ "${cat.title}"?`,
+      content: "หากลบแล้ว ประเภทใบอนุญาตที่อยู่ในหมวดหมู่นี้อาจไม่แสดงผลตามหมวดหมู่ได้",
       onConfirm: async () => {
         try {
-          const res = await fetch(`/api/admin/license-configs?id=${item.id}`, {
-            method: "DELETE",
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการลบประเภทใบอนุญาต", severity: "error" });
-            return;
-          }
-          setSnackbar({ open: true, message: "ลบประเภทใบอนุญาตเรียบร้อยแล้ว", severity: "success" });
-          fetchLicenseConfigs();
-        } catch (err) {
-          console.error(err);
-          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์", severity: "error" });
-        }
-      },
-    });
-  };
-
-  const handleResetLicenseDefaults = () => {
-    setConfirmDialog({
-      open: true,
-      title: "ยืนยันการคืนค่าเริ่มต้น",
-      content: "ต้องการคืนค่าเริ่มต้นมาตรฐานของประเภทใบอนุญาตทั้งหมดหรือไม่ ประเภทที่มีอยู่แล้วจะได้รับการอัปเดตและรายการที่ขาดจะถูกสร้างใหม่",
-      onConfirm: async () => {
-        try {
-          const res = await fetch("/api/admin/license-configs", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "reset-defaults" }),
-          });
-          const data = await res.json();
+          const res = await fetch(`/api/admin/license-categories/${cat.id}`, { method: "DELETE" });
           if (res.ok) {
-            setSnackbar({ open: true, message: "คืนค่าเริ่มต้นประเภทใบอนุญาตมาตรฐานเรียบร้อยแล้ว", severity: "success" });
-            fetchLicenseConfigs();
-            fetchCategories();
+            setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+            setSnackbar({ open: true, message: "ลบหมวดหมู่สำเร็จ", severity: "success" });
           } else {
-            setSnackbar({ open: true, message: data.error || "เกิดข้อผิดพลาดในการคืนค่าเริ่มต้น", severity: "error" });
+            const data = await res.json();
+            throw new Error(data.error || "ลบไม่สำเร็จ");
           }
-        } catch (err) {
-          console.error(err);
-          setSnackbar({ open: true, message: "เกิดข้อผิดพลาดในการเชื่อมต่อ", severity: "error" });
+        } catch (err: any) {
+          setSnackbar({ open: true, message: err.message, severity: "error" });
         }
       },
     });
   };
 
-  // Inline Preset Chip Management
-  const handleAddInlineChip = async (configId: string) => {
-    const chipText = inlineNewChip[configId]?.trim();
-    if (!chipText) return;
-
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "add-chip",
-          id: configId,
-          chip: chipText,
-        }),
-      });
-
-      if (res.ok) {
-        setInlineNewChip((prev) => ({ ...prev, [configId]: "" }));
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleRemoveInlineChip = async (configId: string, chipText: string) => {
-    try {
-      const res = await fetch("/api/admin/license-configs", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "remove-chip",
-          id: configId,
-          chip: chipText,
-        }),
-      });
-
-      if (res.ok) {
-        fetchLicenseConfigs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
+  // Filtered Licenses
   const filteredLicenses = licenseConfigs.filter((c) => {
     if (licenseCategoryFilter === "ALL") return true;
     return c.category === licenseCategoryFilter;
   });
 
-  const getBadgeStyle = (color?: string | null) => {
-    const opt = COLOR_OPTIONS.find((c) => c.value === color);
-    return opt ? opt.badge : "bg-slate-50 text-slate-700 border-slate-200";
-  };
-
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
-      {/* 1. Ultra-Compact Page Header */}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
+      {/* Breadcrumbs Navigation */}
+      <PageBreadcrumbs
+        items={[
+          { label: "ผู้ดูแลระบบ", href: "/admin" },
+          { label: "ตั้งค่าระบบ & มาสเตอร์ข้อมูล", href: "/admin/settings" },
+          { label: "ตั้งค่าประเภทใบอนุญาตวิชาชีพ (Licenses Master)" },
+        ]}
+      />
+
+      {/* Universal Ultra-Compact Header */}
       <Box
         sx={{
           display: "flex",
@@ -590,44 +493,53 @@ export default function AdminLicensesPage() {
           borderColor: "divider",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Tooltip title="กลับหน้าหลัก">
+        {/* LEFT: Universal Back Button + Page Title + Tooltip + SAR Standard Tag */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Tooltip title="กลับหน้าหลักการตั้งค่า">
             <IconButton
               component={Link}
-              href="/dashboard"
+              href="/admin/settings"
               size="small"
               sx={{ color: "text.secondary", p: 0.4 }}
+              aria-label="ย้อนกลับ"
             >
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
-            ตั้งค่าประเภทใบอนุญาตและมาตรฐานวิชาชีพ
+
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+            จัดการประเภทใบอนุญาตประกอบวิชาชีพครูและวิชาชีพเฉพาะ
           </Typography>
+
+          <Tooltip title="กำหนดรายการตัวเลือกประเภทใบอนุญาต คุรุสภา (A/B/P-License), TPQI, กรมพัฒนาฝีมือแรงงาน และใบ กว. เพื่อให้ครูและบุคลากรเลือกกรอกได้อย่างถูกต้อง">
+            <IconButton size="small" sx={{ color: "text.secondary", p: 0.25 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+
           <Chip
             size="small"
-            label={`${categories.length} หมวดหมู่`}
+            label="มาตรฐานที่ 1 ครู & สารสนเทศ SAR"
             color="primary"
             variant="outlined"
-            sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }}
+            sx={{ height: 20, fontSize: "0.6875rem" }}
           />
         </Box>
 
+        {/* RIGHT: Academic Term Indicator + Primary Action Button */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <Button
-            size="small"
+          <Chip
+            icon={<CalendarTodayIcon sx={{ fontSize: 13 }} />}
+            label={`รอบข้อมูล ${termLabel}`}
             variant="outlined"
-            startIcon={<FolderIcon sx={{ fontSize: 16 }} />}
-            onClick={() => setShowCategoryManagerModal(true)}
-            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
-          >
-            จัดการหมวดหมู่
-          </Button>
+            size="small"
+            sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
+          />
 
           <Button
-            size="small"
             variant="contained"
-            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+            size="small"
+            startIcon={<AddIcon sx={{ fontSize: 15 }} />}
             onClick={openCreateLicenseModal}
             sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", fontWeight: 600 }}
           >
@@ -636,662 +548,554 @@ export default function AdminLicensesPage() {
         </Box>
       </Box>
 
-      {/* ================= SUMMARY STAT CARDS ================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm">
-          <span className="text-xs font-bold text-slate-400 block">ประเภททั้งหมด</span>
-          <span className="text-2xl font-black text-slate-900 mt-1 block font-mono">
-            {licenseConfigs.length}
-          </span>
-        </div>
-        <div className="rounded-3xl border border-teal-200/80 bg-teal-50/40 p-4 sm:p-5 shadow-sm">
-          <span className="text-xs font-bold text-teal-700 block">คุรุสภา / ผ่อนผัน</span>
-          <span className="text-2xl font-black text-teal-900 mt-1 block font-mono">
-            {licenseConfigs.filter((c) => c.category === "ksp").length}
-          </span>
-        </div>
-        <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/40 p-4 sm:p-5 shadow-sm">
-          <span className="text-xs font-bold text-emerald-700 block">คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)</span>
-          <span className="text-2xl font-black text-emerald-900 mt-1 block font-mono">
-            {licenseConfigs.filter((c) => c.category === "vocational").length}
-          </span>
-        </div>
-        <div className="rounded-3xl border border-blue-200/80 bg-blue-50/40 p-4 sm:p-5 shadow-sm">
-          <span className="text-xs font-bold text-blue-700 block">ตัวเลือกแนะนำ (Presets)</span>
-          <span className="text-2xl font-black text-blue-900 mt-1 block font-mono">
-            {licenseConfigs.reduce((acc, c) => acc + (c.presetChips?.length || 0), 0)}
-          </span>
-        </div>
-      </div>
+      {/* 2. Summary KPI Stat Cards */}
+      <Grid container spacing={1.5}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block" }}>
+              ประเภททั้งหมด
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5, fontFamily: "monospace" }}>
+              {licenseConfigs.length}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(15, 118, 110, 0.04)" }}>
+            <Typography variant="caption" sx={{ color: "#0f766e", fontWeight: 700, display: "block" }}>
+              คุรุสภา / ผ่อนผัน
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5, fontFamily: "monospace", color: "#0f766e" }}>
+              {licenseConfigs.filter((c) => c.category === "ksp").length}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(4, 120, 87, 0.04)" }}>
+            <Typography variant="caption" sx={{ color: "#047857", fontWeight: 700, display: "block" }}>
+              คุณวุฒิสายอาชีพ (TPQI/DSD)
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5, fontFamily: "monospace", color: "#047857" }}>
+              {licenseConfigs.filter((c) => c.category === "vocational").length}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(29, 78, 216, 0.04)" }}>
+            <Typography variant="caption" sx={{ color: "#1d4ed8", fontWeight: 700, display: "block" }}>
+              ตัวเลือกแนะนำ (Preset Chips)
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, mt: 0.5, fontFamily: "monospace", color: "#1d4ed8" }}>
+              {licenseConfigs.reduce((acc, c) => acc + (c.presetChips?.length || 0), 0)}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
 
-      {/* ================= CATEGORY FILTER & RESET DEFAULTS BAR ================= */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-          <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1 flex-shrink-0">
-            <Filter className="h-3.5 w-3.5" /> หมวดหมู่:
-          </span>
-          {[
-            { key: "ALL", label: "ทั้งหมด" },
-            ...categories.map((c) => ({ key: c.code, label: c.title })),
-          ].map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => setLicenseCategoryFilter(item.key)}
-              className={clsx(
-                "px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex-shrink-0",
-                licenseCategoryFilter === item.key
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              )}
-            >
-              {item.label}
-            </button>
+      {/* 3. Filter Bar & Reset Defaults */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.25,
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+          <Chip
+            label="ทั้งหมด"
+            size="small"
+            clickable
+            color={licenseCategoryFilter === "ALL" ? "primary" : "default"}
+            variant={licenseCategoryFilter === "ALL" ? "filled" : "outlined"}
+            onClick={() => setLicenseCategoryFilter("ALL")}
+            sx={{ fontWeight: 600, height: 26 }}
+          />
+          {categories.map((c) => (
+            <Chip
+              key={c.code}
+              label={c.title}
+              size="small"
+              clickable
+              color={licenseCategoryFilter === c.code ? "primary" : "default"}
+              variant={licenseCategoryFilter === c.code ? "filled" : "outlined"}
+              onClick={() => setLicenseCategoryFilter(c.code)}
+              sx={{ fontWeight: 600, height: 26 }}
+            />
           ))}
-        </div>
+        </Box>
 
-        <button
-          type="button"
+        <Button
+          size="small"
+          variant="outlined"
+          color="inherit"
+          startIcon={<RefreshIcon sx={{ fontSize: 15 }} />}
           onClick={handleResetLicenseDefaults}
-          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-2xs self-start sm:self-auto"
+          sx={{ fontSize: "0.75rem", fontWeight: 600, py: 0.35 }}
         >
-          <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
           คืนค่าเริ่มต้นมาตรฐาน (Reset Defaults)
-        </button>
-      </div>
+        </Button>
+      </Paper>
 
-      {/* ================= LICENSE CONFIGURATION CARDS GRID ================= */}
+      {/* 4. License Configurations List / Grid */}
       {loadingConfigs ? (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-slate-400 shadow-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-teal-600 mb-2" />
-          <span className="text-sm font-medium">กำลังโหลดข้อมูลการตั้งค่าใบอนุญาต...</span>
-        </div>
+        <Grid container spacing={2}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid size={{ xs: 12, md: 6 }} key={i}>
+              <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                <Skeleton variant="text" width="60%" height={28} />
+                <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1.5 }} />
+                <Skeleton variant="rectangular" height={50} sx={{ borderRadius: 1.5, mb: 1.5 }} />
+                <Skeleton variant="text" width="30%" height={24} />
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       ) : filteredLicenses.length === 0 ? (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-14 flex flex-col items-center justify-center text-center text-slate-500 shadow-sm">
-          <FileBadge className="h-10 w-10 text-slate-300 mb-2" />
-          <p className="font-bold text-slate-700">ไม่พบรายการประเภทใบอนุญาต</p>
-          <p className="text-xs text-slate-400 mt-1">คลิกปุ่ม "เพิ่มประเภทใบอนุญาตใหม่" เพื่อสร้างรายการแรก</p>
-        </div>
+        <EmptyState
+          icon={<BadgeIcon sx={{ fontSize: 44 }} />}
+          title="ไม่พบรายการประเภทใบอนุญาต"
+          description="ยังไม่มีการกำหนดประเภทใบอนุญาตในหมวดหมู่นี้ คุณสามารถคลิกปุ่มด้านล่างเพื่อเพิ่มใหม่ หรือคืนค่าเริ่มต้นมาตรฐานของระบบ"
+          actionLabel="คืนค่าเริ่มต้นมาตรฐาน (Reset Defaults)"
+          onAction={handleResetLicenseDefaults}
+          actionIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
+        />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-          {filteredLicenses.map((config) => {
-            const IconComponent = getLicenseIcon(config.icon);
-
-            return (
-              <div
-                key={config.id}
-                className={clsx(
-                  "rounded-3xl border bg-white p-5 sm:p-6 shadow-sm space-y-4 flex flex-col justify-between transition",
-                  config.isActive ? "border-slate-200/80" : "border-slate-200/50 opacity-60 bg-slate-50/50"
-                )}
+        <Grid container spacing={2}>
+          {filteredLicenses.map((config) => (
+            <Grid size={{ xs: 12, md: 6 }} key={config.id}>
+              <Card
+                variant="outlined"
+                sx={{
+                  borderRadius: 2.5,
+                  opacity: config.isActive ? 1 : 0.65,
+                  bgcolor: config.isActive ? "background.paper" : "action.hover",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  transition: "box-shadow 0.2s ease",
+                  "&:hover": { boxShadow: 2 },
+                }}
               >
-                <div className="space-y-3.5">
-                  {/* Card Header: Icon + Title + Code + Active Switch */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div
-                        className={clsx(
-                          "flex h-11 w-11 items-center justify-center rounded-2xl border flex-shrink-0",
-                          getBadgeStyle(config.color)
-                        )}
+                <CardContent sx={{ p: 2, flex: 1, display: "flex", flexDirection: "column", gap: 1.25 }}>
+                  {/* Card Header */}
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                      <Box
+                        sx={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 2,
+                          bgcolor: "action.hover",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "primary.main",
+                        }}
                       >
-                        <IconComponent className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-black text-slate-900 text-sm sm:text-base leading-snug">
+                        {renderLicenseIcon(config.icon, 20)}
+                      </Box>
+                      <Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "0.9rem" }}>
                             {config.title}
-                          </h3>
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200">
-                            {config.code}
-                          </span>
-                        </div>
-                        {config.description && (
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                            {config.description}
-                          </p>
+                          </Typography>
+                          <Chip
+                            label={config.code}
+                            size="small"
+                            sx={{ height: 18, fontSize: "0.625rem", fontFamily: "monospace", fontWeight: 700 }}
+                          />
+                        </Box>
+                        {config.issuer && (
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                            ออกโดย: {config.issuer}
+                          </Typography>
                         )}
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
 
-                    {/* Active/Inactive Toggle Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleLicenseActive(config)}
-                      className={clsx(
-                        "px-2.5 py-1 rounded-full text-[11px] font-bold border transition flex-shrink-0",
-                        config.isActive
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/70"
-                          : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
-                      )}
-                    >
-                      {config.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                    </button>
-                  </div>
-
-                  {/* Attributes Badges */}
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                      <Folder className="h-3 w-3 text-slate-400" />
-                      {config.categoryLabel || config.category}
-                    </span>
-
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 font-semibold text-[11px]">
-                      <Clock className="h-3 w-3 text-blue-500" />
-                      อายุเริ่มต้น {config.defaultYears} ปี
-                    </span>
-
-                    {config.requiresProvisionalRound && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-700 font-semibold text-[11px] border border-amber-200">
-                        <AlertTriangle className="h-3 w-3 text-amber-500" />
-                        ผ่อนผัน 1-3 รอบ
-                      </span>
-                    )}
-
-                    {config.issuer && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-[11px]">
-                        {config.issuer}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Dynamic Preset Chips Manager */}
-                  <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Tag className="h-3 w-3 text-teal-600" />
-                        ตัวเลือกแนะนำเมื่อกรอกข้อมูล (Presets) ({config.presetChips?.length || 0})
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(config.presetChips || []).map((chip, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-teal-50 text-teal-800 border border-teal-200 group"
-                        >
-                          <span>{chip}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveInlineChip(config.id, chip)}
-                            className="text-teal-400 hover:text-rose-600 transition"
-                            title="ลบตัวเลือกนี้"
-                          >
-                            <X className="h-2.5 w-2.5" />
-                          </button>
-                        </span>
-                      ))}
-
-                      {/* Add Inline Chip Input */}
-                      <div className="inline-flex items-center gap-1">
-                        <input
-                          type="text"
-                          placeholder="+ เพิ่มตัวเลือก"
-                          value={inlineNewChip[config.id] || ""}
-                          onChange={(e) =>
-                            setInlineNewChip((prev) => ({
-                              ...prev,
-                              [config.id]: e.target.value,
-                            }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddInlineChip(config.id);
-                            }
-                          }}
-                          className="w-28 px-2 py-0.5 rounded-lg border border-dashed border-slate-300 text-[11px] bg-slate-50 focus:bg-white focus:outline-none focus:border-teal-500"
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          size="small"
+                          checked={config.isActive}
+                          onChange={() => handleToggleActive(config.id, config.isActive)}
                         />
-                        {inlineNewChip[config.id] && (
-                          <button
-                            type="button"
-                            onClick={() => handleAddInlineChip(config.id)}
-                            className="p-1 rounded-md bg-teal-600 text-white hover:bg-teal-700"
-                          >
-                            <Check className="h-2.5 w-2.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      }
+                      label={config.isActive ? "เปิดใช้" : "ปิด"}
+                      sx={{ mr: 0, "& .MuiTypography-root": { fontSize: "0.75rem", fontWeight: 600 } }}
+                    />
+                  </Box>
 
-                {/* Card Footer: Usage Count & Action Buttons */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    ใช้งานอยู่ในระบบ: <strong className="text-slate-700">{config.usageCount || 0}</strong> รายการ
-                  </span>
+                  {/* Description */}
+                  {config.description && (
+                    <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                      {config.description}
+                    </Typography>
+                  )}
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openEditLicenseModal(config)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-2xs"
-                    >
-                      <Edit2 className="h-3.5 w-3.5 text-teal-600" />
-                      แก้ไข
-                    </button>
-
-                    {!config.isSystem && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteLicense(config)}
-                        className="p-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition active:scale-95 shadow-2xs"
-                        title="ลบประเภทใบอนุญาตนี้"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                  {/* Meta Chips */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={`อายุการใช้งาน ${config.defaultYears} ปี`}
+                      sx={{ height: 22, fontSize: "0.7rem" }}
+                    />
+                    {config.requiresProvisionalRound && (
+                      <Chip
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        label="รองรับบันทึกรอบผ่อนผัน"
+                        sx={{ height: 22, fontSize: "0.7rem" }}
+                      />
                     )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                    {config.requiresTitle && (
+                      <Chip
+                        size="small"
+                        color="info"
+                        variant="outlined"
+                        label="ต้องระบุสาขา/ระดับ"
+                        sx={{ height: 22, fontSize: "0.7rem" }}
+                      />
+                    )}
+                  </Box>
+
+                  {/* Preset Chips */}
+                  {config.presetChips && config.presetChips.length > 0 && (
+                    <Box sx={{ pt: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.5 }}>
+                        ตัวเลือกแนะนำ ({config.presetChips.length} รายการ):
+                      </Typography>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {config.presetChips.map((chip, idx) => (
+                          <Chip
+                            key={idx}
+                            size="small"
+                            label={chip}
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: "0.6875rem", bgcolor: "rgba(15, 118, 110, 0.04)" }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </CardContent>
+
+                <Divider />
+
+                {/* Card Actions */}
+                <CardActions sx={{ px: 2, py: 1, justifyContent: "space-between" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                    หมวดหมู่: {config.categoryLabel || config.category}
+                  </Typography>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Tooltip title="แก้ไข">
+                      <IconButton size="small" onClick={() => openEditLicenseModal(config)}>
+                        <EditIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                    {!config.isSystem && (
+                      <Tooltip title="ลบ">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteConfig(config)}>
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
 
-      {/* ================= MODAL 1: LICENSE CATEGORY MANAGER MODAL ================= */}
-      {showCategoryManagerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 border border-teal-200">
-                  <Folder className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">จัดการหมวดหมู่ใบอนุญาต (License Categories)</h3>
-                  <p className="text-xs text-slate-400">เพิ่ม แก้ไข หรือจัดเรียงหมวดหมู่ประเภทใบอนุญาตในระบบ</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCategoryManagerModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+      {/* ================= MODAL 1: CATEGORY MANAGER ================= */}
+      <Dialog
+        open={showCategoryManagerModal}
+        onClose={() => setShowCategoryManagerModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>จัดการหมวดหมู่มาตรฐานวิชาชีพ ({categories.length} หมวดหมู่)</span>
+          <IconButton size="small" onClick={() => setShowCategoryManagerModal(false)}>
+            <CloseIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {categories.map((cat) => (
+              <Paper
+                key={cat.id}
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
               >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={openCreateCategoryModal}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 text-white font-bold text-xs shadow-md shadow-teal-500/20 hover:bg-teal-700"
-              >
-                <Plus className="h-4 w-4" />
-                เพิ่มหมวดหมู่ใหม่
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-              {categories.map((cat) => {
-                const IconComponent = getLicenseIcon(cat.icon);
-                return (
-                  <div
-                    key={cat.id}
-                    className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/60 text-xs"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={clsx(
-                          "flex h-9 w-9 items-center justify-center rounded-xl border flex-shrink-0",
-                          getBadgeStyle(cat.color)
-                        )}
-                      >
-                        <IconComponent className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">{cat.title}</span>
-                          <span className="font-mono text-[10px] bg-slate-200/80 px-1.5 py-0.5 rounded text-slate-600 font-semibold">
-                            {cat.code}
-                          </span>
-                        </div>
-                        {cat.description && (
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5">{cat.description}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCategoryActive(cat)}
-                        className={clsx(
-                          "px-2 py-0.5 rounded-md text-[10px] font-bold border",
-                          cat.isActive
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-slate-100 text-slate-500 border-slate-200"
-                        )}
-                      >
-                        {cat.isActive ? "เปิด" : "ปิด"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => openEditCategoryModal(cat)}
-                        className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600"
-                        title="แก้ไข"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-
-                      {!cat.isSystem && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCategory(cat)}
-                          className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600"
-                          title="ลบ"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCategoryManagerModal(false)}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50"
-              >
-                ปิดหน้าต่าง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 2: CREATE / EDIT CATEGORY MODAL ================= */}
-      {showCategoryEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-black text-slate-900">
-                {categoryModalMode === "create" ? "เพิ่มหมวดหมู่ใหม่" : "แก้ไขหมวดหมู่"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowCategoryEditModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCategoryFormSubmit} className="space-y-3.5 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">รหัสหมวดหมู่ (Code) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น vocational, international"
-                  value={categoryFormData.code}
-                  onChange={(e) =>
-                    setCategoryFormData((prev) => ({
-                      ...prev,
-                      code: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"),
-                    }))
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">ชื่อหมวดหมู่ (Title) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น คุณวุฒิสายอาชีพ (TPQI/DSD/กว.)"
-                  value={categoryFormData.title}
-                  onChange={(e) =>
-                    setCategoryFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">คำอธิบาย</label>
-                <textarea
-                  rows={2}
-                  placeholder="คำอธิบายหมวดหมู่นี้..."
-                  value={categoryFormData.description}
-                  onChange={(e) =>
-                    setCategoryFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">ไอคอน</label>
-                  <select
-                    value={categoryFormData.icon}
-                    onChange={(e) =>
-                      setCategoryFormData((prev) => ({ ...prev, icon: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  >
-                    {ICON_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">โทนสี</label>
-                  <select
-                    value={categoryFormData.color}
-                    onChange={(e) =>
-                      setCategoryFormData((prev) => ({ ...prev, color: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  >
-                    {COLOR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryEditModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={categoryFormSubmitting}
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md shadow-teal-500/20 disabled:opacity-50"
-                >
-                  {categoryFormSubmitting ? "กำลังบันทึก..." : "บันทึกหมวดหมู่"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL 3: CREATE / EDIT LICENSE CONFIG MODAL ================= */}
-      {showLicenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 border border-teal-200">
-                  <FileBadge className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    {licenseModalMode === "create" ? "เพิ่มประเภทใบอนุญาตใหม่" : "แก้ไขประเภทใบอนุญาต"}
-                  </h3>
-                  <p className="text-xs text-slate-400">กำหนดชื่อ รหัส อายุใช้งาน และตัวเลือกแนะนำ</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowLicenseModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleLicenseFormSubmit} className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">รหัสประเภท (Code) *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="เช่น KSP_B_LICENSE, TPQI_IT"
-                    value={licenseFormData.code}
-                    onChange={(e) =>
-                      setLicenseFormData((prev) => ({
-                        ...prev,
-                        code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
-                      }))
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 font-mono text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">หมวดหมู่ *</label>
-                  <select
-                    value={licenseFormData.category}
-                    onChange={(e) => {
-                      const selCat = categories.find((c) => c.code === e.target.value);
-                      setLicenseFormData((prev) => ({
-                        ...prev,
-                        category: e.target.value,
-                        categoryLabel: selCat ? selCat.title : prev.categoryLabel,
-                      }));
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "0.85rem" }}>
+                    {cat.title}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    รหัส: {cat.code} {cat.description ? `• ${cat.description}` : ""}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setCategoryModalMode("edit");
+                      setSelectedCategory(cat);
+                      setCategoryFormData({
+                        code: cat.code,
+                        title: cat.title,
+                        description: cat.description || "",
+                        icon: cat.icon || "GraduationCap",
+                        color: cat.color || "teal",
+                        sortOrder: cat.sortOrder,
+                        isActive: cat.isActive,
+                      });
+                      setShowCategoryEditModal(true);
                     }}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
                   >
-                    {categories.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    <EditIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                  {!cat.isSystem && (
+                    <IconButton size="small" color="error" onClick={() => handleDeleteCategory(cat)}>
+                      <DeleteIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  )}
+                </Box>
+              </Paper>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 1.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setCategoryModalMode("create");
+              setSelectedCategory(null);
+              setCategoryFormData({
+                code: "",
+                title: "",
+                description: "",
+                icon: "GraduationCap",
+                color: "teal",
+                sortOrder: categories.length + 1,
+                isActive: true,
+              });
+              setShowCategoryEditModal(true);
+            }}
+          >
+            เพิ่มหมวดหมู่ใหม่
+          </Button>
+          <Button onClick={() => setShowCategoryManagerModal(false)} color="inherit" size="small">
+            ปิด
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">ชื่อประเภทใบอนุญาต (Title) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น B-License (ชั้นต้น) หรือ คุณวุฒิวิชาชีพ TPQI"
-                  value={licenseFormData.title}
-                  onChange={(e) =>
-                    setLicenseFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                />
-              </div>
+      {/* ================= MODAL 2: CATEGORY EDIT / CREATE ================= */}
+      <Dialog
+        open={showCategoryEditModal}
+        onClose={() => setShowCategoryEditModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <form onSubmit={handleCategoryFormSubmit}>
+          <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+            {categoryModalMode === "create" ? "เพิ่มหมวดหมู่ใหม่" : "แก้ไขหมวดหมู่"}
+          </DialogTitle>
+          <DialogContent dividers sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              size="small"
+              label="รหัสหมวดหมู่ (Code) *"
+              required
+              disabled={categoryModalMode === "edit" && selectedCategory?.isSystem}
+              value={categoryFormData.code}
+              onChange={(e) =>
+                setCategoryFormData((prev) => ({
+                  ...prev,
+                  code: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"),
+                }))
+              }
+              helperText="ภาษาอังกฤษตัวพิมพ์เล็ก เช่น ksp, vocational, custom"
+            />
+            <TextField
+              size="small"
+              label="ชื่อหมวดหมู่ *"
+              required
+              value={categoryFormData.title}
+              onChange={(e) => setCategoryFormData((prev) => ({ ...prev, title: e.target.value }))}
+            />
+            <TextField
+              size="small"
+              label="คำอธิบาย"
+              multiline
+              rows={2}
+              value={categoryFormData.description}
+              onChange={(e) => setCategoryFormData((prev) => ({ ...prev, description: e.target.value }))}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 1.5 }}>
+            <Button onClick={() => setShowCategoryEditModal(false)} color="inherit" size="small">
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="contained" size="small" disabled={categoryFormSubmitting}>
+              {categoryFormSubmitting ? "กำลังบันทึก..." : "บันทึกหมวดหมู่"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">คำอธิบาย</label>
-                <textarea
-                  rows={2}
-                  placeholder="คำอธิบายรายละเอียดใบอนุญาตนี้..."
-                  value={licenseFormData.description}
-                  onChange={(e) =>
-                    setLicenseFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 resize-none"
-                />
-              </div>
+      {/* ================= MODAL 3: LICENSE CONFIG CREATE / EDIT ================= */}
+      <Dialog
+        open={showLicenseModal}
+        onClose={() => setShowLicenseModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <form onSubmit={handleLicenseFormSubmit}>
+          <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+            {licenseModalMode === "create" ? "เพิ่มประเภทใบอนุญาตใหม่" : "แก้ไขประเภทใบอนุญาต"}
+          </DialogTitle>
+          <DialogContent dividers sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.75 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
+              <TextField
+                size="small"
+                label="รหัสประเภท (Code) *"
+                required
+                value={licenseFormData.code}
+                onChange={(e) =>
+                  setLicenseFormData((prev) => ({
+                    ...prev,
+                    code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
+                  }))
+                }
+                placeholder="เช่น KSP_B_LICENSE, TPQI_IT"
+              />
+              <FormControl size="small" fullWidth>
+                <InputLabel>หมวดหมู่ *</InputLabel>
+                <Select
+                  value={licenseFormData.category}
+                  label="หมวดหมู่ *"
+                  onChange={(e) => {
+                    const selCat = categories.find((c) => c.code === e.target.value);
+                    setLicenseFormData((prev) => ({
+                      ...prev,
+                      category: e.target.value,
+                      categoryLabel: selCat ? selCat.title : prev.categoryLabel,
+                    }));
+                  }}
+                >
+                  {categories.map((c) => (
+                    <MenuItem key={c.code} value={c.code}>
+                      {c.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">อายุการใช้งานเริ่มต้น (ปี)</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={licenseFormData.defaultYears}
-                    onChange={(e) =>
-                      setLicenseFormData((prev) => ({
-                        ...prev,
-                        defaultYears: parseInt(e.target.value) || 5,
-                      }))
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
+            <TextField
+              size="small"
+              label="ชื่อประเภทใบอนุญาต (Title) *"
+              required
+              value={licenseFormData.title}
+              onChange={(e) => setLicenseFormData((prev) => ({ ...prev, title: e.target.value }))}
+              placeholder="เช่น B-License (ชั้นต้น) หรือ คุณวุฒิวิชาชีพ TPQI"
+            />
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">หน่วยงานผู้ออก (Issuer)</label>
-                  <input
-                    type="text"
-                    placeholder="เช่น สำนักงานเลขาธิการคุรุสภา, สถาบันคุณวุฒิวิชาชีพ"
-                    value={licenseFormData.issuer}
-                    onChange={(e) =>
-                      setLicenseFormData((prev) => ({ ...prev, issuer: e.target.value }))
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
+            <TextField
+              size="small"
+              label="คำอธิบาย"
+              multiline
+              rows={2}
+              value={licenseFormData.description}
+              onChange={(e) => setLicenseFormData((prev) => ({ ...prev, description: e.target.value }))}
+            />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">ไอคอน</label>
-                  <select
-                    value={licenseFormData.icon}
-                    onChange={(e) =>
-                      setLicenseFormData((prev) => ({ ...prev, icon: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  >
-                    {ICON_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
+              <TextField
+                size="small"
+                label="อายุการใช้งาน (ปี)"
+                type="number"
+                slotProps={{ htmlInput: { min: 1, max: 20 } }}
+                value={licenseFormData.defaultYears}
+                onChange={(e) =>
+                  setLicenseFormData((prev) => ({
+                    ...prev,
+                    defaultYears: parseInt(e.target.value) || 5,
+                  }))
+                }
+              />
+              <TextField
+                size="small"
+                label="หน่วยงานผู้ออก (Issuer)"
+                value={licenseFormData.issuer}
+                onChange={(e) => setLicenseFormData((prev) => ({ ...prev, issuer: e.target.value }))}
+                placeholder="เช่น สำนักงานเลขาธิการคุรุสภา"
+              />
+            </Box>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">โทนสี Badge</label>
-                  <select
-                    value={licenseFormData.color}
-                    onChange={(e) =>
-                      setLicenseFormData((prev) => ({ ...prev, color: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  >
-                    {COLOR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+              <FormControl size="small" fullWidth>
+                <InputLabel>ไอคอน</InputLabel>
+                <Select
+                  value={licenseFormData.icon}
+                  label="ไอคอน"
+                  onChange={(e) => setLicenseFormData((prev) => ({ ...prev, icon: e.target.value }))}
+                >
+                  {ICON_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              {/* Checkbox Options */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+              <FormControl size="small" fullWidth>
+                <InputLabel>โทนสี</InputLabel>
+                <Select
+                  value={licenseFormData.color}
+                  label="โทนสี"
+                  onChange={(e) => setLicenseFormData((prev) => ({ ...prev, color: e.target.value }))}
+                >
+                  {COLOR_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: opt.colorCode }} />
+                        <span>{opt.label}</span>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Checkbox Options */}
+            <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
                     checked={licenseFormData.requiresProvisionalRound}
                     onChange={(e) =>
                       setLicenseFormData((prev) => ({
@@ -1299,16 +1103,15 @@ export default function AdminLicensesPage() {
                         requiresProvisionalRound: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                   />
-                  <span className="font-bold text-slate-800">
-                    เปิดระบบบันทึกรอบผ่อนผันคุรุสภา (ครั้งที่ 1, 2, 3)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                }
+                label="เปิดระบบบันทึกรอบผ่อนผันคุรุสภา (ครั้งที่ 1, 2, 3)"
+                sx={{ "& .MuiTypography-root": { fontSize: "0.8125rem", fontWeight: 600 } }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    size="small"
                     checked={licenseFormData.requiresTitle}
                     onChange={(e) =>
                       setLicenseFormData((prev) => ({
@@ -1316,42 +1119,28 @@ export default function AdminLicensesPage() {
                         requiresTitle: e.target.checked,
                       }))
                     }
-                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                   />
-                  <span className="font-bold text-slate-800">
-                    ให้ผู้ใช้ระบุสาขาวิชาชีพ / ระดับมาตรฐาน (Requires Title/Branch)
-                  </span>
-                </label>
-              </div>
+                }
+                label="ให้ผู้ใช้ระบุสาขาวิชาชีพ / ระดับมาตรฐาน (Requires Title/Branch)"
+                sx={{ "& .MuiTypography-root": { fontSize: "0.8125rem", fontWeight: 600 } }}
+              />
+            </Paper>
 
-              {/* Preset Chips Input */}
-              <div className="space-y-1.5">
-                <label className="font-bold text-slate-700">
-                  ตัวเลือกแนะนำล่วงหน้า (Preset Chips สำหรับคลิกเลือกง่าย)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="พิมพ์ตัวเลือกแล้วกดเพิ่ม เช่น ช่างซ่อมไมโครคอมพิวเตอร์ ระดับ 2"
-                    value={licenseModalChipInput}
-                    onChange={(e) => setLicenseModalChipInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (licenseModalChipInput.trim()) {
-                          setLicenseFormData((prev) => ({
-                            ...prev,
-                            presetChips: [...prev.presetChips, licenseModalChipInput.trim()],
-                          }));
-                          setLicenseModalChipInput("");
-                        }
-                      }
-                    }}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:bg-white focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
+            {/* Preset Chips Input */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>
+                ตัวเลือกแนะนำล่วงหน้า (Preset Chips สำหรับคลิกเลือกง่าย)
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="พิมพ์ตัวเลือกแล้วกด Enter หรือ เพิ่ม"
+                  value={licenseModalChipInput}
+                  onChange={(e) => setLicenseModalChipInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
                       if (licenseModalChipInput.trim()) {
                         setLicenseFormData((prev) => ({
                           ...prev,
@@ -1359,58 +1148,53 @@ export default function AdminLicensesPage() {
                         }));
                         setLicenseModalChipInput("");
                       }
-                    }}
-                    className="px-3 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs flex-shrink-0"
-                  >
-                    เพิ่ม
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {licenseFormData.presetChips.map((chip, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 text-xs font-semibold border border-teal-200"
-                    >
-                      {chip}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setLicenseFormData((prev) => ({
-                            ...prev,
-                            presetChips: prev.presetChips.filter((_, i) => i !== idx),
-                          }))
-                        }
-                        className="text-teal-400 hover:text-rose-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Modal Actions */}
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLicenseModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold"
+                    }
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    if (licenseModalChipInput.trim()) {
+                      setLicenseFormData((prev) => ({
+                        ...prev,
+                        presetChips: [...prev.presetChips, licenseModalChipInput.trim()],
+                      }));
+                      setLicenseModalChipInput("");
+                    }
+                  }}
                 >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={licenseFormSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md shadow-teal-500/20 disabled:opacity-50"
-                >
-                  {licenseFormSubmitting ? "กำลังบันทึก..." : "บันทึกประเภทใบอนุญาต"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  เพิ่ม
+                </Button>
+              </Box>
+
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pt: 0.5 }}>
+                {licenseFormData.presetChips.map((chip, idx) => (
+                  <Chip
+                    key={idx}
+                    size="small"
+                    label={chip}
+                    onDelete={() =>
+                      setLicenseFormData((prev) => ({
+                        ...prev,
+                        presetChips: prev.presetChips.filter((_, i) => i !== idx),
+                      }))
+                    }
+                  />
+                ))}
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 1.5 }}>
+            <Button onClick={() => setShowLicenseModal(false)} color="inherit" size="small">
+              ยกเลิก
+            </Button>
+            <Button type="submit" variant="contained" size="small" disabled={licenseFormSubmitting}>
+              {licenseFormSubmitting ? "กำลังบันทึก..." : "บันทึกประเภทใบอนุญาต"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <Dialog
@@ -1419,17 +1203,20 @@ export default function AdminLicensesPage() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>{confirmDialog.title}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>{confirmDialog.title}</DialogTitle>
         <DialogContent>
-          <Typography variant="body2">{confirmDialog.content}</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {confirmDialog.content}
+          </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))} color="inherit">
+        <DialogActions sx={{ p: 1.5 }}>
+          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))} color="inherit" size="small">
             ยกเลิก
           </Button>
           <Button
             variant="contained"
             color="error"
+            size="small"
             onClick={async () => {
               setConfirmDialog((prev) => ({ ...prev, open: false }));
               await confirmDialog.onConfirm();
@@ -1456,6 +1243,6 @@ export default function AdminLicensesPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 }

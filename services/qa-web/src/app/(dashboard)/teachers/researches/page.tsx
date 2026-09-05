@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -9,23 +9,34 @@ import Paper from "@mui/material/Paper";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Rating from "@mui/material/Rating";
+import LinearProgress from "@mui/material/LinearProgress";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AddIcon from "@mui/icons-material/Add";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ScienceIcon from "@mui/icons-material/Science";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+
 import { LiveEvidenceSection } from "@/components/evidence/LiveEvidenceSection";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 
 export default function ResearchesPage() {
   const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
 
-  const [summary, setSummary] = React.useState({
+  const [summary, setSummary] = useState({
     count: 0,
     awardCount: 0,
   });
-  const [loading, setLoading] = React.useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selfScore, setSelfScore] = useState<number | null>(4);
 
-  const fetchSummary = React.useCallback(async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -51,6 +62,14 @@ export default function ResearchesPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "ครูและบุคลากร", href: "/dashboard" },
+          { label: "งานวิจัยและสิ่งประดิษฐ์" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header */}
       <Box
         sx={{
@@ -118,13 +137,13 @@ export default function ResearchesPage() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
           gap: 1.5,
         }}
       >
-        <Paper sx={{ p: 1.25 }}>
+        <Paper sx={{ p: 1.5, borderRadius: 2 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
-            งานวิจัยในชั้นเรียนและนวัตกรรม
+            งานวิจัยในชั้นเรียน (CAR)
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
@@ -138,12 +157,18 @@ export default function ResearchesPage() {
                 fontSize: "0.725rem",
               }}
             >
-              {summary.count > 0 ? "จัดเก็บในระบบแล้ว" : "รอบปีการศึกษานี้"}
+              {summary.count > 0 ? "เป้าหมายอย่างน้อย 1 เรื่อง/ปี" : "รอบปีการศึกษานี้"}
             </Typography>
           </Box>
+          <LinearProgress
+            variant="determinate"
+            color={summary.count >= 1 ? "success" : "warning"}
+            value={Math.min(100, (summary.count / 1) * 100)}
+            sx={{ height: 5, borderRadius: 1, mt: 1 }}
+          />
         </Paper>
 
-        <Paper sx={{ p: 1.25 }}>
+        <Paper sx={{ p: 1.5, borderRadius: 2 }}>
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
             นวัตกรรม สิ่งประดิษฐ์ และรางวัล
           </Typography>
@@ -155,10 +180,69 @@ export default function ResearchesPage() {
               สอดคล้องกับตัวชี้วัด SAR 3.1
             </Typography>
           </Box>
+          <LinearProgress
+            variant="determinate"
+            color="primary"
+            value={summary.awardCount > 0 ? 100 : 0}
+            sx={{ height: 5, borderRadius: 1, mt: 1 }}
+          />
+        </Paper>
+
+        <Paper sx={{ p: 1.5, borderRadius: 2 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
+            คะแนนประเมินตนเอง (SAR Self-Audit)
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25 }}>
+            <Rating
+              size="small"
+              value={selfScore}
+              onChange={(_, newVal) => setSelfScore(newVal)}
+            />
+            <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main" }}>
+              {selfScore}/5 ดาว
+            </Typography>
+          </Box>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5, fontSize: "0.7rem" }}>
+            ระดับคุณภาพ: {selfScore && selfScore >= 4 ? "ยอดเยี่ยม (Level 4-5)" : "กำลังพัฒนา"}
+          </Typography>
         </Paper>
       </Box>
 
-      {/* 3. Live Uploaded Evidence Files */}
+      {/* 3. SAR Criteria & Guidelines Accordion */}
+      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
+        <Accordion variant="outlined" sx={{ border: "none" }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: "0.875rem" }}>
+                เกณฑ์และแนวทางการประเมินตามมาตรฐาน SAR ด้านงานวิจัย นวัตกรรม และสิ่งประดิษฐ์ (มาตรฐานที่ 3)
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 1.5 }}>
+              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, color: "warning.main" }}>
+                  1. การวิจัยเพื่อแก้ปัญหาและพัฒนาการเรียนรู้ (CAR)
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6, display: "block" }}>
+                  ครูผู้สอนทุกคนต้องจัดทำวิจัยในชั้นเรียนอย่างน้อยภาคเรียนละ 1 เรื่อง หรือปีการศึกษาละ 1 เรื่อง มุ่งเน้นการแก้ปัญหาผู้เรียน การสร้างนวัตกรรมการสอน หรือการใช้เทคโนโลยีดิจิทัลในการยกระดับผลสัมฤทธิ์
+                </Typography>
+              </Paper>
+              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 1.5, bgcolor: "action.hover" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, color: "warning.main" }}>
+                  2. สิ่งประดิษฐ์คนรุ่นใหม่และนวัตกรรมอาชีวศึกษา
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6, display: "block" }}>
+                  การให้คำปรึกษาและพานักเรียนนักศึกษาประกวดสิ่งประดิษฐ์คนรุ่นใหม่ ผลงานนวัตกรรม การจดสิทธิบัตร/อนุสิทธิบัตร หรือการถ่ายทอดเทคโนโลยีสู่ชุมชนและสถานประกอบการ
+                </Typography>
+              </Paper>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      </Paper>
+
+      {/* 4. Live Uploaded Evidence Files */}
       <LiveEvidenceSection
         category="research"
         sectionTitle="เอกสารงานวิจัยและสิ่งประดิษฐ์ที่จัดเก็บในระบบ"

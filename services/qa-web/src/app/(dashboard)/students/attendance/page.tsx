@@ -54,6 +54,7 @@ import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { usePermission } from "@/hooks/usePermission";
 import { AttendanceRiskChart } from "@/components/analytics/AttendanceRiskChart";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 import * as XLSX from "xlsx";
 
 interface AssignmentOption {
@@ -506,6 +507,14 @@ export default function AttendancePage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "งานนักศึกษา", href: "/dashboard/students" },
+          { label: "เช็คชื่อเข้าเรียนและพฤติกรรม" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header (Standardized as per GEMINI.md) */}
       <Box
         sx={{

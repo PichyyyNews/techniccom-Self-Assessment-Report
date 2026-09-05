@@ -42,6 +42,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 
 interface Laboratory {
   name: string;
@@ -264,6 +265,14 @@ export default function AdminDepartmentPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
+          { label: "ข้อมูลแผนกและห้องปฏิบัติการ" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header */}
       <Box
         sx={{

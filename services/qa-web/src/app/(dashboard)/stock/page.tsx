@@ -32,6 +32,10 @@ import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Skeleton from "@mui/material/Skeleton";
+import Grid from "@mui/material/Grid";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import SearchIcon from "@mui/icons-material/Search";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -53,6 +57,8 @@ import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { EvidenceThumbnail } from "@/components/evidence/EvidenceThumbnail";
 import { FileDetailsDialog, EvidenceFileDetails } from "@/components/evidence/FileDetailsDialog";
 import { groupEvidenceFiles, GroupedEvidenceFile } from "@/lib/evidence-grouping";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const CATEGORY_MAP: Record<
   string,
@@ -220,6 +226,14 @@ export default function StockPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* Breadcrumbs Navigation */}
+      <PageBreadcrumbs
+        items={[
+          { label: "หน้าหลัก", href: "/dashboard" },
+          { label: "คลังไฟล์และร่องรอยหลักฐาน (Evidence Stock)" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, pb: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -343,14 +357,24 @@ export default function StockPage() {
               </Select>
             </FormControl>
 
-            <Box sx={{ display: "flex", border: "1px solid", borderColor: "divider", borderRadius: 1, p: 0.2 }}>
-              <IconButton size="small" onClick={() => setViewMode("list")} color={viewMode === "list" ? "primary" : "default"} sx={{ p: 0.35 }}>
-                <ViewListIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              <IconButton size="small" onClick={() => setViewMode("grid")} color={viewMode === "grid" ? "primary" : "default"} sx={{ p: 0.35 }}>
-                <GridViewIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Box>
+            <ToggleButtonGroup
+              size="small"
+              value={viewMode}
+              exclusive
+              onChange={(_, val) => val && setViewMode(val)}
+              sx={{ height: 32 }}
+            >
+              <ToggleButton value="list" aria-label="list view" sx={{ px: 0.8, py: 0.2 }}>
+                <Tooltip title="มุมมองตาราง (List View)">
+                  <ViewListIcon sx={{ fontSize: 18 }} />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="grid" aria-label="grid view" sx={{ px: 0.8, py: 0.2 }}>
+                <Tooltip title="มุมมองการ์ด (Grid View)">
+                  <GridViewIcon sx={{ fontSize: 18 }} />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
 
             <Tooltip title="รีเฟรชข้อมูล">
               <IconButton size="small" onClick={fetchFiles} sx={{ p: 0.4 }}>
@@ -362,9 +386,21 @@ export default function StockPage() {
       </Paper>
 
       {loading ? (
-        <Box sx={{ py: 8, textAlign: "center" }}><CircularProgress size={36} sx={{ mb: 1.5 }} /><Typography variant="body2" sx={{ color: "text.secondary" }}>กำลังโหลดรายการไฟล์หลักฐาน</Typography></Box>
+        <Box sx={{ py: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
+          <CircularProgress size={36} />
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            กำลังโหลดรายการไฟล์หลักฐาน...
+          </Typography>
+        </Box>
       ) : files.length === 0 ? (
-        <Paper sx={{ py: 8, px: 3, textAlign: "center" }}><FolderSpecialIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} /><Typography variant="h4" sx={{ color: "text.primary", mb: 0.5 }}>ไม่พบไฟล์หลักฐานตามเงื่อนไขที่เลือก</Typography></Paper>
+        <EmptyState
+          icon={<FolderSpecialIcon sx={{ fontSize: 48 }} />}
+          title="ไม่พบไฟล์หลักฐานตามเงื่อนไขที่เลือก"
+          description="ยังไม่มีการอัปโหลดไฟล์หลักฐานในหมวดหมู่นี้ หรือไม่พบข้อมูลตามคำค้นหา คุณสามารถอัปโหลดไฟล์ใหม่ได้ทันที"
+          actionLabel="อัปโหลดไฟล์หลักฐาน (Quick Upload)"
+          actionHref="/quick-upload"
+          actionIcon={<BoltIcon sx={{ fontSize: 16 }} />}
+        />
       ) : viewMode === "list" ? (
         <Paper sx={{ overflow: "hidden" }}>
           <TableContainer sx={{ overflowX: "auto", width: "100%" }}>

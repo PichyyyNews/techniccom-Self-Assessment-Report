@@ -49,6 +49,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import RemoveDoneIcon from "@mui/icons-material/RemoveDone";
 
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 import {
   PERMISSION_CATEGORIES,
   ALL_PERMISSION_KEYS,
@@ -298,6 +299,14 @@ export default function AdminRolesPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* 0. Breadcrumbs */}
+      <PageBreadcrumbs
+        items={[
+          { label: "ผู้ดูแลระบบ", href: "/dashboard" },
+          { label: "จัดการสิทธิ์และบทบาท" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header (Standardized as per GEMINI.md) */}
       <Box
         sx={{

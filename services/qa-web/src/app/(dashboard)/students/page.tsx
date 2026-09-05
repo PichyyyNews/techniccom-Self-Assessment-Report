@@ -33,6 +33,14 @@ import LinearProgress from "@mui/material/LinearProgress";
 import CircularProgress from "@mui/material/CircularProgress";
 import InputAdornment from "@mui/material/InputAdornment";
 import Divider from "@mui/material/Divider";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Avatar from "@mui/material/Avatar";
+import Badge from "@mui/material/Badge";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
 
 // Icons from @mui/icons-material
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -50,10 +58,21 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import SchoolIcon from "@mui/icons-material/School";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
+import LaunchIcon from "@mui/icons-material/Launch";
 
 import { useAcademicYear } from "@/components/layout/AcademicYearContext";
 import { usePermission } from "@/hooks/usePermission";
 import { parseThaiName, countLines, splitLines } from "@/lib/parseThaiName";
+import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
+import { DetailDrawer } from "@/components/ui/DetailDrawer";
+import { EmptyState } from "@/components/ui/EmptyState";
 import * as XLSX from "xlsx";
 
 interface StudentItem {
@@ -131,6 +150,10 @@ export default function StudentsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
+
+  // State: View Mode & Inspector Drawer
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [selectedStudentForDrawer, setSelectedStudentForDrawer] = useState<StudentItem | null>(null);
 
   // State: Feedback
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" | "warning" }>({
@@ -511,6 +534,14 @@ export default function StudentsPage() {
 
   return (
     <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* Breadcrumbs Navigation */}
+      <PageBreadcrumbs
+        items={[
+          { label: "หน้าหลัก", href: "/dashboard" },
+          { label: "งานทะเบียนนักเรียนนักศึกษา" },
+        ]}
+      />
+
       {/* 1. Ultra-Compact Page Header (Standardized as per GEMINI.md) */}
       <Box
         sx={{
@@ -733,14 +764,35 @@ export default function StudentsPage() {
           </Select>
         </FormControl>
 
-        <Tooltip title="รีเฟรชข้อมูล">
-          <IconButton size="small" onClick={() => { fetchStudents(); fetchStats(); }} sx={{ ml: "auto" }}>
-            <RefreshIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
+        <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+          <ToggleButtonGroup
+            size="small"
+            value={viewMode}
+            exclusive
+            onChange={(_, val) => val && setViewMode(val)}
+            sx={{ height: 32 }}
+          >
+            <ToggleButton value="table" aria-label="table view" sx={{ px: 1, py: 0.25 }}>
+              <Tooltip title="มุมมองตาราง (Table View)">
+                <ViewListIcon sx={{ fontSize: 18 }} />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="grid" aria-label="card view" sx={{ px: 1, py: 0.25 }}>
+              <Tooltip title="มุมมองการ์ด (Card View)">
+                <ViewModuleIcon sx={{ fontSize: 18 }} />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <Tooltip title="รีเฟรชข้อมูล">
+            <IconButton size="small" onClick={() => { fetchStudents(); fetchStats(); }} sx={{ p: 0.4 }}>
+              <RefreshIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Paper>
 
-      {/* 4. Student Data Table */}
+      {/* 4. Student Data View (Table or Grid) */}
       <Paper sx={{ overflow: "hidden" }}>
         {loading && <LinearProgress />}
         <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -752,107 +804,297 @@ export default function StudentsPage() {
           </Typography>
         </Box>
 
-        <TableContainer sx={{ maxHeight: 600, overflowX: "auto", width: "100%" }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: { xs: 105, sm: 130 } }}>รหัสนักศึกษา</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>ชื่อ - นามสกุล</TableCell>
-                <TableCell sx={{ fontWeight: 700, display: { xs: "none", sm: "table-cell" } }}>ระดับชั้น / สาขาวิชา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 70, display: { xs: "none", md: "table-cell" } }}>ห้อง</TableCell>
-                <TableCell sx={{ fontWeight: 700, display: { xs: "none", lg: "table-cell" } }}>ครูที่ปรึกษา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: { xs: 85, sm: 100 } }} align="center">สถานะ</TableCell>
-                {canEdit && <TableCell sx={{ fontWeight: 700, width: { xs: 75, sm: 90 } }} align="center">จัดการ</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {students.length === 0 && !loading ? (
+        {viewMode === "table" ? (
+          <TableContainer sx={{ maxHeight: 600, overflowX: "auto", width: "100%" }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 7 : 6} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      ไม่พบข้อมูลนักเรียน กรุณากดปุ่ม <b>"นำเข้านักศึกษา"</b> หรือ <b>"เพิ่มรายคน"</b> เพื่อเริ่มต้นบันทึกข้อมูล
-                    </Typography>
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 105, sm: 130 } }}>รหัสนักศึกษา</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>ชื่อ - นามสกุล</TableCell>
+                  <TableCell sx={{ fontWeight: 700, display: { xs: "none", sm: "table-cell" } }}>ระดับชั้น / สาขาวิชา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 70, display: { xs: "none", md: "table-cell" } }}>ห้อง</TableCell>
+                  <TableCell sx={{ fontWeight: 700, display: { xs: "none", lg: "table-cell" } }}>ครูที่ปรึกษา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 85, sm: 100 } }} align="center">สถานะ</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 90, sm: 110 } }} align="center">จัดการ</TableCell>
                 </TableRow>
-              ) : (
-                students.map((std) => (
-                  <TableRow key={std.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                        {std.studentCode}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
-                        {std.prefix} {std.firstName} {std.lastName}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "block", sm: "none" }, fontSize: "0.7rem" }}>
-                        {std.level}.{std.year} ห้อง {std.room} ({std.majorCode})
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
-                      <Typography variant="caption" sx={{ color: "text.primary", display: "block", fontWeight: 600 }}>
-                        {std.level}.{std.year} {std.majorName}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.6875rem" }}>
-                        ({std.majorCode})
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
-                      <Chip size="small" label={`กลุ่ม ${std.room}`} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
-                    </TableCell>
-                    <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
-                      {std.advisor?.name ? (
-                        <Chip size="small" label={std.advisor.name} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
-                      ) : (
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>-</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        size="small"
-                        label={STATUS_MAP[std.status]?.label || std.status}
-                        color={STATUS_MAP[std.status]?.color || "default"}
-                        sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  [1, 2, 3, 4, 5].map((i) => (
+                    <TableRow key={`skel-${i}`}>
+                      <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={140} /></TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}><Skeleton variant="text" width={120} /></TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}><Skeleton variant="text" width={50} /></TableCell>
+                      <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}><Skeleton variant="text" width={90} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="rectangular" width={60} height={20} sx={{ borderRadius: 1, mx: "auto" }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={24} height={24} sx={{ mx: "auto" }} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : students.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                      <EmptyState
+                        icon={<SchoolIcon sx={{ fontSize: 44 }} />}
+                        title="ไม่พบข้อมูลนักเรียนนักศึกษา"
+                        description="ยังไม่มีข้อมูลนักเรียนในระบบ หรือไม่พบตามเงื่อนไขการค้นหา คุณสามารถกดปุ่มนำเข้าข้อมูลเพื่อเริ่มต้น"
+                        actionLabel="นำเข้านักศึกษาจาก Excel"
+                        onAction={() => setImportDialogOpen(true)}
+                        actionIcon={<FileUploadIcon sx={{ fontSize: 16 }} />}
                       />
                     </TableCell>
-                    {canEdit && (
+                  </TableRow>
+                ) : (
+                  students.map((std) => (
+                    <TableRow
+                      key={std.id}
+                      hover
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => setSelectedStudentForDrawer(std)}
+                    >
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", fontSize: "0.8125rem", color: "primary.main" }}>
+                          {std.studentCode}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+                          {std.prefix} {std.firstName} {std.lastName}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "block", sm: "none" }, fontSize: "0.7rem" }}>
+                          {std.level}.{std.year} ห้อง {std.room} ({std.majorCode})
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                        <Typography variant="caption" sx={{ color: "text.primary", display: "block", fontWeight: 600 }}>
+                          {std.level}.{std.year} {std.majorName}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.6875rem" }}>
+                          ({std.majorCode})
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
+                        <Chip size="small" label={`กลุ่ม ${std.room}`} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
+                        {std.advisor?.name ? (
+                          <Chip size="small" label={std.advisor.name} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+                        ) : (
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>-</Typography>
+                        )}
+                      </TableCell>
                       <TableCell align="center">
-                        <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5 }}>
-                          <Tooltip title="แก้ไข">
+                        <Chip
+                          size="small"
+                          label={STATUS_MAP[std.status]?.label || std.status}
+                          color={STATUS_MAP[std.status]?.color || "default"}
+                          sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex", justifyContent: "center", gap: 0.3 }} onClick={(e) => e.stopPropagation()}>
+                          <Tooltip title="ดูประวัติเชิงลึก">
                             <IconButton
                               size="small"
-                              onClick={() => {
-                                setEditingStudent(std);
-                                setEditDialogOpen(true);
-                              }}
-                              sx={{ p: 0.3 }}
+                              onClick={() => setSelectedStudentForDrawer(std)}
+                              sx={{ p: 0.3, color: "primary.main" }}
                             >
-                              <EditIcon sx={{ fontSize: 15 }} />
+                              <VisibilityIcon sx={{ fontSize: 15 }} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="ลบ">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => {
-                                setStudentToDelete(std);
-                                setDeleteDialogOpen(true);
-                              }}
-                              sx={{ p: 0.3 }}
-                            >
-                              <DeleteIcon sx={{ fontSize: 15 }} />
-                            </IconButton>
-                          </Tooltip>
+                          {canEdit && (
+                            <>
+                              <Tooltip title="แก้ไข">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    setEditingStudent(std);
+                                    setEditDialogOpen(true);
+                                  }}
+                                  sx={{ p: 0.3 }}
+                                >
+                                  <EditIcon sx={{ fontSize: 15 }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="ลบ">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => {
+                                    setStudentToDelete(std);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  sx={{ p: 0.3 }}
+                                >
+                                  <DeleteIcon sx={{ fontSize: 15 }} />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
                         </Box>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          /* Grid / Card View */
+          <Box sx={{ p: 1.5 }}>
+            {loading ? (
+              <Grid container spacing={1.5}>
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`grid-skel-${i}`}>
+                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+                        <Skeleton variant="circular" width={40} height={40} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" width="60%" />
+                          <Skeleton variant="text" width="40%" />
+                        </Box>
+                      </Box>
+                      <Skeleton variant="rectangular" height={36} sx={{ borderRadius: 1 }} />
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : students.length === 0 ? (
+              <EmptyState
+                icon={<SchoolIcon sx={{ fontSize: 44 }} />}
+                title="ไม่พบข้อมูลนักเรียนนักศึกษา"
+                description="ยังไม่มีข้อมูลนักเรียนในระบบ หรือไม่พบตามเงื่อนไขการค้นหา คุณสามารถกดปุ่มนำเข้าข้อมูลเพื่อเริ่มต้น"
+                actionLabel="นำเข้านักศึกษาจาก Excel"
+                onAction={() => setImportDialogOpen(true)}
+                actionIcon={<FileUploadIcon sx={{ fontSize: 16 }} />}
+              />
+            ) : (
+              <Grid container spacing={1.5}>
+                {students.map((std) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={std.id}>
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 2,
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          borderColor: "primary.main",
+                          boxShadow: 2,
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                      onClick={() => setSelectedStudentForDrawer(std)}
+                    >
+                      <CardContent sx={{ p: 1.75, "&:last-child": { pb: 1.75 } }}>
+                        {/* Top Row: Avatar + Student Code + Status */}
+                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1, mb: 1 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: std.prefix === "นางสาว" || std.prefix === "น.ส." ? "#db2777" : "primary.main",
+                                width: 38,
+                                height: 38,
+                                fontSize: "0.875rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {std.firstName?.[0] || "น"}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace", fontSize: "0.8125rem", color: "primary.main" }}>
+                                {std.studentCode}
+                              </Typography>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: "0.875rem", lineHeight: 1.2 }}>
+                                {std.prefix} {std.firstName} {std.lastName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip
+                            size="small"
+                            label={STATUS_MAP[std.status]?.label || std.status}
+                            color={STATUS_MAP[std.status]?.color || "default"}
+                            sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
+                          />
+                        </Box>
+
+                        {/* Middle: Level / Major / Room */}
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1.5 }}>
+                          <Chip
+                            size="small"
+                            label={`${std.level}.${std.year}`}
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
+                          />
+                          <Chip
+                            size="small"
+                            label={`ห้อง ${std.room}`}
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: "0.6875rem" }}
+                          />
+                          <Chip
+                            size="small"
+                            label={std.majorName}
+                            color="info"
+                            variant="outlined"
+                            sx={{ height: 20, fontSize: "0.6875rem" }}
+                          />
+                        </Box>
+
+                        {/* Footer: Advisor + Actions */}
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid", borderColor: "divider", pt: 1 }}>
+                          <Typography variant="caption" noWrap sx={{ color: "text.secondary", fontSize: "0.7rem", maxWidth: 160 }}>
+                            {std.advisor?.name ? `ที่ปรึกษา: ${std.advisor.name}` : "ไม่มีครูที่ปรึกษา"}
+                          </Typography>
+                          <Box sx={{ display: "flex", gap: 0.25 }} onClick={(e) => e.stopPropagation()}>
+                            <Tooltip title="ดูประวัติเชิงลึก">
+                              <IconButton
+                                size="small"
+                                onClick={() => setSelectedStudentForDrawer(std)}
+                                sx={{ p: 0.3, color: "primary.main" }}
+                              >
+                                <VisibilityIcon sx={{ fontSize: 15 }} />
+                              </IconButton>
+                            </Tooltip>
+                            {canEdit && (
+                              <>
+                                <Tooltip title="แก้ไข">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setEditingStudent(std);
+                                      setEditDialogOpen(true);
+                                    }}
+                                    sx={{ p: 0.3 }}
+                                  >
+                                    <EditIcon sx={{ fontSize: 15 }} />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="ลบ">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => {
+                                      setStudentToDelete(std);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                    sx={{ p: 0.3 }}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 15 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
 
         <TablePagination
           component="div"
@@ -870,6 +1112,177 @@ export default function StudentsPage() {
           sx={{ borderTop: "1px solid", borderColor: "divider" }}
         />
       </Paper>
+
+      {/* 5. Student Inspector Detail Drawer */}
+      <DetailDrawer
+        open={Boolean(selectedStudentForDrawer)}
+        onClose={() => setSelectedStudentForDrawer(null)}
+        title={
+          selectedStudentForDrawer
+            ? `${selectedStudentForDrawer.prefix} ${selectedStudentForDrawer.firstName} ${selectedStudentForDrawer.lastName}`
+            : "ข้อมูลนักเรียน"
+        }
+        subtitle={selectedStudentForDrawer ? `รหัสนักศึกษา: ${selectedStudentForDrawer.studentCode}` : ""}
+        actions={
+          selectedStudentForDrawer && canEdit ? (
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<EditIcon sx={{ fontSize: 15 }} />}
+              onClick={() => {
+                setEditingStudent(selectedStudentForDrawer);
+                setSelectedStudentForDrawer(null);
+                setEditDialogOpen(true);
+              }}
+              sx={{ fontSize: "0.75rem" }}
+            >
+              แก้ไขข้อมูล
+            </Button>
+          ) : undefined
+        }
+      >
+        {selectedStudentForDrawer && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Header Badge & Basic Info */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Avatar
+                  sx={{
+                    bgcolor:
+                      selectedStudentForDrawer.prefix === "นางสาว" || selectedStudentForDrawer.prefix === "น.ส."
+                        ? "#db2777"
+                        : "primary.main",
+                    width: 56,
+                    height: 56,
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  {selectedStudentForDrawer.firstName?.[0] || "น"}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    {selectedStudentForDrawer.prefix} {selectedStudentForDrawer.firstName}{" "}
+                    {selectedStudentForDrawer.lastName}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: "monospace", color: "primary.main", fontWeight: 700 }}>
+                    {selectedStudentForDrawer.studentCode}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
+                    <Chip
+                      size="small"
+                      label={STATUS_MAP[selectedStudentForDrawer.status]?.label || selectedStudentForDrawer.status}
+                      color={STATUS_MAP[selectedStudentForDrawer.status]?.color || "default"}
+                      sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
+                    />
+                    <Chip
+                      size="small"
+                      label={`${selectedStudentForDrawer.level}.${selectedStudentForDrawer.year} ห้อง ${selectedStudentForDrawer.room}`}
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: "0.6875rem" }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* Academic Details Card */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: "text.primary" }}>
+                ข้อมูลสังกัดการศึกษา
+              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    หลักสูตร / สาขาวิชา
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedStudentForDrawer.majorName} ({selectedStudentForDrawer.majorCode})
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    ระดับชั้นและห้อง
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedStudentForDrawer.level} ปีที่ {selectedStudentForDrawer.year} (กลุ่ม{" "}
+                    {selectedStudentForDrawer.room})
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    ปีการศึกษา / ภาคเรียน
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedStudentForDrawer.academicYear
+                      ? `ปี ${selectedStudentForDrawer.academicYear} เทอม ${selectedStudentForDrawer.semester}`
+                      : termLabel}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    ครูที่ปรึกษา
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: selectedStudentForDrawer.advisor?.name ? "primary.main" : "text.secondary",
+                    }}
+                  >
+                    {selectedStudentForDrawer.advisor?.name || "ยังไม่ได้กำหนดครูที่ปรึกษา"}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* SAR Cross-Navigation Shortcuts */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: "text.primary" }}>
+                การประเมินและร่องรอยตามเกณฑ์ SAR
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Button
+                  component={Link}
+                  href={`/students/attendance?search=${selectedStudentForDrawer.studentCode}`}
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  startIcon={<HowToRegIcon sx={{ fontSize: 16 }} />}
+                  endIcon={<LaunchIcon sx={{ fontSize: 14 }} />}
+                  sx={{ justifyContent: "space-between", py: 0.75, fontSize: "0.8125rem" }}
+                >
+                  ประวัติการเช็กชื่อและเข้าแถว
+                </Button>
+                <Button
+                  component={Link}
+                  href="/students/competencies"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  startIcon={<AssessmentIcon sx={{ fontSize: 16 }} />}
+                  endIcon={<LaunchIcon sx={{ fontSize: 14 }} />}
+                  sx={{ justifyContent: "space-between", py: 0.75, fontSize: "0.8125rem" }}
+                >
+                  ผลการประเมินสมรรถนะรายบุคคล
+                </Button>
+                <Button
+                  component={Link}
+                  href="/students/activities"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  startIcon={<VolunteerActivismIcon sx={{ fontSize: 16 }} />}
+                  endIcon={<LaunchIcon sx={{ fontSize: 14 }} />}
+                  sx={{ justifyContent: "space-between", py: 0.75, fontSize: "0.8125rem" }}
+                >
+                  บันทึกกิจกรรมและจิตอาสา
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+      </DetailDrawer>
 
       {/* ==================== 5. BULK IMPORT DIALOG (Adapted from activity_attendance_System) ==================== */}
       <Dialog
