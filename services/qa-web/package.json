@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:test": "tsx src/scripts/test-connection.ts"
+    "db:test": "tsx src/scripts/test-connection.ts",
+    "db:check": "tsx src/scripts/check-data.ts",
+    "db:clean": "tsx src/scripts/clean-test-data.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
