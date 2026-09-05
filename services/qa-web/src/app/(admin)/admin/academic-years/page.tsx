@@ -240,8 +240,8 @@ export default function AdminAcademicYearsPage() {
             </IconButton>
           </Tooltip>
 
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
-            จัดการรอบปีการศึกษาและภาคเรียน (Academic Years & Terms)
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
+            จัดการรอบปีการศึกษาและภาคเรียน
           </Typography>
 
           <Tooltip title="กำหนดปีการศึกษาและภาคเรียนของสถานศึกษา พร้อมกำหนดรอบข้อมูลหลักของระบบ">
@@ -250,7 +250,7 @@ export default function AdminAcademicYearsPage() {
             </IconButton>
           </Tooltip>
 
-          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         {/* RIGHT: Term Chip + Actions */}
@@ -288,21 +288,21 @@ export default function AdminAcademicYearsPage() {
           <Typography variant="h4" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
             รายการรอบปีการศึกษาและภาคเรียน ({items.length} รอบ)
           </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
             รอบที่มีสัญลักษณ์ดาวสีทองคือรอบข้อมูลหลักของสถานศึกษา
           </Typography>
         </Box>
 
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 120 }}>ปีการศึกษา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>ภาคเรียน</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 80, sm: 120 } }}>ปีการศึกษา</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", sm: "table-cell" } }}>ภาคเรียน</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>ชื่อรอบข้อมูล</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 180 }} align="center">สถานะรอบข้อมูลหลัก</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">สถานะเปิดใช้</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 150 }} align="center">จัดการ</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 130, sm: 180 } }} align="center">สถานะรอบข้อมูลหลัก</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", md: "table-cell" } }} align="center">สถานะเปิดใช้</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">จัดการ</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -312,20 +312,31 @@ export default function AdminAcademicYearsPage() {
                     <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
                       {item.year}
                     </Typography>
+                    <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                      <Chip size="small" label={`เทอม ${item.semester}`} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                    </Box>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Chip size="small" label={`เทอม ${item.semester}`} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: item.isCurrent ? 700 : 500 }}>
                       {item.label}
                     </Typography>
+                    <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                      <Chip
+                        size="small"
+                        label={item.isActive ? "เปิดใช้" : "ปิด"}
+                        color={item.isActive ? "success" : "default"}
+                        sx={{ height: 16, fontSize: 9 }}
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell align="center">
                     {item.isCurrent ? (
                       <Chip
                         icon={<StarIcon sx={{ fontSize: 13, color: "#d97706 !important" }} />}
-                        label="รอบข้อมูลหลัก (Current)"
+                        label="รอบหลัก"
                         sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 700, bgcolor: "amber.50", color: "amber.900" }}
                       />
                     ) : (
@@ -339,7 +350,7 @@ export default function AdminAcademicYearsPage() {
                       </Button>
                     )}
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Chip
                       size="small"
                       label={item.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}

@@ -44,7 +44,7 @@ export default function CompetenciesPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             ผลสัมฤทธิ์ และ สมรรถนะวิชาชีพ
           </Typography>
           <Tooltip title="ศูนย์รวมคะแนนผลสัมฤทธิ์ทางการเรียน ผลการทดสอบ VNET และการประเมินมาตรฐานวิชาชีพ TPQI และ DSD">
@@ -52,7 +52,7 @@ export default function CompetenciesPage() {
               <InfoOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>

@@ -400,7 +400,7 @@ export default function SystemAdminPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             ศูนย์มอนิเตอร์และตั้งค่าโครงสร้างระบบ
           </Typography>
           <Tooltip title="สตรีมมิ่งสถานะฮาร์ดแวร์แบบ Real Time แยก 2 เครื่องเซิร์ฟเวอร์ พร้อมตรวจจับขนาดฐานข้อมูล">
@@ -702,12 +702,13 @@ export default function SystemAdminPage() {
           onChange={(_, val) => setActiveTab(val)}
           variant="scrollable"
           scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
-            px: 2,
+            px: { xs: 0.5, sm: 2 },
             "& .MuiTab-root": {
-              minHeight: 48,
+              minHeight: 44,
               fontWeight: 700,
-              fontSize: "0.875rem",
+              fontSize: { xs: "0.8125rem", sm: "0.875rem" },
               textTransform: "none",
             },
           }}
@@ -847,7 +848,7 @@ export default function SystemAdminPage() {
       {activeTab === 1 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Table Stats */}
-          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", overflowX: "auto", width: "100%" }}>
             <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid", borderColor: "divider" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <TableChartIcon color="success" />
@@ -1109,14 +1110,14 @@ export default function SystemAdminPage() {
               </Typography>
             </Box>
           ) : (
-            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", overflowX: "auto", width: "100%" }}>
               <Table size="small">
                 <TableHead sx={{ bgcolor: "grey.50" }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ชื่อ Snapshot และคำอธิบาย</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ผู้สร้าง</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", display: { xs: "none", sm: "table-cell" } }}>ผู้สร้าง</TableCell>
                     <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>ขนาดไฟล์</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>วันที่บันทึก</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", display: { xs: "none", md: "table-cell" } }}>วันที่บันทึก</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary" }}>ดาวน์โหลด</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1139,7 +1140,7 @@ export default function SystemAdminPage() {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Chip
                           icon={<PersonIcon sx={{ fontSize: "0.875rem !important" }} />}
                           label={b.creator}
@@ -1149,7 +1150,7 @@ export default function SystemAdminPage() {
                         />
                       </TableCell>
                       <TableCell sx={{ fontFamily: "monospace", fontWeight: 700 }}>{b.sizeKB} KB</TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: "0.8125rem" }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.8125rem", display: { xs: "none", md: "table-cell" } }}>
                         {new Date(b.lastModified).toLocaleDateString("th-TH", {
                           day: "numeric",
                           month: "short",
@@ -1184,7 +1185,7 @@ export default function SystemAdminPage() {
 
       {/* ================= TAB 4: ENVIRONMENT CONFIG ================= */}
       {activeTab === 4 && (
-        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", overflowX: "auto", width: "100%" }}>
           <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
             <VpnKeyIcon color="warning" />
             <Box>

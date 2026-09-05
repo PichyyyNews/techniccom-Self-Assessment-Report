@@ -73,7 +73,7 @@ export default function ActivitiesPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             กิจกรรมผู้เรียน และ บันทึกหน้าเสาธง
           </Typography>
           <Tooltip title="บันทึกการเข้าร่วมกิจกรรมเข้าแถวหน้าเสาธง กิจกรรมชมรมวิชาชีพ อวท และกิจกรรมจิตอาสาเพื่อสังคม">
@@ -81,7 +81,7 @@ export default function ActivitiesPage() {
               <InfoOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="warning" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="warning" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -152,13 +152,13 @@ export default function ActivitiesPage() {
           </Typography>
         </Box>
 
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>ชื่อกิจกรรม และ ชมรม</TableCell>
-                <TableCell>ประเภทกิจกรรม</TableCell>
-                <TableCell>ผู้เข้าร่วม</TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>ประเภทกิจกรรม</TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>ผู้เข้าร่วม</TableCell>
                 <TableCell align="right">สถานะการประเมิน</TableCell>
               </TableRow>
             </TableHead>
@@ -169,13 +169,16 @@ export default function ActivitiesPage() {
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
                       {row.name}
                     </Typography>
+                    <Typography variant="caption" sx={{ display: { xs: "block", sm: "none" }, color: "text.secondary" }}>
+                      {row.type} • {row.participants}
+                    </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       {row.type}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Typography variant="body2">{row.participants}</Typography>
                   </TableCell>
                   <TableCell align="right">

@@ -137,7 +137,7 @@ export default function StudentDashboardPage() {
               <InfoOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -174,18 +174,23 @@ export default function StudentDashboardPage() {
           borderColor: "divider",
           borderRadius: 1.5,
           px: 1,
+          overflow: "hidden",
         }}
       >
         <Tabs
           value={activeTab}
           onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             minHeight: 40,
+            width: "100%",
             "& .MuiTab-root": {
               minHeight: 40,
               py: 0.5,
-              px: 1.5,
-              fontSize: "0.8125rem",
+              px: { xs: 1, sm: 1.5 },
+              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
               fontWeight: 600,
               textTransform: "none",
             },
@@ -199,7 +204,7 @@ export default function StudentDashboardPage() {
           <Tab
             icon={<QueryStatsIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label="การวิเคราะห์โครงสร้างประชากรผู้เรียน (Demographic & Retention EDA)"
+            label="วิเคราะห์ประชากรผู้เรียน (Demographic & Retention EDA)"
           />
         </Tabs>
       </Paper>

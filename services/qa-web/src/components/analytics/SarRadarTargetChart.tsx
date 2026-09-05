@@ -73,10 +73,10 @@ export function SarRadarTargetChart({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Row 1: Target vs Actual & License Risk Horizon */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1.2fr" }, gap: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1.2fr" }, gap: { xs: 1.5, sm: 2 } }}>
         {/* 1. Target vs Actual Bar Chart */}
-        <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1, mb: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <TrackChangesIcon sx={{ fontSize: 20, color: "primary.main" }} />
               <Box>
@@ -88,7 +88,7 @@ export function SarRadarTargetChart({
                 </Typography>
               </Box>
             </Box>
-            <Chip size="small" label="เกณฑ์ประกันคุณภาพ SAR" color="primary" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+            <Chip size="small" label="เกณฑ์ประกันคุณภาพ SAR" color="primary" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
           </Box>
 
           <Box sx={{ width: "100%", height: 310 }}>
@@ -112,7 +112,7 @@ export function SarRadarTargetChart({
         </Paper>
 
         {/* 2. License Risk Horizon Pie Chart */}
-        <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <VerifiedUserIcon sx={{ fontSize: 20, color: "success.main" }} />
             <Box>
@@ -151,10 +151,10 @@ export function SarRadarTargetChart({
 
       {/* Row 2: Academic Qualification & Academic Rank Distribution (SAR Standard 2) */}
       {(academicRanks.length > 0 || qualifications.length > 0) && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.4fr 1fr" }, gap: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1.4fr 1fr" }, gap: { xs: 1.5, sm: 2 } }}>
           {/* Academic Rank Distribution */}
-          <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+          <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1, mb: 1.5 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <SchoolIcon sx={{ fontSize: 20, color: "primary.main" }} />
                 <Box>
@@ -166,7 +166,7 @@ export function SarRadarTargetChart({
                   </Typography>
                 </Box>
               </Box>
-              <Chip size="small" label="มาตรฐานที่ 2 SAR" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+              <Chip size="small" label="มาตรฐานที่ 2 SAR" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
             </Box>
 
             <Box sx={{ width: "100%", height: 260 }}>

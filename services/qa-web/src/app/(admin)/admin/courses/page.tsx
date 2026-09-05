@@ -369,18 +369,28 @@ export default function AdminCoursesPage() {
 
       {/* 2. Tabs */}
       <Paper sx={{ border: "1px solid", borderColor: "divider" }}>
-        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            "& .MuiTab-root": {
+              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
+              minHeight: 40,
+            },
+          }}
+        >
           <Tab
             icon={<AssignmentIndIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label={`การมอบหมายผู้สอนประจำห้อง (${assignments.length} รายการ)`}
-            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+            label={`การมอบหมายผู้สอน (${assignments.length})`}
           />
           <Tab
             icon={<MenuBookIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label={`บัญชีรายวิชาในแผนก (${courses.length} วิชา)`}
-            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+            label={`บัญชีรายวิชา (${courses.length})`}
           />
         </Tabs>
       </Paper>
@@ -393,21 +403,21 @@ export default function AdminCoursesPage() {
             <Typography variant="h4" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
               รายการมอบหมายการสอนใน {termLabel}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
               ครูผู้สอนจะเห็นเฉพาะวิชาและห้องที่ได้รับมอบหมายในระบบเช็กชื่อ
             </Typography>
           </Box>
 
-          <TableContainer>
+          <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: 130 }}>รหัสวิชา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 80, sm: 130 } }}>รหัสวิชา</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>ชื่อรายวิชา</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>ครูผู้สอนที่รับผิดชอบ</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 140 }}>ห้องเรียนเป้าหมาย</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">คาบสอน</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">เช็กชื่อแล้ว</TableCell>
+                  <TableCell sx={{ fontWeight: 700, display: { xs: "none", sm: "table-cell" } }}>ครูผู้สอนที่รับผิดชอบ</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 140, display: { xs: "none", md: "table-cell" } }}>ห้องเรียนเป้าหมาย</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 90, display: { xs: "none", md: "table-cell" } }} align="center">คาบสอน</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", sm: "table-cell" } }} align="center">เช็กชื่อแล้ว</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: 80 }} align="center">จัดการ</TableCell>
                 </TableRow>
               </TableHead>
@@ -434,11 +444,23 @@ export default function AdminCoursesPage() {
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {a.course?.courseName}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                           ท-ป-น: {a.course?.theoryHours}-{a.course?.practiceHours}-{a.course?.credits}
                         </Typography>
+                        <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
+                          <Typography variant="caption" sx={{ color: "text.primary", fontWeight: 600, fontSize: "0.6875rem" }}>
+                            {a.teacher?.name}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={`${a.level}.${a.year} ${a.majorCode} ห้อง ${a.room}`}
+                            color="primary"
+                            variant="outlined"
+                            sx={{ height: 18, fontSize: 9 }}
+                          />
+                        </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           <Avatar src={a.teacher?.avatarUrl || ""} sx={{ width: 24, height: 24, fontSize: "0.75rem" }}>
                             {a.teacher?.name?.charAt(0) || "T"}
@@ -453,7 +475,7 @@ export default function AdminCoursesPage() {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                         <Chip
                           size="small"
                           label={`${a.level}.${a.year} ${a.majorCode} กลุ่ม ${a.room}`}
@@ -462,12 +484,12 @@ export default function AdminCoursesPage() {
                           sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 600 }}
                         />
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                         <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
                           {a.totalPeriods} คาบ
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Chip
                           size="small"
                           label={`${a._count?.sessions || 0} ครั้ง`}
@@ -513,16 +535,16 @@ export default function AdminCoursesPage() {
             </Typography>
           </Box>
 
-          <TableContainer>
+          <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: 130 }}>รหัสวิชา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 80, sm: 130 } }}>รหัสวิชา</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>ชื่อรายวิชา</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>ระดับชั้น</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }}>รหัสสาขา</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 120 }} align="center">ท-ป-น (หน่วยกิต)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">มอบหมายแล้ว</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", sm: "table-cell" } }}>ระดับชั้น</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", md: "table-cell" } }}>รหัสสาขา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 120, display: { xs: "none", sm: "table-cell" } }} align="center">ท-ป-น (หน่วยกิต)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", md: "table-cell" } }} align="center">มอบหมายแล้ว</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: 80 }} align="center">จัดการ</TableCell>
                 </TableRow>
               </TableHead>
@@ -538,8 +560,12 @@ export default function AdminCoursesPage() {
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {c.courseName}
                       </Typography>
+                      <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25, flexWrap: "wrap" }}>
+                        <Chip size="small" label={c.level} color={c.level === "ปวส" ? "secondary" : "primary"} variant="outlined" sx={{ height: 18, fontSize: 9 }} />
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{c.theoryHours}-{c.practiceHours}-{c.credits} ({c._count?.assignments || 0} ห้อง)</Typography>
+                      </Box>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                       <Chip
                         size="small"
                         label={c.level}
@@ -548,15 +574,15 @@ export default function AdminCoursesPage() {
                         sx={{ height: 20, fontSize: "0.6875rem" }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Chip size="small" label={c.majorCode} sx={{ height: 20, fontSize: "0.6875rem" }} />
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                       <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
                         {c.theoryHours}-{c.practiceHours}-{c.credits}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Chip
                         size="small"
                         label={`${c._count?.assignments || 0} ห้อง`}

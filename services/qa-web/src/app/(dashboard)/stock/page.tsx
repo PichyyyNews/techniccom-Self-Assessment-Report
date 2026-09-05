@@ -270,6 +270,9 @@ export default function StockPage() {
           <Tabs
             value={scope}
             onChange={(_, val) => setScope(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             textColor="primary"
             indicatorColor="primary"
             sx={{ minHeight: 32, "& .MuiTab-root": { minHeight: 32, py: 0.25, px: 1.25, fontSize: "0.8rem" } }}
@@ -295,7 +298,7 @@ export default function StockPage() {
               sx={{ width: { xs: "100%", sm: 220, md: 240 } }}
             />
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 150 }, flex: { xs: "1 1 100%", sm: "initial" } }}>
               <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>หมวดหมู่หลักฐาน</InputLabel>
               <Select
                 value={filterCategory}
@@ -312,7 +315,7 @@ export default function StockPage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 105 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: "calc(50% - 6px)", sm: 105 }, flex: { xs: "1 1 calc(50% - 6px)", sm: "initial" } }}>
               <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>ปีการศึกษา</InputLabel>
               <Select
                 value={filterYear}
@@ -326,7 +329,7 @@ export default function StockPage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 95 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: "calc(50% - 6px)", sm: 95 }, flex: { xs: "1 1 calc(50% - 6px)", sm: "initial" } }}>
               <InputLabel sx={{ fontSize: "0.8rem", top: -3 }}>ภาคเรียน</InputLabel>
               <Select
                 value={filterSemester}
@@ -364,16 +367,16 @@ export default function StockPage() {
         <Paper sx={{ py: 8, px: 3, textAlign: "center" }}><FolderSpecialIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} /><Typography variant="h4" sx={{ color: "text.primary", mb: 0.5 }}>ไม่พบไฟล์หลักฐานตามเงื่อนไขที่เลือก</Typography></Paper>
       ) : viewMode === "list" ? (
         <Paper sx={{ overflow: "hidden" }}>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: 50 }}></TableCell>
                   <TableCell>ชื่อเอกสาร</TableCell>
-                  <TableCell>หมวดหมู่</TableCell>
-                  <TableCell>ผู้จัดเก็บ</TableCell>
-                  <TableCell>วันเวลาที่อัปโหลด</TableCell>
-                  <TableCell>ขนาด</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>หมวดหมู่</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>ผู้จัดเก็บ</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>วันเวลาที่อัปโหลด</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>ขนาด</TableCell>
                   <TableCell align="right">การจัดการ</TableCell>
                 </TableRow>
               </TableHead>
@@ -417,7 +420,7 @@ export default function StockPage() {
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
-                                maxWidth: { xs: 180, sm: 280 },
+                                maxWidth: { xs: 150, sm: 280 },
                               }}
                             >
                               {file.title}
@@ -440,13 +443,19 @@ export default function StockPage() {
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              maxWidth: { xs: 180, sm: 280 },
+                              maxWidth: { xs: 150, sm: 280 },
                             }}
                           >
                             {galleryCount > 1
                               ? `ชุดหลักฐาน ${galleryCount} รายการ (${file.fileName})`
                               : file.fileName}
                           </Typography>
+                          <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25, flexWrap: "wrap" }}>
+                            <Chip size="small" label={cat.label} color={cat.color} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.6875rem" }}>
+                              {formatThaiDateTime(file.createdAt)}
+                            </Typography>
+                          </Box>
                           {tags.length > 0 && (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
                               {tags.slice(0, 3).map((t, idx) => (
@@ -456,8 +465,10 @@ export default function StockPage() {
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell><Chip size="small" label={cat.label} color={cat.color} variant="outlined" /></TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                        <Chip size="small" label={cat.label} color={cat.color} variant="outlined" />
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           <Avatar
                             src={file.user?.avatarUrl || undefined}
@@ -479,8 +490,15 @@ export default function StockPage() {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell><Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><AccessTimeIcon sx={{ fontSize: 13, color: "text.secondary" }} /><Typography variant="caption" sx={{ color: "text.secondary" }}>{formatThaiDateTime(file.createdAt)}</Typography></Box></TableCell>
-                      <TableCell><Typography variant="caption" sx={{ color: "text.secondary" }}>{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</Typography></TableCell>
+                      <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <AccessTimeIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatThaiDateTime(file.createdAt)}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</Typography>
+                      </TableCell>
                       <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
                           <Tooltip title={isStarred ? "เลิกติดดาว" : "ติดดาว"}><IconButton size="small" color={isStarred ? "warning" : "default"} onClick={(e) => handleToggleStar(file, e)}>{isStarred ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}</IconButton></Tooltip>

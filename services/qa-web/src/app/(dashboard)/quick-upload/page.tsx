@@ -533,7 +533,7 @@ export default function QuickUploadPage() {
                   <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 420 }}>
                     หลักฐานชุด &ldquo;{title}&rdquo; ถูกบันทึกลงในคลังหลักฐาน และเชื่อมโยงไปยัง {activeModalCard.linkedTitle} เรียบร้อยแล้ว
                   </Typography>
-                  <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, mt: 2, width: "100%", justifyContent: "center" }}>
                     <Button
                       component={Link}
                       href={activeModalCard.linkedUrl}
@@ -710,7 +710,7 @@ export default function QuickUploadPage() {
                   />
 
                   {/* Term Selectors */}
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
                     <FormControl size="small" fullWidth>
                       <InputLabel>ปีการศึกษา</InputLabel>
                       <Select
@@ -744,7 +744,7 @@ export default function QuickUploadPage() {
 
                   {/* Contextual Fields */}
                   {activeModalCard.category === "lesson_plan" && (
-                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
                       <TextField
                         label="รหัสวิชา"
                         value={subjectCode}
@@ -764,7 +764,7 @@ export default function QuickUploadPage() {
                     activeModalCard.category === "speaker_activity" ||
                     activeModalCard.category === "training_cert") && (
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
                         <TextField
                           label="สถานที่จัดกิจกรรม"
                           value={location}

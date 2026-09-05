@@ -252,8 +252,8 @@ export default function AdminCurriculumPage() {
             </IconButton>
           </Tooltip>
 
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
-            จัดการระดับชั้น สาขาวิชา และห้องเรียน (Curriculum & Sections)
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
+            จัดการระดับชั้นและห้องเรียน
           </Typography>
 
           <Tooltip title="กำหนดโครงสร้างชั้นเรียนเป้าหมายสำหรับนักศึกษา การเช็คชื่อ และตัวกรองในระบบ">
@@ -262,7 +262,7 @@ export default function AdminCurriculumPage() {
             </IconButton>
           </Tooltip>
 
-          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         {/* RIGHT: Academic Term + Primary CTA */}
@@ -309,10 +309,10 @@ export default function AdminCurriculumPage() {
               ),
             },
           }}
-          sx={{ minWidth: 240, flex: { xs: "1 1 100%", sm: "1 1 auto" } }}
+          sx={{ minWidth: { xs: "100%", sm: 240 }, flex: { xs: "1 1 100%", sm: "1 1 auto" } }}
         />
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 120 } }}>
           <InputLabel>ระดับชั้น</InputLabel>
           <Select value={filterLevel} label="ระดับชั้น" onChange={(e) => setFilterLevel(e.target.value)}>
             <MenuItem value="">ทั้งหมด</MenuItem>
@@ -329,16 +329,16 @@ export default function AdminCurriculumPage() {
       {/* 3. Data Table */}
       <Paper sx={{ overflow: "hidden" }}>
         {loading && <LinearProgress />}
-        <TableContainer sx={{ maxHeight: 620 }}>
+        <TableContainer sx={{ maxHeight: 620, overflowX: "auto", width: "100%" }}>
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>ระดับชั้น</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 80 }}>ชั้นปี</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 80, sm: 100 } }}>ระดับชั้น</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 80, display: { xs: "none", sm: "table-cell" } }}>ชั้นปี</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>สาขาวิชา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>รหัสย่อ</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 90 }}>ห้อง/กลุ่ม</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">สถานะ</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", md: "table-cell" } }}>รหัสย่อ</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 90, display: { xs: "none", sm: "table-cell" } }}>ห้อง/กลุ่ม</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100, display: { xs: "none", md: "table-cell" } }} align="center">สถานะ</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">จัดการ</TableCell>
               </TableRow>
             </TableHead>
@@ -354,21 +354,24 @@ export default function AdminCurriculumPage() {
                       sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       ปี {s.year}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{s.majorName}</Typography>
+                    <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25, flexWrap: "wrap" }}>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>ปี {s.year} ({s.majorCode}) • กลุ่ม {s.room}</Typography>
+                    </Box>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Chip size="small" label={s.majorCode} sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Chip size="small" label={`กลุ่ม ${s.room}`} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
                     <Chip
                       size="small"
                       label={s.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}

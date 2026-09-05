@@ -78,7 +78,7 @@ export default function TrainingsPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" noWrap sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" noWrap sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             การพัฒนาวิชาชีพ และ อบรมสัมมนา
           </Typography>
           <Tooltip title="บันทึกประวัติการอบรม พัฒนาสมรรถนะวิชาชีพครู และการแลกเปลี่ยนเรียนรู้ชุมชนทางวิชาชีพ PLC">
@@ -86,7 +86,7 @@ export default function TrainingsPage() {
               <InfoOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Chip size="small" label="มาตรฐานที่ 2 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="มาตรฐานที่ 2 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>

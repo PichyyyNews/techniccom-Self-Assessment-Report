@@ -583,7 +583,7 @@ export default function AdminUsersPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             จัดการบัญชีผู้ใช้และสิทธิ์การใช้งาน
           </Typography>
           <Tooltip title="กำหนดข้อมูลบุคลากร รูปประจำตัว ควบคุมยศ และสิทธิ์การเข้าถึงแต่ละส่วนของระบบ">
@@ -600,7 +600,7 @@ export default function AdminUsersPage() {
             variant="outlined"
             size="small"
             startIcon={<SecurityIcon sx={{ fontSize: 15 }} />}
-            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem" }}
+            sx={{ px: 1.25, py: 0.35, fontSize: "0.75rem", display: { xs: "none", sm: "inline-flex" } }}
           >
             Matrix สิทธิ์ละเอียด
           </Button>
@@ -634,12 +634,15 @@ export default function AdminUsersPage() {
         <Tabs
           value={activeTab}
           onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
-            px: 2,
+            px: { xs: 0.5, sm: 2 },
             "& .MuiTab-root": {
-              minHeight: 48,
+              minHeight: 44,
               fontWeight: 700,
-              fontSize: "0.875rem",
+              fontSize: { xs: "0.8125rem", sm: "0.875rem" },
               textTransform: "none",
             },
           }}
@@ -720,7 +723,7 @@ export default function AdminUsersPage() {
           </Paper>
 
           {/* Users Table */}
-          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", overflowX: "auto", width: "100%" }}>
             {loading ? (
               <Box sx={{ p: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
                 <CircularProgress size={32} />
@@ -743,13 +746,13 @@ export default function AdminUsersPage() {
                     <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
                       ผู้ใช้งาน
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem", display: { xs: "none", sm: "table-cell" } }}>
                       ยศหรือสิทธิ์
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                    <TableCell sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem", display: { xs: "none", md: "table-cell" } }}>
                       ตำแหน่งและข้อมูล
                     </TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem", display: { xs: "none", sm: "table-cell" } }}>
                       สถานะ
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.75rem" }}>
@@ -772,28 +775,46 @@ export default function AdminUsersPage() {
                               src={user.avatarUrl || undefined}
                               alt={user.name}
                               sx={{
-                                width: 40,
-                                height: 40,
+                                width: { xs: 32, sm: 40 },
+                                height: { xs: 32, sm: 40 },
                                 bgcolor: "primary.main",
                                 fontWeight: 700,
-                                fontSize: "0.875rem",
+                                fontSize: { xs: "0.75rem", sm: "0.875rem" },
                               }}
                             >
                               {userInitial}
                             </Avatar>
                             <Box sx={{ minWidth: 0 }}>
-                              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: "text.primary" }}>
+                              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: "text.primary", maxWidth: { xs: 140, sm: 220 } }}>
                                 {user.name}
                               </Typography>
-                              <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block" }}>
+                              <Typography variant="caption" noWrap sx={{ color: "text.secondary", display: "block", maxWidth: { xs: 140, sm: 220 } }}>
                                 {user.email}
                               </Typography>
+                              <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
+                                <Chip
+                                  label={user.roleDefinition?.title || (isRootUser ? "ROOT" : user.roleCode)}
+                                  size="small"
+                                  color={isRootUser ? "error" : "primary"}
+                                  variant="outlined"
+                                  sx={{ height: 18, fontSize: 10 }}
+                                />
+                                <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.6875rem" }}>
+                                  • {user.position || "บุคลากร"}
+                                </Typography>
+                                <Chip
+                                  label={user.isActive ? "ใช้งาน" : "ระงับ"}
+                                  size="small"
+                                  color={user.isActive ? "success" : "default"}
+                                  sx={{ height: 16, fontSize: 9 }}
+                                />
+                              </Box>
                             </Box>
                           </Box>
                         </TableCell>
 
                         {/* Role Chip */}
-                        <TableCell>
+                        <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                           <Chip
                             icon={<VerifiedUserIcon sx={{ fontSize: "1rem !important" }} />}
                             label={user.roleDefinition?.title || (isRootUser ? "ROOT" : user.roleCode)}
@@ -805,7 +826,7 @@ export default function AdminUsersPage() {
                         </TableCell>
 
                         {/* Position & Info */}
-                        <TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                               <WorkIcon sx={{ fontSize: "0.875rem", color: "text.secondary" }} />
@@ -835,7 +856,7 @@ export default function AdminUsersPage() {
                         </TableCell>
 
                         {/* Status Toggle */}
-                        <TableCell align="center">
+                        <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                           <Chip
                             label={user.isActive ? "ใช้งาน" : "ระงับ"}
                             size="small"

@@ -601,7 +601,7 @@ export default function AdminLicensesPage() {
               <ArrowBackIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
             ตั้งค่าประเภทใบอนุญาตและมาตรฐานวิชาชีพ
           </Typography>
           <Chip

@@ -77,7 +77,7 @@ export function Navbar() {
         top: 0,
         zIndex: 30,
         display: "flex",
-        height: 64,
+        height: { xs: 56, sm: 64 },
         width: "100%",
         alignItems: "center",
         justifyContent: "space-between",
@@ -85,14 +85,14 @@ export function Navbar() {
         borderColor: "divider",
         bgcolor: "rgba(255, 255, 255, 0.95)",
         backdropFilter: "blur(8px)",
-        px: { xs: 2, sm: 3 },
+        px: { xs: 1.25, sm: 2.5, md: 3 },
       }}
     >
       {/* Left side: Mobile Toggle & Page Title */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 }, minWidth: 0, flex: 1, mr: 1 }}>
         <IconButton
           onClick={toggleMobile}
-          sx={{ display: { xs: "inline-flex", md: "none" } }}
+          sx={{ display: { xs: "inline-flex", md: "none" }, p: { xs: 0.5, sm: 0.75 } }}
           size="small"
           aria-label="เปิดเมนูนำทาง"
         >
@@ -102,7 +102,8 @@ export function Navbar() {
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 600,
+            fontWeight: 700,
+            fontSize: { xs: "0.875rem", sm: "1rem", md: "1.125rem" },
             color: "text.primary",
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -114,22 +115,23 @@ export function Navbar() {
       </Box>
 
       {/* Right side: Academic Term Selector + Profile Avatar */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.75, sm: 1.5 }, flexShrink: 0 }}>
         {/* Global Academic Year / Term Selector */}
         <Button
           variant="outlined"
           size="small"
           onClick={(e) => setTermAnchorEl(e.currentTarget)}
-          startIcon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
-          endIcon={<ExpandMoreIcon sx={{ fontSize: 16 }} />}
+          startIcon={<CalendarTodayIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+          endIcon={<ExpandMoreIcon sx={{ fontSize: 16, display: { xs: "none", sm: "inline-flex" } }} />}
           sx={{
             borderColor: "primary.light",
             bgcolor: "primary.50",
             color: "primary.main",
             fontWeight: 600,
-            py: 0.5,
-            px: 1.5,
+            py: { xs: 0.35, sm: 0.5 },
+            px: { xs: 0.75, sm: 1.25 },
             borderRadius: 2,
+            fontSize: { xs: "0.725rem", sm: "0.8125rem" },
           }}
         >
           <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, mr: 0.5 }}>
@@ -140,7 +142,7 @@ export function Navbar() {
             size="small"
             label={availableSemesters.find((s) => s.value === selectedSemester)?.shortLabel || "เทอม 1"}
             color="primary"
-            sx={{ ml: 1, height: 20, fontSize: "0.6875rem", fontWeight: 700 }}
+            sx={{ ml: { xs: 0.5, sm: 1 }, height: { xs: 18, sm: 20 }, fontSize: "0.6875rem", fontWeight: 700 }}
           />
         </Button>
 

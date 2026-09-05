@@ -775,7 +775,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
               label={user?.position || "บุคลากร"}
               color="primary"
               variant="outlined"
-              sx={{ height: 20, fontSize: "0.6875rem" }}
+              sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }}
             />
           )}
         </Box>
@@ -788,7 +788,7 @@ export default function ProfilePage({ targetId }: { targetId?: string }) {
               color={canEdit ? "success" : "default"}
               variant="outlined"
               size="small"
-              sx={{ height: 22, fontSize: "0.725rem" }}
+              sx={{ height: 22, fontSize: "0.725rem", display: { xs: "none", sm: "inline-flex" } }}
             />
           )}
         </Box>

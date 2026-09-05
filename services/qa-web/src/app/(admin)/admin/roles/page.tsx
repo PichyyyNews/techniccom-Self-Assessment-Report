@@ -324,8 +324,8 @@ export default function AdminRolesPage() {
             </IconButton>
           </Tooltip>
 
-          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}>
-            กำหนดยศและสิทธิ์การใช้งาน (Roles & Permissions Matrix)
+          <Typography variant="h2" sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}>
+            กำหนดยศและสิทธิ์การใช้งาน
           </Typography>
 
           <Tooltip title="ระบบกำหนดยศและ Matrix สิทธิ์ Read vs Edit/Action อย่างละเอียดสำหรับทุกปุ่มในระบบ">
@@ -334,7 +334,7 @@ export default function AdminRolesPage() {
             </IconButton>
           </Tooltip>
 
-          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="การบริหารระบบ" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         {/* RIGHT: Academic Term + Primary CTA */}
@@ -402,21 +402,21 @@ export default function AdminRolesPage() {
           <Typography variant="h4" sx={{ fontSize: "0.95rem", fontWeight: 700 }}>
             รายการยศและสิทธิ์ในระบบ ({roles.length} ยศ)
           </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}>
             คลิกปุ่มแก้ไขเพื่อปรับแต่ง Matrix สิทธิ์ Read vs Edit
           </Typography>
         </Box>
 
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 140 }}>รหัสยศ</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 80, sm: 140 } }}>รหัสยศ</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>ชื่อยศ / บทบาท</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>คำอธิบายหน้าที่</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 120 }} align="center">จำนวนผู้ใช้</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 140 }} align="center">สิทธิ์ที่ได้รับ</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">จัดการ</TableCell>
+                <TableCell sx={{ fontWeight: 700, display: { xs: "none", md: "table-cell" } }}>คำอธิบายหน้าที่</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 120, display: { xs: "none", sm: "table-cell" } }} align="center">จำนวนผู้ใช้</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 110, sm: 140 } }} align="center">สิทธิ์ที่ได้รับ</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 80 }} align="center">จัดการ</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -438,7 +438,7 @@ export default function AdminRolesPage() {
                           }}
                         />
                         {r.isSystem && (
-                          <Chip size="small" label="ระบบ" variant="outlined" sx={{ height: 18, fontSize: "0.5625rem" }} />
+                          <Chip size="small" label="ระบบ" variant="outlined" sx={{ height: 18, fontSize: "0.5625rem", display: { xs: "none", sm: "inline-flex" } }} />
                         )}
                       </Box>
                     </TableCell>
@@ -446,13 +446,16 @@ export default function AdminRolesPage() {
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>
                         {r.title}
                       </Typography>
+                      <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{r._count?.users || 0} คน</Typography>
+                      </Box>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {r.description || "-"}
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                       <Chip
                         size="small"
                         label={`${r._count?.users || 0} คน`}

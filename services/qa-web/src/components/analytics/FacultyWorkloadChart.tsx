@@ -64,10 +64,10 @@ export function FacultyWorkloadChart({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Row 1: Training Histogram & Workload Comparison */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: { xs: 1.5, sm: 2 } }}>
         {/* 1. Training Hours Distribution Histogram */}
-        <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1, mb: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <AccessTimeIcon sx={{ fontSize: 20, color: "primary.main" }} />
               <Box>
@@ -79,7 +79,7 @@ export function FacultyWorkloadChart({
                 </Typography>
               </Box>
             </Box>
-            <Chip size="small" label="เกณฑ์ขั้นต่ำ 20 ชม." color="success" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+            <Chip size="small" label="เกณฑ์ขั้นต่ำ 20 ชม." color="success" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
           </Box>
 
           <Box sx={{ width: "100%", height: 300 }}>
@@ -94,8 +94,8 @@ export function FacultyWorkloadChart({
         </Paper>
 
         {/* 2. Teacher Workload Comparison */}
-        <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+        <Paper sx={{ p: { xs: 1.5, sm: 2 }, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1, mb: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <BalanceIcon sx={{ fontSize: 20, color: "secondary.main" }} />
               <Box>
@@ -107,7 +107,7 @@ export function FacultyWorkloadChart({
                 </Typography>
               </Box>
             </Box>
-            <Chip size="small" label="สัปดาห์ละไม่เกิน 24 คาบ" variant="outlined" sx={{ height: 22, fontSize: "0.7rem" }} />
+            <Chip size="small" label="สัปดาห์ละไม่เกิน 24 คาบ" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
           </Box>
 
           <Box sx={{ width: "100%", height: 300 }}>

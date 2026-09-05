@@ -292,7 +292,7 @@ export function AttendanceRiskChart({
 
       {/* 3. Early Warning Action Table (At-Risk Students) */}
       <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5, flexWrap: "wrap", gap: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, mb: 1.5, gap: 1 }}>
           <Box>
             <Typography variant="h3" sx={{ fontSize: "0.95rem", fontWeight: 700, color: "error.main", display: "flex", alignItems: "center", gap: 0.75 }}>
               <WarningAmberIcon fontSize="small" /> ระบบเตือนภัยล่วงหน้า: นักเรียนกลุ่มเสี่ยงหมดสิทธิ์สอบ (Early Warning System)
@@ -302,7 +302,7 @@ export function AttendanceRiskChart({
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 0.75 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
             <Button
               size="small"
               variant={filterRisk === "ALL" ? "contained" : "outlined"}
@@ -338,18 +338,18 @@ export function AttendanceRiskChart({
             ยอดเยี่ยม! ในกลุ่มเป้าหมายนี้ไม่มีนักเรียนที่เวลาเรียนต่ำกว่าเกณฑ์ 80%
           </Alert>
         ) : (
-          <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, maxHeight: 320 }}>
+          <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, maxHeight: 320, overflowX: "auto", width: "100%" }}>
             <Table size="small" stickyHeader>
               <TableHead sx={{ bgcolor: "action.hover" }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 120 }}>รหัสนักศึกษา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: { xs: 95, sm: 120 } }}>รหัสนักศึกษา</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem" }}>ชื่อ - นามสกุล</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 100 }}>กลุ่มเรียน</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 90, textAlign: "center" }}>ร้อยละเข้าเรียน</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center" }}>ขาด (คาบ)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center" }}>ลา (คาบ)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center" }}>สาย (คาบ)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 130, textAlign: "center" }}>สถานะความเสี่ยง</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: { xs: 80, sm: 100 } }}>กลุ่มเรียน</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 85, textAlign: "center" }}>ร้อยละเข้าเรียน</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center", display: { xs: "none", sm: "table-cell" } }}>ขาด (คาบ)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center", display: { xs: "none", sm: "table-cell" } }}>ลา (คาบ)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 70, textAlign: "center", display: { xs: "none", sm: "table-cell" } }}>สาย (คาบ)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: { xs: 110, sm: 130 }, textAlign: "center" }}>สถานะความเสี่ยง</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -363,16 +363,16 @@ export function AttendanceRiskChart({
                     <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center", fontWeight: 700, color: s.riskLevel === "CRITICAL" ? "error.main" : "warning.main" }}>
                       {s.rate}%
                     </TableCell>
-                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center", color: "error.main", fontWeight: 600 }}>{s.absent}</TableCell>
-                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center" }}>{s.leave}</TableCell>
-                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center" }}>{s.late}</TableCell>
+                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center", color: "error.main", fontWeight: 600, display: { xs: "none", sm: "table-cell" } }}>{s.absent}</TableCell>
+                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center", display: { xs: "none", sm: "table-cell" } }}>{s.leave}</TableCell>
+                    <TableCell sx={{ fontSize: "0.8125rem", textAlign: "center", display: { xs: "none", sm: "table-cell" } }}>{s.late}</TableCell>
                     <TableCell sx={{ textAlign: "center" }}>
                       {s.riskLevel === "CRITICAL" ? (
                         <Chip
                           size="small"
                           color="error"
                           icon={<ErrorIcon sx={{ fontSize: 13 }} />}
-                          label="วิกฤต (ขาดสิทธิ์สอบ)"
+                          label="วิกฤต (<70%)"
                           sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 700 }}
                         />
                       ) : (
@@ -380,7 +380,7 @@ export function AttendanceRiskChart({
                           size="small"
                           color="warning"
                           icon={<WarningAmberIcon sx={{ fontSize: 13 }} />}
-                          label="เสี่ยงเฝ้าระวัง (70-79%)"
+                          label="เฝ้าระวัง"
                           sx={{ height: 22, fontSize: "0.6875rem", fontWeight: 700 }}
                         />
                       )}

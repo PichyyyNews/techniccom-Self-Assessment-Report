@@ -743,25 +743,40 @@ export default function AttendancePage() {
       </Box>
 
       {/* 4. Tabs: Student Summary vs Session History vs EDA Analytics */}
-      <Paper sx={{ border: "1px solid", borderColor: "divider" }}>
-        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
+      <Paper sx={{ border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            minHeight: 40,
+            width: "100%",
+            "& .MuiTab-root": {
+              minHeight: 40,
+              py: 0.5,
+              px: { xs: 1, sm: 1.5 },
+              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
+              fontWeight: 600,
+              textTransform: "none",
+            },
+          }}
+        >
           <Tab
             icon={<AssessmentIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label={`สรุปสถิติเวลาเรียนรายคน (${summaryData?.students?.length || 0} คน)`}
-            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+            label={`สรุปเวลาเรียนรายคน (${summaryData?.students?.length || 0} คน)`}
           />
           <Tab
             icon={<HistoryIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label={`ประวัติการเช็กชื่อย้อนหลัง (${sessions.length} ครั้ง)`}
-            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+            label={`ประวัติการเช็กชื่อ (${sessions.length} ครั้ง)`}
           />
           <Tab
             icon={<QueryStatsIcon sx={{ fontSize: 16 }} />}
             iconPosition="start"
-            label="วิเคราะห์สถิติเวลาเรียนและกลุ่มเสี่ยง (EDA Analytics)"
-            sx={{ fontSize: "0.8125rem", minHeight: 40 }}
+            label="วิเคราะห์สถิติเวลาเรียนและกลุ่มเสี่ยง (EDA)"
           />
         </Tabs>
       </Paper>
@@ -770,19 +785,19 @@ export default function AttendancePage() {
       {activeTab === 0 && (
         <Paper sx={{ overflow: "hidden" }}>
           {loadingData && <LinearProgress />}
-          <TableContainer sx={{ maxHeight: 600 }}>
+          <TableContainer sx={{ maxHeight: 600, overflowX: "auto", width: "100%" }}>
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, width: 130 }}>รหัสนักศึกษา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 105, sm: 130 } }}>รหัสนักศึกษา</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>ชื่อ - นามสกุล</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 70 }} align="center">มา</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 70 }} align="center">สาย</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 70 }} align="center">ขาด</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 70 }} align="center">ลา</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">รวมคาบ</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 110 }} align="center">ร้อยละเวลาเรียน</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 130 }} align="center">เกณฑ์ 80% (SAR)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60, display: { xs: "none", sm: "table-cell" } }} align="center">มา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60, display: { xs: "none", sm: "table-cell" } }} align="center">สาย</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60, display: { xs: "none", sm: "table-cell" } }} align="center">ขาด</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60, display: { xs: "none", sm: "table-cell" } }} align="center">ลา</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 80, display: { xs: "none", md: "table-cell" } }} align="center">รวมคาบ</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 90, sm: 110 } }} align="center">ร้อยละ</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: { xs: 110, sm: 130 } }} align="center">เกณฑ์ 80%</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -805,33 +820,36 @@ export default function AttendancePage() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
+                        <Typography variant="body2" sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
                           {std.prefix} {std.firstName} {std.lastName}
                         </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "block", sm: "none" }, fontSize: "0.6875rem" }}>
+                          มา {std.present} • สาย {std.late} • ขาด {std.absent}
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "success.main" }}>
                           {std.present}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "warning.main" }}>
                           {std.late}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: "error.main" }}>
                           {std.absent}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: "info.main" }}>
+                      <TableCell align="center" sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           {std.leave}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
-                          {std.totalChecked} คาบ
+                      <TableCell align="center" sx={{ display: { xs: "none", md: "table-cell" } }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {std.totalChecked}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -848,8 +866,9 @@ export default function AttendancePage() {
                       <TableCell align="center">
                         <Chip
                           size="small"
-                          label={std.isPassing80 ? "มีสิทธิ์สอบ" : "หมดสิทธิ์สอบ (ม.ส.)"}
+                          label={std.isPassing80 ? "มีสิทธิ์สอบ" : "ม.ส. (<80%)"}
                           color={std.isPassing80 ? "success" : "error"}
+                          variant={std.isPassing80 ? "outlined" : "filled"}
                           sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700 }}
                         />
                       </TableCell>

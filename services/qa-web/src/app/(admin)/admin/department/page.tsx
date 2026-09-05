@@ -293,7 +293,7 @@ export default function AdminDepartmentPage() {
           <Typography
             variant="h2"
             noWrap
-            sx={{ fontWeight: 700, fontSize: "1.125rem", color: "text.primary" }}
+            sx={{ fontWeight: 700, fontSize: { xs: "0.95rem", sm: "1.125rem" }, color: "text.primary" }}
           >
             บริบทและข้อมูลแผนกวิชา
           </Typography>
@@ -309,7 +309,7 @@ export default function AdminDepartmentPage() {
             label="ข้อมูลบริบท SAR"
             color="primary"
             variant="outlined"
-            sx={{ height: 20, fontSize: "0.6875rem" }}
+            sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }}
           />
         </Box>
 
@@ -357,6 +357,7 @@ export default function AdminDepartmentPage() {
           onChange={(_, val) => setActiveTab(val)}
           variant="scrollable"
           scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
             minHeight: 40,
             px: 1,
@@ -585,15 +586,15 @@ export default function AdminDepartmentPage() {
                 </Button>
               </Box>
 
-              <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+              <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflowX: "auto", width: "100%" }}>
                 <Table size="small">
                   <TableHead sx={{ bgcolor: "action.hover" }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 50 }}>ลำดับ</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 200 }}>ชื่อห้องปฏิบัติการ</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 100 }}>รหัสห้อง</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 100 }}>ความจุ (ที่นั่ง)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem" }}>ครุภัณฑ์และอุปกรณ์สำคัญ</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: { xs: 150, sm: 200 } }}>ชื่อห้องปฏิบัติการ</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 100, display: { xs: "none", sm: "table-cell" } }}>รหัสห้อง</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 100 }}>ความจุ</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", display: { xs: "none", md: "table-cell" } }}>ครุภัณฑ์และอุปกรณ์สำคัญ</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 80, textAlign: "center" }}>จัดการ</TableCell>
                     </TableRow>
                   </TableHead>
@@ -608,12 +609,17 @@ export default function AdminDepartmentPage() {
                       form.laboratories.map((lab, idx) => (
                         <TableRow key={idx} hover>
                           <TableCell sx={{ fontSize: "0.8125rem" }}>{idx + 1}</TableCell>
-                          <TableCell sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>{lab.name}</TableCell>
-                          <TableCell sx={{ fontSize: "0.8125rem" }}>
+                          <TableCell sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+                            {lab.name}
+                            <Box sx={{ display: { xs: "flex", sm: "none" }, alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                              <Chip size="small" label={lab.room || "-"} variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ fontSize: "0.8125rem", display: { xs: "none", sm: "table-cell" } }}>
                             <Chip size="small" label={lab.room || "-"} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                           </TableCell>
                           <TableCell sx={{ fontSize: "0.8125rem" }}>{lab.capacity} คน</TableCell>
-                          <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{lab.equipment || "-"}</TableCell>
+                          <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary", display: { xs: "none", md: "table-cell" } }}>{lab.equipment || "-"}</TableCell>
                           <TableCell sx={{ textAlign: "center" }}>
                             <Tooltip title="แก้ไข">
                               <IconButton size="small" onClick={() => handleOpenLabDialog(idx)} sx={{ p: 0.3 }}>
@@ -658,14 +664,14 @@ export default function AdminDepartmentPage() {
                 </Button>
               </Box>
 
-              <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+              <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflowX: "auto", width: "100%" }}>
                 <Table size="small">
                   <TableHead sx={{ bgcolor: "action.hover" }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 50 }}>ลำดับ</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem" }}>ตัวบ่งชี้ / ประเด็นการประเมิน</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 140 }}>ค่าเป้าหมาย</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 160 }}>เกณฑ์ SAR อ้างอิง</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 160, display: { xs: "none", sm: "table-cell" } }}>เกณฑ์ SAR อ้างอิง</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", width: 80, textAlign: "center" }}>จัดการ</TableCell>
                     </TableRow>
                   </TableHead>

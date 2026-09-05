@@ -246,23 +246,25 @@ export default async function DashboardPage() {
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, alignSelf: { xs: "stretch", md: "auto" } }}>
-            <Link href="/dashboard/students" style={{ textDecoration: "none" }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, alignSelf: { xs: "stretch", md: "auto" }, width: { xs: "100%", md: "auto" } }}>
+            <Link href="/dashboard/students" style={{ textDecoration: "none", flex: 1 }}>
               <Button
                 size="small"
                 variant="outlined"
+                fullWidth
                 startIcon={<SchoolIcon sx={{ fontSize: 16 }} />}
-                sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem" }}
+                sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem", whiteSpace: "nowrap" }}
               >
                 สลับไปงานนักเรียน
               </Button>
             </Link>
-            <Link href="/quick-upload" style={{ textDecoration: "none" }}>
+            <Link href="/quick-upload" style={{ textDecoration: "none", flex: 1 }}>
               <Button
                 size="small"
                 variant="contained"
+                fullWidth
                 startIcon={<BoltIcon sx={{ fontSize: 16 }} />}
-                sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem", fontWeight: 600 }}
+                sx={{ px: 1.25, py: 0.4, fontSize: "0.75rem", fontWeight: 600, whiteSpace: "nowrap" }}
               >
                 อัปโหลดหลักฐาน
               </Button>
@@ -272,7 +274,7 @@ export default async function DashboardPage() {
       </Paper>
 
       {/* 2. Personnel Details Grid */}
-      <Paper sx={{ p: 2.5 }}>
+      <Paper sx={{ p: { xs: 1.5, sm: 2.5 } }}>
         <Typography variant="h4" sx={{ mb: 2 }}>
           ข้อมูลส่วนตัวและตำแหน่งงาน
         </Typography>

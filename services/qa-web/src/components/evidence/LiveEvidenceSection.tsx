@@ -260,15 +260,15 @@ export function LiveEvidenceSection({
           </Box>
         </Box>
       ) : (
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto", width: "100%" }}>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 50 }}></TableCell>
+                <TableCell sx={{ width: { xs: 44, sm: 50 }, px: { xs: 0.75, sm: 1.5 } }}></TableCell>
                 <TableCell>ชื่อเอกสารและหลักฐาน</TableCell>
-                <TableCell>ผู้จัดเก็บ</TableCell>
-                <TableCell>วันเวลาที่อัปโหลด</TableCell>
-                <TableCell>ขนาด</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>ผู้จัดเก็บ</TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>วันเวลาที่อัปโหลด</TableCell>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>ขนาด</TableCell>
                 <TableCell align="right">การจัดการ</TableCell>
               </TableRow>
             </TableHead>
@@ -291,7 +291,7 @@ export function LiveEvidenceSection({
                     }}
                   >
                     {/* Mini Thumbnail */}
-                    <TableCell sx={{ pr: 0 }}>
+                    <TableCell sx={{ pr: 0, px: { xs: 0.5, sm: 1.5 }, width: { xs: 44, sm: 50 } }}>
                       <EvidenceThumbnail
                         fileUrl={file.fileUrl}
                         fileType={file.fileType}
@@ -317,7 +317,8 @@ export function LiveEvidenceSection({
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              maxWidth: { xs: 200, sm: 320 },
+                              maxWidth: { xs: 150, sm: 260, md: 360 },
+                              fontSize: { xs: "0.785rem", sm: "0.875rem" },
                             }}
                           >
                             {file.title}
@@ -340,7 +341,8 @@ export function LiveEvidenceSection({
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
-                            maxWidth: { xs: 200, sm: 320 },
+                            maxWidth: { xs: 150, sm: 260, md: 360 },
+                            fontSize: { xs: "0.7rem", sm: "0.75rem" },
                           }}
                         >
                           {galleryCount > 1
@@ -358,7 +360,7 @@ export function LiveEvidenceSection({
                     </TableCell>
 
                     {/* Uploader */}
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Avatar
                           src={file.user?.avatarUrl || undefined}
@@ -386,7 +388,7 @@ export function LiveEvidenceSection({
                     </TableCell>
 
                     {/* Upload Time */}
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         <AccessTimeIcon sx={{ fontSize: 13, color: "text.secondary" }} />
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -396,7 +398,7 @@ export function LiveEvidenceSection({
                     </TableCell>
 
                     {/* File Size */}
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
                       </Typography>
@@ -404,13 +406,14 @@ export function LiveEvidenceSection({
 
                     {/* Actions */}
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: { xs: 0.25, sm: 0.5 } }}>
                         {/* Star Button */}
                         <Tooltip title={isStarred ? "เลิกติดดาว" : "ติดดาว"}>
                           <IconButton
                             size="small"
                             color={isStarred ? "warning" : "default"}
                             onClick={(e) => handleToggleStar(file, e)}
+                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
                           >
                             {isStarred ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
                           </IconButton>
@@ -424,6 +427,7 @@ export function LiveEvidenceSection({
                               setInitialSlideIndex(0);
                               setDetailsFile(file);
                             }}
+                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
                           >
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
@@ -438,6 +442,7 @@ export function LiveEvidenceSection({
                             download={file.fileName}
                             target="_blank"
                             rel="noopener noreferrer"
+                            sx={{ p: { xs: 0.25, sm: 0.5 } }}
                           >
                             <FileDownloadIcon fontSize="small" />
                           </IconButton>

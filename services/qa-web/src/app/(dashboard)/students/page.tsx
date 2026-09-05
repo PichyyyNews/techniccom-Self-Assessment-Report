@@ -547,7 +547,7 @@ export default function StudentsPage() {
             </IconButton>
           </Tooltip>
 
-          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+          <Chip size="small" label="มาตรฐานที่ 1 SAR" color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem", display: { xs: "none", sm: "inline-flex" } }} />
         </Box>
 
         {/* RIGHT: Academic Term + Action Buttons */}
@@ -629,14 +629,14 @@ export default function StudentsPage() {
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
             จำนวนนักเรียนและนักศึกษาทั้งหมด
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
               {statsLoading ? "..." : `${stats.totalStudents.toLocaleString()} คน`}
             </Typography>
             <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
               ปวช {stats.vocationalCount} • ปวส {stats.highVocationalCount}
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", ml: "auto" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", ml: { xs: 0, sm: "auto" } }}>
               ชาย {stats.maleCount} / หญิง {stats.femaleCount}
             </Typography>
           </Box>
@@ -646,14 +646,14 @@ export default function StudentsPage() {
           <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25, fontSize: "0.75rem" }}>
             อัตราการคงอยู่ของผู้เรียน
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 1 }}>
             <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
               {statsLoading ? "..." : `${stats.retentionRate}%`}
             </Typography>
             <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
               กำลังศึกษา {stats.activeStudents} คน
             </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", ml: "auto" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", ml: { xs: 0, sm: "auto" } }}>
               เกณฑ์ สอศ. ≥ 90%
             </Typography>
           </Box>
@@ -682,7 +682,7 @@ export default function StudentsPage() {
           sx={{ minWidth: 220, flex: { xs: "1 1 100%", sm: "1 1 auto" } }}
         />
 
-        <FormControl size="small" sx={{ minWidth: 110 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "calc(50% - 6px)", sm: 110 }, flex: { xs: "1 1 calc(50% - 6px)", sm: "initial" } }}>
           <InputLabel>ระดับชั้น</InputLabel>
           <Select
             value={filterLevel}
@@ -698,7 +698,7 @@ export default function StudentsPage() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 90 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "calc(50% - 6px)", sm: 90 }, flex: { xs: "1 1 calc(50% - 6px)", sm: "initial" } }}>
           <InputLabel>ชั้นปี</InputLabel>
           <Select
             value={filterYear}
@@ -715,7 +715,7 @@ export default function StudentsPage() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "calc(50% - 6px)", sm: 120 }, flex: { xs: "1 1 calc(50% - 6px)", sm: "initial" } }}>
           <InputLabel>สถานะ</InputLabel>
           <Select
             value={filterStatus}
@@ -752,17 +752,17 @@ export default function StudentsPage() {
           </Typography>
         </Box>
 
-        <TableContainer sx={{ maxHeight: 600 }}>
+        <TableContainer sx={{ maxHeight: 600, overflowX: "auto", width: "100%" }}>
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 130 }}>รหัสนักศึกษา</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 105, sm: 130 } }}>รหัสนักศึกษา</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>ชื่อ - นามสกุล</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>ระดับชั้น / สาขาวิชา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 70 }}>ห้อง</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>ครูที่ปรึกษา</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }} align="center">สถานะ</TableCell>
-                {canEdit && <TableCell sx={{ fontWeight: 700, width: 90 }} align="center">จัดการ</TableCell>}
+                <TableCell sx={{ fontWeight: 700, display: { xs: "none", sm: "table-cell" } }}>ระดับชั้น / สาขาวิชา</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 70, display: { xs: "none", md: "table-cell" } }}>ห้อง</TableCell>
+                <TableCell sx={{ fontWeight: 700, display: { xs: "none", lg: "table-cell" } }}>ครูที่ปรึกษา</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: { xs: 85, sm: 100 } }} align="center">สถานะ</TableCell>
+                {canEdit && <TableCell sx={{ fontWeight: 700, width: { xs: 75, sm: 90 } }} align="center">จัดการ</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -783,11 +783,14 @@ export default function StudentsPage() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
+                      <Typography variant="body2" sx={{ fontSize: "0.8125rem", fontWeight: 600 }}>
                         {std.prefix} {std.firstName} {std.lastName}
                       </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: { xs: "block", sm: "none" }, fontSize: "0.7rem" }}>
+                        {std.level}.{std.year} ห้อง {std.room} ({std.majorCode})
+                      </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                       <Typography variant="caption" sx={{ color: "text.primary", display: "block", fontWeight: 600 }}>
                         {std.level}.{std.year} {std.majorName}
                       </Typography>
@@ -795,10 +798,10 @@ export default function StudentsPage() {
                         ({std.majorCode})
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                       <Chip size="small" label={`กลุ่ม ${std.room}`} variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
                       {std.advisor?.name ? (
                         <Chip size="small" label={std.advisor.name} color="primary" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                       ) : (
