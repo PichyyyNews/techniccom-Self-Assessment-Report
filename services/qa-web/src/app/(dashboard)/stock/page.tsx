@@ -225,7 +225,7 @@ export default function StockPage() {
   const totalSizeMB = files.reduce((acc, f) => acc + f.fileSize, 0) / (1024 * 1024);
 
   return (
-    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
       {/* Breadcrumbs Navigation */}
       <PageBreadcrumbs />
 

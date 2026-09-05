@@ -1,4 +1,4 @@
-﻿# Design & Architecture Rules for Techniccom QA / SAR Web App
+# Design & Architecture Rules for Techniccom QA / SAR Web App
 
 This document defines the strict UI design system, architecture guidelines, and UX consistency rules for the Techniccom Self-Assessment Report (SAR) Web Application. All AI models (Gemini / Antigravity), developers, and contributors MUST adhere to these rules unconditionally when generating, modifying, or refactoring code.
 
@@ -21,7 +21,27 @@ This document defines the strict UI design system, architecture guidelines, and 
 
 ---
 
-## 2. Universal Page Header & Back Button Standards
+## 2. Page Root Container Standards
+
+All page components (`page.tsx`) across both `(admin)` and `(dashboard)` routes MUST use the standardized root container layout matching the reference layout in `/admin/licenses`:
+
+```tsx
+<Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
+  {/* 0. Breadcrumbs Navigation */}
+  <PageBreadcrumbs />
+
+  {/* 1. Ultra-Compact Page Header */}
+  ...
+</Box>
+```
+
+- **Do NOT** constrain pages with arbitrary fixed `maxWidth` (such as `maxWidth: 1300`, `maxWidth: 1400`, `mx: "auto"`).
+- Use uniform responsive padding: `p: { xs: 1.5, sm: 2.5 }`.
+- Use uniform root element spacing: `gap: 2`.
+
+---
+
+## 3. Universal Page Header & Back Button Standards
 
 Every page that is a sub-page, child route, or detailed view (e.g., all pages under `/teachers/*`, `/students/*`, `/admin/*`, `/quick-upload`, `/stock`, `/profile`) MUST implement the **Ultra-Compact Page Header** according to the following exact structure:
 
@@ -99,7 +119,7 @@ Every page that is a sub-page, child route, or detailed view (e.g., all pages un
 
 ---
 
-## 3. Anti-Duplication Rules (No Duplicate Buttons on Same Screen)
+## 4. Anti-Duplication Rules (No Duplicate Buttons on Same Screen)
 
 1. **Single Primary CTA per Scope**: A page must have only one primary action button per task. Never display two buttons that perform the exact same action (e.g. going to `/quick-upload` or creating a backup snapshot) in different places on the same screen.
 2. **Embedded Components**: Reusable components such as `LiveEvidenceSection` must accept props like `hideUploadButton?: boolean`. When embedded in a parent page that already provides a descriptive primary action button in its header (e.g., "เพิ่มแผนการสอน", "เพิ่มงานวิจัย", "เพิ่มการอบรม", "บันทึกสมรรถนะ"), always pass `hideUploadButton` to eliminate redundant upload buttons.
@@ -107,7 +127,7 @@ Every page that is a sub-page, child route, or detailed view (e.g., all pages un
 
 ---
 
-## 4. Typography & Information Density
+## 5. Typography & Information Density
 
 - All pages follow an **Ultra-Compact / High Information Density** layout tailored for academic and institutional evaluation:
   - Page Titles: `fontSize: "1.125rem"`, `fontWeight: 700`
@@ -119,7 +139,7 @@ Every page that is a sub-page, child route, or detailed view (e.g., all pages un
 
 ---
 
-## 5. Thai Localization & Academic Year Standards
+## 6. Thai Localization & Academic Year Standards
 
 - Date & Time display must follow Thai Buddhist Era conventions:
   - `day month_th year_be` (e.g. `12 ส.ค. 2568 เวลา 14:30 น.`)

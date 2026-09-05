@@ -535,7 +535,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
         <Skeleton variant="text" width={240} height={32} />
         <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 3 }} />
         <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 3 }} />
@@ -564,7 +564,7 @@ export default function ProfilePage() {
   const teacherLicenses: TeacherLicenseData[] = user?.teacherLicenses || [];
 
   return (
-    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
       {/* Breadcrumbs */}
       <PageBreadcrumbs
         items={[

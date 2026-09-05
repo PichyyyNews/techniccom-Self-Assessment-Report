@@ -264,7 +264,7 @@ export default function AdminDepartmentPage() {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
       {/* 0. Breadcrumbs */}
       <PageBreadcrumbs />
 

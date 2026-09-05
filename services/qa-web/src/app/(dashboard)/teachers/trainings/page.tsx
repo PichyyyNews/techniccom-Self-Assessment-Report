@@ -65,7 +65,7 @@ export default function TrainingsPage() {
   }, [fetchSummary]);
 
   return (
-    <Box sx={{ p: { xs: 1.25, sm: 2 }, maxWidth: 1300, mx: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 1.5, sm: 2.5 } }}>
       {/* Breadcrumbs Navigation */}
       <PageBreadcrumbs />
 
