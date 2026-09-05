@@ -714,6 +714,9 @@ export default function SystemAdminPage() {
               fontWeight: 700,
               fontSize: { xs: "0.8125rem", sm: "0.875rem" },
               textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >

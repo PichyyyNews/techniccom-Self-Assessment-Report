@@ -180,14 +180,10 @@ export default function StudentDashboardPage() {
       <Paper
         elevation={0}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
           border: "1px solid",
           borderColor: "divider",
           borderRadius: 1.5,
           px: 1,
-          overflow: "hidden",
         }}
       >
         <Tabs
@@ -197,15 +193,18 @@ export default function StudentDashboardPage() {
           scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{
-            minHeight: 40,
+            minHeight: 44,
             width: "100%",
             "& .MuiTab-root": {
-              minHeight: 40,
-              py: 0.5,
-              px: { xs: 1, sm: 1.5 },
-              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
+              minHeight: 44,
+              py: 0.75,
+              px: { xs: 1.5, sm: 2 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
               fontWeight: 600,
               textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >

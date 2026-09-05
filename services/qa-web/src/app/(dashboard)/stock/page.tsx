@@ -284,7 +284,19 @@ export default function StockPage() {
             allowScrollButtonsMobile
             textColor="primary"
             indicatorColor="primary"
-            sx={{ minHeight: 32, "& .MuiTab-root": { minHeight: 32, py: 0.25, px: 1.25, fontSize: "0.8rem" } }}
+            sx={{
+              minHeight: 36,
+              "& .MuiTab-root": {
+                minHeight: 36,
+                py: 0.5,
+                px: 1.5,
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                textTransform: "none",
+                whiteSpace: "nowrap",
+                maxWidth: "none",
+              },
+            }}
           >
             <Tab label="ไฟล์ทั้งหมดในวิทยาลัย" value="all" />
             <Tab label="เฉพาะไฟล์ของฉัน" value="my" />

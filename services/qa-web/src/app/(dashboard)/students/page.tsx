@@ -1351,18 +1351,33 @@ export default function StudentsPage() {
 
           {/* Import Mode Tabs */}
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <Tabs value={importTab} onChange={(_, val) => setImportTab(val)}>
+            <Tabs
+              value={importTab}
+              onChange={(_, val) => setImportTab(val)}
+              sx={{
+                minHeight: 44,
+                "& .MuiTab-root": {
+                  minHeight: 44,
+                  py: 0.75,
+                  px: 2,
+                  fontSize: "0.8125rem",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                  maxWidth: "none",
+                  lineHeight: 1.5,
+                },
+              }}
+            >
               <Tab
                 icon={<ContentPasteIcon sx={{ fontSize: 16 }} />}
                 iconPosition="start"
                 label="คัดลอกและวาง (Dual-Textarea)"
-                sx={{ fontSize: "0.8125rem", minHeight: 40 }}
               />
               <Tab
                 icon={<TableChartIcon sx={{ fontSize: 16 }} />}
                 iconPosition="start"
                 label="อัปโหลดไฟล์ Excel / CSV"
-                sx={{ fontSize: "0.8125rem", minHeight: 40 }}
               />
             </Tabs>
           </Box>

@@ -93,15 +93,21 @@ export function DashboardEdaSection({
         <Tabs
           value={activeTab}
           onChange={(_, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
-            minHeight: 40,
+            minHeight: 44,
             "& .MuiTab-root": {
-              minHeight: 40,
-              py: 0.5,
-              px: 1.5,
-              fontSize: "0.8125rem",
+              minHeight: 44,
+              py: 0.75,
+              px: { xs: 1.5, sm: 2 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
               fontWeight: 600,
               textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >
@@ -118,7 +124,7 @@ export function DashboardEdaSection({
         </Tabs>
 
         {activeTab === 1 && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, pr: 1, flexShrink: 0 }}>
             <Chip
               size="small"
               label={`รอบ ${termLabel}`}

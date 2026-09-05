@@ -380,9 +380,18 @@ export default function AdminCoursesPage() {
           scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{
+            minHeight: 44,
+            px: { xs: 0.5, sm: 1 },
             "& .MuiTab-root": {
-              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
-              minHeight: 40,
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+              fontWeight: 600,
+              minHeight: 44,
+              py: 0.75,
+              px: { xs: 1.5, sm: 2 },
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >

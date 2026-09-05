@@ -747,7 +747,7 @@ export default function AttendancePage() {
       </Box>
 
       {/* 4. Tabs: Student Summary vs Session History vs EDA Analytics */}
-      <Paper sx={{ border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+      <Paper sx={{ border: "1px solid", borderColor: "divider" }}>
         <Tabs
           value={activeTab}
           onChange={(_, val) => setActiveTab(val)}
@@ -755,15 +755,18 @@ export default function AttendancePage() {
           scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{
-            minHeight: 40,
+            minHeight: 44,
             width: "100%",
             "& .MuiTab-root": {
-              minHeight: 40,
-              py: 0.5,
-              px: { xs: 1, sm: 1.5 },
-              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
+              minHeight: 44,
+              py: 0.75,
+              px: { xs: 1.5, sm: 2 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
               fontWeight: 600,
               textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >

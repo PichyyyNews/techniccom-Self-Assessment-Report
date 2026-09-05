@@ -363,15 +363,18 @@ export default function AdminDepartmentPage() {
           scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{
-            minHeight: 40,
+            minHeight: 44,
             px: 1,
             "& .MuiTab-root": {
-              minHeight: 40,
-              py: 0.5,
-              px: 1.5,
-              fontSize: "0.8125rem",
+              minHeight: 44,
+              py: 0.75,
+              px: { xs: 1.5, sm: 2 },
+              fontSize: { xs: "0.8rem", sm: "0.875rem" },
               fontWeight: 600,
               textTransform: "none",
+              whiteSpace: "nowrap",
+              maxWidth: "none",
+              lineHeight: 1.5,
             },
           }}
         >
