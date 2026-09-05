@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
     const retentionRate =
       totalStudents > 0
         ? Number(((activeStudents / totalStudents) * 100).toFixed(1))
-        : 100;
+        : null;
 
     const attendanceRate =
       attendanceTotalCount > 0
         ? Number(((attendancePresentCount / attendanceTotalCount) * 100).toFixed(1))
-        : 95.0;
+        : null;
 
     return NextResponse.json({
       totalStudents,

@@ -8,8 +8,10 @@ import Chip from "@mui/material/Chip";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BalanceIcon from "@mui/icons-material/Balance";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AddIcon from "@mui/icons-material/Add";
 import LinearProgress from "@mui/material/LinearProgress";
 import { BarChart } from "@mui/x-charts/BarChart";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface TrainingBin {
   range: string;
@@ -82,14 +84,26 @@ export function FacultyWorkloadChart({
             <Chip size="small" label="เกณฑ์ขั้นต่ำ 20 ชม." color="success" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
           </Box>
 
-          <Box sx={{ width: "100%", height: 300 }}>
-            <BarChart
-              dataset={binChartData}
-              xAxis={[{ scaleType: "band", dataKey: "range" }]}
-              series={[{ dataKey: "จำนวนครู", label: "จำนวนครู (คน)", color: "#0ea5e9" }]}
-              height={280}
-              margin={{ top: 20, bottom: 35, left: 40, right: 10 }}
-            />
+          <Box sx={{ width: "100%", minHeight: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {binChartData.every((b) => b["จำนวนครู"] === 0) ? (
+              <EmptyState
+                compact
+                icon={<AccessTimeIcon sx={{ fontSize: 36, color: "text.secondary" }} />}
+                title="ยังไม่มีบันทึกชั่วโมงอบรม"
+                description="ข้อมูลจะแสดงเมื่อมีการอัปโหลดหลักฐานการอบรมพัฒนาวิชาชีพ"
+                actionLabel="อัปโหลดหลักฐาน"
+                actionHref="/quick-upload"
+                actionIcon={<AddIcon sx={{ fontSize: 15 }} />}
+              />
+            ) : (
+              <BarChart
+                dataset={binChartData}
+                xAxis={[{ scaleType: "band", dataKey: "range" }]}
+                series={[{ dataKey: "จำนวนครู", label: "จำนวนครู (คน)", color: "#0ea5e9" }]}
+                height={280}
+                margin={{ top: 20, bottom: 35, left: 40, right: 10 }}
+              />
+            )}
           </Box>
         </Paper>
 
@@ -110,23 +124,35 @@ export function FacultyWorkloadChart({
             <Chip size="small" label="สัปดาห์ละไม่เกิน 24 คาบ" variant="outlined" sx={{ height: 22, fontSize: "0.7rem", alignSelf: { xs: "flex-start", sm: "auto" } }} />
           </Box>
 
-          <Box sx={{ width: "100%", height: 300 }}>
-            <BarChart
-              dataset={workloadChartData}
-              xAxis={[{ scaleType: "band", dataKey: "teacher" }]}
-              series={[
-                { dataKey: "ภาระงานสอน", label: "ภาระสอน (คาบ/สัปดาห์)", color: "#6366f1" },
-                { dataKey: "ชั่วโมงอบรม", label: "อบรมสะสม (ชม.)", color: "#10b981" },
-              ]}
-              height={280}
-              margin={{ top: 20, bottom: 45, left: 40, right: 10 }}
-              slotProps={{
-                legend: {
-                  direction: "horizontal",
-                  position: { vertical: "bottom", horizontal: "center" },
-                },
-              }}
-            />
+          <Box sx={{ width: "100%", minHeight: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {workloadChartData.length === 0 || workloadChartData.every((w) => w.ภาระงานสอน === 0 && w.ชั่วโมงอบรม === 0) ? (
+              <EmptyState
+                compact
+                icon={<BalanceIcon sx={{ fontSize: 36, color: "text.secondary" }} />}
+                title="ยังไม่มีข้อมูลภาระงานสอน"
+                description="จะแสดงผลเมื่อมีการมอบหมายตารางสอนครูในระบบ"
+                actionLabel="จัดการตารางสอน"
+                actionHref="/admin/curriculum"
+                actionIcon={<AddIcon sx={{ fontSize: 15 }} />}
+              />
+            ) : (
+              <BarChart
+                dataset={workloadChartData}
+                xAxis={[{ scaleType: "band", dataKey: "teacher" }]}
+                series={[
+                  { dataKey: "ภาระงานสอน", label: "ภาระสอน (คาบ/สัปดาห์)", color: "#6366f1" },
+                  { dataKey: "ชั่วโมงอบรม", label: "อบรมสะสม (ชม.)", color: "#10b981" },
+                ]}
+                height={280}
+                margin={{ top: 20, bottom: 45, left: 40, right: 10 }}
+                slotProps={{
+                  legend: {
+                    direction: "horizontal",
+                    position: { vertical: "bottom", horizontal: "center" },
+                  },
+                }}
+              />
+            )}
           </Box>
         </Paper>
       </Box>

@@ -8,8 +8,10 @@ import Chip from "@mui/material/Chip";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import SchoolIcon from "@mui/icons-material/School";
+import AddIcon from "@mui/icons-material/Add";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface SarStandardMetric {
   standard: string;
@@ -126,25 +128,37 @@ export function SarRadarTargetChart({
           </Box>
 
           <Box sx={{ width: "100%", height: 310, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <PieChart
-              series={[
-                {
-                  data: pieData,
-                  innerRadius: 45,
-                  outerRadius: 95,
-                  paddingAngle: 3,
-                  cornerRadius: 4,
-                  highlightScope: { fade: "global", highlight: "item" },
-                },
-              ]}
-              height={290}
-              slotProps={{
-                legend: {
-                  direction: "horizontal",
-                  position: { vertical: "bottom", horizontal: "center" },
-                },
-              }}
-            />
+            {pieData.length === 0 || pieData.reduce((acc, p) => acc + p.value, 0) === 0 ? (
+              <EmptyState
+                compact
+                icon={<VerifiedUserIcon sx={{ fontSize: 36, color: "text.secondary" }} />}
+                title="ยังไม่มีข้อมูลใบอนุญาตครู"
+                description="ข้อมูลจะแสดงเมื่อมีการบันทึกใบอนุญาตครูในระบบ"
+                actionLabel="บันทึกใบอนุญาต"
+                actionHref="/profile"
+                actionIcon={<AddIcon sx={{ fontSize: 15 }} />}
+              />
+            ) : (
+              <PieChart
+                series={[
+                  {
+                    data: pieData,
+                    innerRadius: 45,
+                    outerRadius: 95,
+                    paddingAngle: 3,
+                    cornerRadius: 4,
+                    highlightScope: { fade: "global", highlight: "item" },
+                  },
+                ]}
+                height={290}
+                slotProps={{
+                  legend: {
+                    direction: "horizontal",
+                    position: { vertical: "bottom", horizontal: "center" },
+                  },
+                }}
+              />
+            )}
           </Box>
         </Paper>
       </Box>

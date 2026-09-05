@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     }));
 
     // 5. Classroom Capacity Benchmark (Comparing room sizes with OVEC criteria: Min 20, Target 30, Max 35)
-    let classroomBenchmarks = Object.entries(roomCounts).map(([room, count]) => {
+    const classroomBenchmarks = Object.entries(roomCounts).map(([room, count]) => {
       let status = "เหมาะสมตามเกณฑ์";
       if (count > 35) status = "หนาแน่นเกินเกณฑ์";
       else if (count < 20) status = "ต่ำกว่าเกณฑ์ สอศ.";
@@ -119,31 +119,22 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    if (classroomBenchmarks.length === 0) {
-      classroomBenchmarks = [
-        { room: "ปวช.1/1", count: 32, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-        { room: "ปวช.1/2", count: 28, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-        { room: "ปวช.2/1", count: 29, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-        { room: "ปวช.3/1", count: 26, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-        { room: "ปวส.1/1", count: 24, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-        { room: "ปวส.2/1", count: 22, minCriteria: 20, targetCriteria: 30, maxCriteria: 35, status: "เหมาะสมตามเกณฑ์" },
-      ];
-    }
-
     // 6. Cohort Progression & Survival Rate (วิเคราะห์การเลื่อนชั้นปีและการคงอยู่)
-    const voc1 = cohortGroups["ปวช.1"]?.total || 60;
-    const voc2 = cohortGroups["ปวช.2"]?.total || 56;
-    const voc3 = cohortGroups["ปวช.3"]?.total || 52;
-    const hvoc1 = cohortGroups["ปวส.1"]?.total || 45;
-    const hvoc2 = cohortGroups["ปวส.2"]?.total || 43;
+    const voc1 = cohortGroups["ปวช.1"]?.total || 0;
+    const voc2 = cohortGroups["ปวช.2"]?.total || 0;
+    const voc3 = cohortGroups["ปวช.3"]?.total || 0;
+    const hvoc1 = cohortGroups["ปวส.1"]?.total || 0;
+    const hvoc2 = cohortGroups["ปวส.2"]?.total || 0;
 
-    const cohortProgression = [
-      { stage: "ปวช.1 (แรกเข้า)", count: voc1, retentionRate: 100 },
-      { stage: "ปวช.2 (คงอยู่)", count: voc2, retentionRate: Number(((voc2 / Math.max(1, voc1)) * 100).toFixed(1)) },
-      { stage: "ปวช.3 (จบการศึกษา)", count: voc3, retentionRate: Number(((voc3 / Math.max(1, voc1)) * 100).toFixed(1)) },
-      { stage: "ปวส.1 (แรกเข้า)", count: hvoc1, retentionRate: 100 },
-      { stage: "ปวส.2 (จบการศึกษา)", count: hvoc2, retentionRate: Number(((hvoc2 / Math.max(1, hvoc1)) * 100).toFixed(1)) },
-    ];
+    const cohortProgression = students.length > 0
+      ? [
+          { stage: "ปวช.1 (แรกเข้า)", count: voc1, retentionRate: voc1 > 0 ? 100 : 0 },
+          { stage: "ปวช.2 (คงอยู่)", count: voc2, retentionRate: voc1 > 0 ? Number(((voc2 / voc1) * 100).toFixed(1)) : 0 },
+          { stage: "ปวช.3 (จบการศึกษา)", count: voc3, retentionRate: voc1 > 0 ? Number(((voc3 / voc1) * 100).toFixed(1)) : 0 },
+          { stage: "ปวส.1 (แรกเข้า)", count: hvoc1, retentionRate: hvoc1 > 0 ? 100 : 0 },
+          { stage: "ปวส.2 (จบการศึกษา)", count: hvoc2, retentionRate: hvoc1 > 0 ? Number(((hvoc2 / hvoc1) * 100).toFixed(1)) : 0 },
+        ]
+      : [];
 
     // 7. Evidence Files in Student Work category
     const studentWorkCount = await prisma.evidenceFile.count({

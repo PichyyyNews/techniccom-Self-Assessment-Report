@@ -9,9 +9,11 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AddIcon from "@mui/icons-material/Add";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface PyramidCohortItem {
   cohort: string;
@@ -57,6 +59,19 @@ export function StudentDemographicPyramid({
   cohortProgression = [],
   totalStudents,
 }: StudentDemographicPyramidProps) {
+  if (totalStudents === 0) {
+    return (
+      <EmptyState
+        icon={<GroupsIcon sx={{ fontSize: 44, color: "text.secondary" }} />}
+        title="ยังไม่มีข้อมูลนักเรียนในระบบ"
+        description="เริ่มนำเข้าข้อมูลนักเรียนตามระดับชั้นและกลุ่มเรียน เพื่อให้ระบบวิเคราะห์โครงสร้างประชากรผู้เรียนและอัตราคงอยู่โดยอัตโนมัติ"
+        actionLabel="นำเข้าข้อมูลนักเรียน"
+        actionHref="/students"
+        actionIcon={<AddIcon sx={{ fontSize: 16 }} />}
+      />
+    );
+  }
+
   const chartData = pyramidData.map((p) => ({
     cohort: p.cohort,
     ชาย: p.male,

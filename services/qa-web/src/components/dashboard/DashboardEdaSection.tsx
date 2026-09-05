@@ -162,42 +162,42 @@ export function DashboardEdaSection({
                 ร้อยละครูที่มีใบอนุญาตถูกต้อง
               </Typography>
               <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 1 }}>
-                <Typography variant="h1" sx={{ color: "primary.main", fontSize: "2rem", fontWeight: 700 }}>
-                  {sarLicensePercentage}%
+                <Typography variant="h1" sx={{ color: totalActiveTeachers > 0 ? "primary.main" : "text.secondary", fontSize: "2rem", fontWeight: 700 }}>
+                  {totalActiveTeachers > 0 ? `${sarLicensePercentage}%` : "-"}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  {validLicenseCount}/{totalActiveTeachers} ท่าน
+                  {totalActiveTeachers > 0 ? `${validLicenseCount}/${totalActiveTeachers} ท่าน` : "ยังไม่มีข้อมูลบุคลากร"}
                 </Typography>
               </Box>
-              <LinearProgress variant="determinate" value={sarLicensePercentage} sx={{ height: 6, borderRadius: 3 }} />
+              <LinearProgress variant="determinate" value={totalActiveTeachers > 0 ? sarLicensePercentage : 0} sx={{ height: 6, borderRadius: 3 }} />
             </Paper>
 
             {/* Metric 2 */}
             <Paper sx={{ p: 2, bgcolor: "background.default", border: "1px solid", borderColor: "divider" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
-                <CheckCircleIcon sx={{ fontSize: 16, color: "success.main" }} />
+                <CheckCircleIcon sx={{ fontSize: 16, color: validLicenseCount > 0 ? "success.main" : "text.disabled" }} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
                   ใบอนุญาตพร้อมใช้งาน
                 </Typography>
               </Box>
-              <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5, fontSize: "1.5rem", fontWeight: 700 }}>
-                {validLicenseCount} คน
+              <Typography variant="h2" sx={{ color: validLicenseCount > 0 ? "text.primary" : "text.secondary", mb: 0.5, fontSize: "1.5rem", fontWeight: 700 }}>
+                {validLicenseCount > 0 ? `${validLicenseCount} คน` : "-"}
               </Typography>
-              <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600 }}>
-                ผ่านเกณฑ์มาตรฐานวิชาชีพ
+              <Typography variant="caption" sx={{ color: validLicenseCount > 0 ? "success.main" : "text.secondary", fontWeight: 600 }}>
+                {validLicenseCount > 0 ? "ผ่านเกณฑ์มาตรฐานวิชาชีพ" : "ยังไม่มีบันทึกใบอนุญาต"}
               </Typography>
             </Paper>
 
             {/* Metric 3 */}
             <Paper sx={{ p: 2, bgcolor: "background.default", border: "1px solid", borderColor: "divider" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
-                <AccessTimeIcon sx={{ fontSize: 16, color: "warning.main" }} />
+                <AccessTimeIcon sx={{ fontSize: 16, color: expiringCount > 0 ? "warning.main" : "text.disabled" }} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary" }}>
                   ใกล้หมดอายุ หรือต้องต่ออายุ
                 </Typography>
               </Box>
-              <Typography variant="h2" sx={{ color: "warning.main", mb: 0.5, fontSize: "1.5rem", fontWeight: 700 }}>
-                {expiringCount} คน
+              <Typography variant="h2" sx={{ color: expiringCount > 0 ? "warning.main" : "text.secondary", mb: 0.5, fontSize: "1.5rem", fontWeight: 700 }}>
+                {expiringCount > 0 ? `${expiringCount} คน` : "0 คน"}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 หมดอายุภายใน 180 วัน

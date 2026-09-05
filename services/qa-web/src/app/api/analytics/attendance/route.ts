@@ -87,25 +87,24 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // Format weekly trend (if actual sessions exist, use them, otherwise provide realistic trend baseline)
-    const weeklyTrend = Object.entries(weeklyDataMap).map(([weekStr, data]) => {
-      const week = Number(weekStr);
-      let rate = 95;
-      if (data.total > 0) {
-        rate = Number((((data.present + data.late) / data.total) * 100).toFixed(1));
-      } else {
-        // Natural slight decay across semester 1-18 for baseline simulation
-        rate = Number((96.5 - week * 0.45 + (Math.sin(week) * 1.5)).toFixed(1));
-      }
-      return {
-        week: `สัปดาห์ ${week}`,
-        weekNum: week,
-        rate,
-        presentCount: data.present,
-        absentCount: data.absent,
-        totalChecked: data.total,
-      };
-    });
+    // Format weekly trend (only from actual attendance data)
+    const hasActualSessions = sessions.length > 0;
+    const weeklyTrend = hasActualSessions
+      ? Object.entries(weeklyDataMap)
+          .filter(([_, data]) => data.total > 0)
+          .map(([weekStr, data]) => {
+            const week = Number(weekStr);
+            const rate = Number((((data.present + data.late) / data.total) * 100).toFixed(1));
+            return {
+              week: `สัปดาห์ ${week}`,
+              weekNum: week,
+              rate,
+              presentCount: data.present,
+              absentCount: data.absent,
+              totalChecked: data.total,
+            };
+          })
+      : [];
 
     // 4. Per-Student Attendance Rate & Risk Classification
     const studentAggMap: Record<
@@ -172,12 +171,6 @@ export async function GET(request: NextRequest) {
           atRiskStudents.push({ ...s, rate, riskLevel: "CRITICAL" });
         }
       });
-    } else {
-      // Default baseline counts for display
-      riskSegments[0].count = 28;
-      riskSegments[1].count = 14;
-      riskSegments[2].count = 3;
-      riskSegments[3].count = 1;
     }
 
     // 5. Room Comparative Attendance
@@ -195,20 +188,11 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    let roomComparison = Object.entries(roomPerformanceMap).map(([room, counts]) => ({
+    const roomComparison = Object.entries(roomPerformanceMap).map(([room, counts]) => ({
       room,
-      rate: counts.total > 0 ? Number(((counts.present / counts.total) * 100).toFixed(1)) : 90,
+      rate: counts.total > 0 ? Number(((counts.present / counts.total) * 100).toFixed(1)) : 0,
       totalChecked: counts.total,
     }));
-
-    if (roomComparison.length === 0) {
-      roomComparison = [
-        { room: "ปวช.1/1", rate: 94.2, totalChecked: 40 },
-        { room: "ปวช.1/2", rate: 91.5, totalChecked: 38 },
-        { room: "ปวช.2/1", rate: 89.8, totalChecked: 35 },
-        { room: "ปวส.1/1", rate: 93.4, totalChecked: 30 },
-      ];
-    }
 
     // 6. Day-of-Week Attendance Pattern (จันทร์ - ศุกร์)
     const dayNames = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];

@@ -32,13 +32,22 @@ import { PageBreadcrumbs } from "@/components/ui/PageBreadcrumbs";
 export default function StudentDashboardPage() {
   const { termLabel, selectedYear, selectedSemester } = useAcademicYear();
 
-  const [stats, setStats] = React.useState({
+  const [stats, setStats] = React.useState<{
+    totalStudents: number;
+    activeStudents: number;
+    vocationalCount: number;
+    highVocationalCount: number;
+    retentionRate: number | null;
+    attendanceRate: number | null;
+    attendanceTotalCount: number;
+    studentWorkCount: number;
+  }>({
     totalStudents: 0,
     activeStudents: 0,
     vocationalCount: 0,
     highVocationalCount: 0,
-    retentionRate: 100,
-    attendanceRate: 92.6,
+    retentionRate: null,
+    attendanceRate: null,
     attendanceTotalCount: 0,
     studentWorkCount: 0,
   });
@@ -251,10 +260,10 @@ export default function StudentDashboardPage() {
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               นักเรียนนักศึกษาในแผนกวิชา
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: "success.main" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1, color: stats.retentionRate !== null ? "success.main" : "text.secondary" }}>
               <TrendingUpIcon sx={{ fontSize: 14 }} />
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                อัตราคงอยู่ {stats.retentionRate}% ผ่านเกณฑ์
+                {stats.retentionRate !== null ? `อัตราคงอยู่ ${stats.retentionRate}% ผ่านเกณฑ์` : "ยังไม่มีข้อมูลคงอยู่"}
               </Typography>
             </Box>
           </Paper>
@@ -278,8 +287,8 @@ export default function StudentDashboardPage() {
               </Box>
               <Chip size="small" label="เกณฑ์สิทธิ์สอบ ≥80%" color="success" variant="outlined" />
             </Box>
-            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-              {loading ? <CircularProgress size={20} /> : `${stats.attendanceRate}%`}
+            <Typography variant="h2" sx={{ color: stats.attendanceRate !== null ? "text.primary" : "text.secondary", mb: 0.5 }}>
+              {loading ? <CircularProgress size={20} /> : (stats.attendanceRate !== null ? `${stats.attendanceRate}%` : "-")}
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               อัตราการเข้าชั้นเรียนเฉลี่ย
@@ -287,7 +296,7 @@ export default function StudentDashboardPage() {
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
               {stats.attendanceTotalCount > 0
                 ? `เช็คชื่อสะสม ${stats.attendanceTotalCount.toLocaleString()} รายการ`
-                : "บันทึกเวลาเรียนโดยครูผู้สอน"}
+                : "ยังไม่มีบันทึกเวลาเรียน"}
             </Typography>
           </Paper>
 
@@ -310,8 +319,8 @@ export default function StudentDashboardPage() {
               </Box>
               <Chip size="small" label="มาตรฐานฝีมือ" color="secondary" variant="outlined" />
             </Box>
-            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-              {loading ? <CircularProgress size={20} /> : (stats.studentWorkCount > 0 ? `${stats.studentWorkCount} รายการ` : "89.2%")}
+            <Typography variant="h2" sx={{ color: stats.studentWorkCount > 0 ? "text.primary" : "text.secondary", mb: 0.5 }}>
+              {loading ? <CircularProgress size={20} /> : (stats.studentWorkCount > 0 ? `${stats.studentWorkCount} รายการ` : "-")}
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               ผลงานและสมรรถนะวิชาชีพ
@@ -319,7 +328,7 @@ export default function StudentDashboardPage() {
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
               {stats.studentWorkCount > 0
                 ? `รวบรวมหลักฐานชิ้นงาน ${stats.studentWorkCount} ชิ้น`
-                : "ประเมินสมรรถนะตามมาตรฐาน SAR"}
+                : "ยังไม่มีการอัปโหลดชิ้นงาน"}
             </Typography>
           </Paper>
 
@@ -342,14 +351,14 @@ export default function StudentDashboardPage() {
               </Box>
               <Chip size="small" label="กิจกรรมผู้เรียน" color="warning" variant="outlined" />
             </Box>
-            <Typography variant="h2" sx={{ color: "text.primary", mb: 0.5 }}>
-              95.1%
+            <Typography variant="h2" sx={{ color: "text.secondary", mb: 0.5 }}>
+              -
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               เข้าร่วมกิจกรรมพัฒนาผู้เรียน
             </Typography>
-            <Typography variant="caption" sx={{ color: "warning.main", display: "block", mt: 1, fontWeight: 600 }}>
-              ผ่านเกณฑ์กิจกรรมชมรมและจิตอาสา
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1, fontWeight: 500 }}>
+              รอการประเมินกิจกรรมผู้เรียน
             </Typography>
           </Paper>
         </Box>

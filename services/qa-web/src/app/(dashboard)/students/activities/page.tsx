@@ -140,17 +140,17 @@ export default function ActivitiesPage() {
             อัตราผ่านกิจกรรมหน้าเสาธง
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              95.1%
+            <Typography variant="h3" sx={{ color: "text.secondary", fontSize: "1.25rem", fontWeight: 700 }}>
+              -
             </Typography>
-            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              เกณฑ์ขั้นต่ำ 85%
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.725rem" }}>
+              ยังไม่มีบันทึกเวลาเข้าแถว
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
             color="success"
-            value={95.1}
+            value={0}
             sx={{ height: 5, borderRadius: 1, mt: 1 }}
           />
         </Paper>
@@ -160,17 +160,17 @@ export default function ActivitiesPage() {
             นักเรียนสังกัดชมรมวิชาชีพ
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              100%
+            <Typography variant="h3" sx={{ color: "text.secondary", fontSize: "1.25rem", fontWeight: 700 }}>
+              -
             </Typography>
-            <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              องค์การวิชาชีพ อวท.
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.725rem" }}>
+              ยังไม่มีข้อมูลสมาชิกชมรม
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
             color="primary"
-            value={100}
+            value={0}
             sx={{ height: 5, borderRadius: 1, mt: 1 }}
           />
         </Paper>

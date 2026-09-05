@@ -21,9 +21,12 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import GroupWorkIcon from "@mui/icons-material/GroupWork";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DonutLargeIcon from "@mui/icons-material/DonutLarge";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import AddIcon from "@mui/icons-material/Add";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface WeeklyTrendItem {
   week: string;
@@ -94,6 +97,20 @@ export function AttendanceRiskChart({
   absenceDecomposition = [],
 }: AttendanceRiskChartProps) {
   const [filterRisk, setFilterRisk] = useState<"ALL" | "WARNING" | "CRITICAL">("ALL");
+
+  const hasData = weeklyTrend.length > 0 || riskSegments.reduce((a, b) => a + b.count, 0) > 0;
+  if (!hasData) {
+    return (
+      <EmptyState
+        icon={<FactCheckIcon sx={{ fontSize: 44, color: "text.secondary" }} />}
+        title="ยังไม่มีการบันทึกข้อมูลเวลาเรียนในระบบ"
+        description="เริ่มเช็กชื่อเข้าเรียนประจำวัน หรือนำเข้าข้อมูลสรุปเวลาเรียนจากระบบ RMS เพื่อวิเคราะห์แนวโน้ม 18 สัปดาห์และตรวจจับกลุ่มเสี่ยงขาดสิทธิ์สอบ"
+        actionLabel="บันทึกเวลาเรียน"
+        actionHref="/students/attendance"
+        actionIcon={<AddIcon sx={{ fontSize: 16 }} />}
+      />
+    );
+  }
 
   const weeks = weeklyTrend.map((w) => `${w.weekNum}`);
   const rates = weeklyTrend.map((w) => w.rate);

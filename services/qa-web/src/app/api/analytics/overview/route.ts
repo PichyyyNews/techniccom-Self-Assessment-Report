@@ -131,33 +131,63 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // If no licenses seeded yet, provide realistic distribution for EDA
-    const licenseDistribution = [
-      { status: "พร้อมใช้งาน (Active)", count: activeLicenseCount || 8, color: "#10b981" },
-      { status: "ใกล้หมดอายุ (<180 วัน)", count: expiringSoonCount || 2, color: "#f59e0b" },
-      { status: "ผ่อนผัน (รอบ 1-3)", count: provisionalCount || 1, color: "#8b5cf6" },
-      { status: "หมดอายุ / ต่ออายุ", count: expiredCount || 0, color: "#ef4444" },
-    ];
+    const totalLicenses = activeLicenseCount + expiringSoonCount + provisionalCount + expiredCount;
+    const licenseDistribution = totalLicenses > 0
+      ? [
+          { status: "พร้อมใช้งาน (Active)", count: activeLicenseCount, color: "#10b981" },
+          { status: "ใกล้หมดอายุ (<180 วัน)", count: expiringSoonCount, color: "#f59e0b" },
+          { status: "ผ่อนผัน (รอบ 1-3)", count: provisionalCount, color: "#8b5cf6" },
+          { status: "หมดอายุ / ต่ออายุ", count: expiredCount, color: "#ef4444" },
+        ]
+      : [];
 
-    // 4. SAR 3 Standards Target vs Actual Comparison
-    const [totalStudents, activeStudents, lessonPlanCount, researchCount] = await Promise.all([
+    // 4. SAR 3 Standards Target vs Actual Comparison (Real DB counts)
+    const [
+      totalStudents,
+      activeStudents,
+      lessonPlanCount,
+      researchCount,
+      attendancePresentCount,
+      attendanceTotalCount,
+    ] = await Promise.all([
       prisma.student.count({ where: { academicYear } }),
       prisma.student.count({ where: { academicYear, status: "ACTIVE" } }),
       prisma.evidenceFile.count({ where: { academicYear, category: "lesson_plan" } }),
       prisma.evidenceFile.count({ where: { academicYear, category: "research" } }),
+      prisma.attendanceRecord.count({
+        where: {
+          status: { in: ["PRESENT", "LATE"] },
+          assignment: {
+            academicYear,
+            ...(semester !== "all" ? { semester } : {}),
+          },
+        },
+      }),
+      prisma.attendanceRecord.count({
+        where: {
+          assignment: {
+            academicYear,
+            ...(semester !== "all" ? { semester } : {}),
+          },
+        },
+      }),
     ]);
 
-    const retentionRate = totalStudents > 0 ? Number(((activeStudents / totalStudents) * 100).toFixed(1)) : 98.4;
+    const retentionRate = totalStudents > 0 ? Number(((activeStudents / totalStudents) * 100).toFixed(1)) : 0;
+    const examEligibilityRate = attendanceTotalCount > 0
+      ? Number(((attendancePresentCount / attendanceTotalCount) * 100).toFixed(1))
+      : 0;
+
     const avgTrainingHours = teachers.length > 0
       ? Number((Object.values(teacherHoursMap).reduce((a, b) => a + b, 0) / teachers.length).toFixed(1))
       : 0;
 
     const sarStandardsRadar = [
       { standard: "1. อัตราคงอยู่ผู้เรียน", target: 95, actual: retentionRate, unit: "%" },
-      { standard: "1. สิทธิ์สอบ (เข้าเรียน)", target: 90, actual: 92.6, unit: "%" },
-      { standard: "2. แผนการจัดการเรียนรู้", target: 100, actual: Math.min(100, (lessonPlanCount / Math.max(1, teachers.length * 2)) * 100), unit: "%" },
-      { standard: "2. ชั่วโมงอบรมพัฒนา", target: 100, actual: Math.min(100, (avgTrainingHours / 20) * 100), unit: "%" },
-      { standard: "3. ผลงานวิจัย/นวัตกรรม", target: 80, actual: Math.min(100, (researchCount / Math.max(1, teachers.length)) * 100), unit: "%" },
+      { standard: "1. สิทธิ์สอบ (เข้าเรียน)", target: 90, actual: examEligibilityRate, unit: "%" },
+      { standard: "2. แผนการจัดการเรียนรู้", target: 100, actual: teachers.length > 0 ? Math.min(100, Number(((lessonPlanCount / Math.max(1, teachers.length * 2)) * 100).toFixed(1))) : 0, unit: "%" },
+      { standard: "2. ชั่วโมงอบรมพัฒนา", target: 100, actual: Math.min(100, Number(((avgTrainingHours / 20) * 100).toFixed(1))), unit: "%" },
+      { standard: "3. ผลงานวิจัย/นวัตกรรม", target: 80, actual: teachers.length > 0 ? Math.min(100, Number(((researchCount / Math.max(1, teachers.length)) * 100).toFixed(1))) : 0, unit: "%" },
     ];
 
     // 5. Teacher Academic Qualification & Rank Distribution (SAR Standard 2)
@@ -183,42 +213,31 @@ export async function GET(request: NextRequest) {
       else if (pos.includes("ผู้ช่วย")) academicRankCounts["ครูผู้ช่วย"]++;
       else academicRankCounts["ครู (คศ.1)"]++;
 
-      // Default reasonable distribution if not explicitly specified in education JSON
       if (pos.includes("เชี่ยวชาญ") || pos.includes("ดร.")) qualificationCounts["ปริญญาเอก"]++;
       else if (pos.includes("ชำนาญการพิเศษ") || pos.includes("โท")) qualificationCounts["ปริญญาโท"]++;
       else qualificationCounts["ปริญญาตรี"]++;
     });
 
-    // Ensure realistic baseline counts if DB is fresh
-    if (Object.values(academicRankCounts).reduce((a, b) => a + b, 0) === 0) {
-      academicRankCounts["ครูชำนาญการพิเศษ"] = 2;
-      academicRankCounts["ครูชำนาญการ"] = 3;
-      academicRankCounts["ครู (คศ.1)"] = 2;
-      academicRankCounts["ครูผู้ช่วย"] = 1;
-      qualificationCounts["ปริญญาโท"] = 4;
-      qualificationCounts["ปริญญาตรี"] = 4;
-    }
+    const hasAcademicRanks = teachers.length > 0 && Object.values(academicRankCounts).reduce((a, b) => a + b, 0) > 0;
 
-    const qualificationData = Object.entries(qualificationCounts).map(([degree, count]) => ({
-      degree,
-      count,
-    }));
+    const qualificationData = hasAcademicRanks
+      ? Object.entries(qualificationCounts).map(([degree, count]) => ({ degree, count }))
+      : [];
 
-    const academicRankData = Object.entries(academicRankCounts).map(([rank, count]) => ({
-      rank,
-      count,
-    }));
+    const academicRankData = hasAcademicRanks
+      ? Object.entries(academicRankCounts).map(([rank, count]) => ({ rank, count }))
+      : [];
 
     // 6. Research, Innovation & Academic Output Productivity
     const totalAssignmentsCount = teachers.reduce((acc, t) => acc + t.teachingAssignments.length, 0);
     const planCompletionRate = totalAssignmentsCount > 0
       ? Number(Math.min(100, (lessonPlanCount / totalAssignmentsCount) * 100).toFixed(1))
-      : 87.5;
+      : 0;
 
     const researchProductivity = [
-      { category: "วิจัยในชั้นเรียน", count: researchCount || 3, target: Math.max(1, teachers.length) },
-      { category: "นวัตกรรม/สิ่งประดิษฐ์", count: Math.max(1, Math.round(researchCount * 0.4)) || 2, target: 2 },
-      { category: "แผนการจัดการเรียนรู้", count: lessonPlanCount || 12, target: totalAssignmentsCount || 14 },
+      { category: "วิจัยในชั้นเรียน", count: researchCount, target: Math.max(0, teachers.length) },
+      { category: "นวัตกรรม/สิ่งประดิษฐ์", count: Math.round(researchCount * 0.4), target: 2 },
+      { category: "แผนการจัดการเรียนรู้", count: lessonPlanCount, target: totalAssignmentsCount },
     ];
 
     return NextResponse.json({

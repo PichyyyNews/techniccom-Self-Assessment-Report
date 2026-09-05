@@ -112,17 +112,17 @@ export default function CompetenciesPage() {
             เกรดเฉลี่ยสะสมเฉลี่ย (GPAX)
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              3.18
+            <Typography variant="h3" sx={{ color: "text.secondary", fontSize: "1.25rem", fontWeight: 700 }}>
+              -
             </Typography>
-            <Typography variant="caption" sx={{ color: "success.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              +0.12 จากปีก่อน
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.725rem" }}>
+              รอผลการเรียน
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
             color="success"
-            value={(3.18 / 4.0) * 100}
+            value={0}
             sx={{ height: 5, borderRadius: 1, mt: 1 }}
           />
         </Paper>
@@ -132,17 +132,17 @@ export default function CompetenciesPage() {
             ผ่านประเมินมาตรฐานวิชาชีพ
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              89.2%
+            <Typography variant="h3" sx={{ color: "text.secondary", fontSize: "1.25rem", fontWeight: 700 }}>
+              -
             </Typography>
-            <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              ระดับ 1-3 (TPQI/DSD)
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.725rem" }}>
+              ยังไม่มีบันทึก TPQI/DSD
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
             color="primary"
-            value={89.2}
+            value={0}
             sx={{ height: 5, borderRadius: 1, mt: 1 }}
           />
         </Paper>
@@ -152,17 +152,17 @@ export default function CompetenciesPage() {
             ผลการทดสอบระดับชาติ (V-NET)
           </Typography>
           <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-            <Typography variant="h3" sx={{ color: "text.primary", fontSize: "1.25rem", fontWeight: 700 }}>
-              74.5%
+            <Typography variant="h3" sx={{ color: "text.secondary", fontSize: "1.25rem", fontWeight: 700 }}>
+              -
             </Typography>
-            <Typography variant="caption" sx={{ color: "info.main", fontWeight: 600, fontSize: "0.725rem" }}>
-              ผ่านเกณฑ์เป้าหมาย สอศ.
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.725rem" }}>
+              ยังไม่มีคะแนน V-NET
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
             color="info"
-            value={74.5}
+            value={0}
             sx={{ height: 5, borderRadius: 1, mt: 1 }}
           />
         </Paper>
